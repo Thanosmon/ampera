@@ -2720,8 +2720,9 @@ function openExportModal(){
 
 function exportPDF(mode){
   const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const W=210,M=14,TW=W-M*2;
+  const isLS=mode==='timeline'; // landscape hanya untuk timeline
+  const doc=new jsPDF({orientation:isLS?'landscape':'portrait',unit:'mm',format:'a4'});
+  const W=isLS?297:210,M=14,TW=W-M*2;
   const teal=[0,124,145],ink=[13,31,45],gold=[232,160,32],green=[0,184,122],red=[224,85,85];
   const now=new Date();
   const tgl=now.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
@@ -2876,25 +2877,32 @@ function exportPDF(mode){
     });
     const CLR_DONE=[0,184,122],CLR_PLAN=[0,124,145],CLR_DONE_BG=[230,251,242],CLR_PLAN_BG=[224,243,246];
     const CLR_BORDER=[205,220,228],CLR_ALT=[245,249,251],CLR_HEAD=[13,31,45];
+    // Landscape: W=297, TW=269 → kolom bulan lebih lebar
+    // No=8, Kegiatan=65, Bidang=38, 12×bulan=11.5ea=138, Total=28 → 277 (fit dalam TW=269)
+    const cWBln=Math.floor((TW-8-65-38-28)/12); // ~11mm per bulan
     doc.autoTable({
       startY:y,margin:{left:M,right:M},
       head:head,body:body,
       styles:{
-        fontSize:6.5,cellPadding:{top:2.5,bottom:2.5,left:2,right:2},
+        fontSize:7,cellPadding:{top:2.5,bottom:2.5,left:2,right:2},
         halign:'center',valign:'middle',
         lineColor:CLR_BORDER,lineWidth:0.25
       },
       headStyles:{
         fillColor:CLR_HEAD,textColor:[255,255,255],fontStyle:'bold',
-        fontSize:6.5,cellPadding:{top:3,bottom:3,left:2,right:2},
+        fontSize:7,cellPadding:{top:3,bottom:3,left:2,right:2},
         lineColor:[255,255,255],lineWidth:0.4
       },
       alternateRowStyles:{fillColor:CLR_ALT},
       columnStyles:{
         0:{cellWidth:8,halign:'center'},
-        1:{cellWidth:38,halign:'left'},
-        2:{cellWidth:22,halign:'left'},
-        15:{halign:'right',cellWidth:24}
+        1:{cellWidth:65,halign:'left'},
+        2:{cellWidth:38,halign:'left'},
+        3:{cellWidth:cWBln},4:{cellWidth:cWBln},5:{cellWidth:cWBln},
+        6:{cellWidth:cWBln},7:{cellWidth:cWBln},8:{cellWidth:cWBln},
+        9:{cellWidth:cWBln},10:{cellWidth:cWBln},11:{cellWidth:cWBln},
+        12:{cellWidth:cWBln},13:{cellWidth:cWBln},14:{cellWidth:cWBln},
+        15:{halign:'right',cellWidth:28}
       },
       didParseCell:function(d){
         if(d.section!=='body')return;
@@ -2911,36 +2919,31 @@ function exportPDF(mode){
         if(ci<3||ci>14)return;
         const raw=d.cell.raw;
         if(raw!=='DONE'&&raw!=='PLAN')return;
-        // Gambar blok chip dengan margin agar tidak menyatu antar baris
         const mg=1.2,rx=1;
         const bx=d.cell.x+mg,by=d.cell.y+mg;
         const bw=d.cell.width-mg*2,bh=d.cell.height-mg*2;
         // Shadow tipis
-        doc.setFillColor(0,0,0);doc.setGState&&doc.setGState(new doc.GState({opacity:0.06}));
+        doc.setFillColor(0,0,0);
+        if(doc.setGState)doc.setGState(new doc.GState({opacity:0.06}));
         doc.roundedRect(bx+0.3,by+0.3,bw,bh,rx,rx,'F');
-        doc.setGState&&doc.setGState(new doc.GState({opacity:1}));
+        if(doc.setGState)doc.setGState(new doc.GState({opacity:1}));
         // Blok utama
-        const clr=raw==='DONE'?CLR_DONE:CLR_PLAN;
-        doc.setFillColor(...clr);
+        doc.setFillColor(...(raw==='DONE'?CLR_DONE:CLR_PLAN));
         doc.roundedRect(bx,by,bw,bh,rx,rx,'F');
-        // Highlight strip atas (efek glossy)
-        doc.setFillColor(255,255,255);doc.setGState&&doc.setGState(new doc.GState({opacity:0.18}));
+        // Glossy strip atas
+        doc.setFillColor(255,255,255);
+        if(doc.setGState)doc.setGState(new doc.GState({opacity:0.15}));
         doc.roundedRect(bx,by,bw,bh/2,rx,rx,'F');
-        doc.setGState&&doc.setGState(new doc.GState({opacity:1}));
-        // Ikon centang untuk DONE
-        if(raw==='DONE'){
-          doc.setTextColor(255,255,255);doc.setFontSize(4.5);
-          doc.text('✓',bx+bw/2,by+bh/2+1.5,{align:'center'});
-        }
+        if(doc.setGState)doc.setGState(new doc.GState({opacity:1}));
       }
     });
     // Legenda
     const lx=M,ly=doc.lastAutoTable.finalY+5;
-    doc.setFontSize(7);doc.setTextColor(80,100,115);
+    doc.setFontSize(7.5);doc.setTextColor(80,100,115);
     doc.setFillColor(...CLR_DONE);doc.roundedRect(lx,ly,5,3.5,0.8,0.8,'F');
-    doc.text('Terlaksana',lx+6.5,ly+2.8);
-    doc.setFillColor(...CLR_PLAN);doc.roundedRect(lx+28,ly,5,3.5,0.8,0.8,'F');
-    doc.text('Direncanakan',lx+34.5,ly+2.8);
+    doc.text('Terlaksana',lx+7,ly+2.8);
+    doc.setFillColor(...CLR_PLAN);doc.roundedRect(lx+35,ly,5,3.5,0.8,0.8,'F');
+    doc.text('Direncanakan',lx+42,ly+2.8);
   }
 
   if(mode==='dashboard'){addDashboard();}
