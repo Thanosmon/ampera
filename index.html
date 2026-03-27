@@ -1315,7 +1315,15 @@ function migrateKegiatan(k){
   return k;
 }
 function migrateData(d){
-  if(d&&!d.tahunAnggaran)d.tahunAnggaran=2026;if(d&&d.kegiatan)d.kegiatan=d.kegiatan.map(migrateKegiatan);return d;}
+  if(d&&!d.tahunAnggaran)d.tahunAnggaran=2026;
+  if(d&&d.kegiatan)d.kegiatan=d.kegiatan.map(migrateKegiatan);
+  // Bersihkan kegiatan orphaned (bidangId tidak ada di data.bidang)
+  if(d&&d.bidang&&d.kegiatan){
+    const validIds=new Set(d.bidang.map(b=>b.id));
+    d.kegiatan=d.kegiatan.filter(k=>validIds.has(k.bidangId));
+  }
+  return d;
+}
 
 // ── TOAST ──
 function toast(msg,icon='✓'){
@@ -2813,8 +2821,9 @@ function exportPDF(mode){
   function addBulan(){
     let y=header('Monitoring Per Bulan');
     const rows=[];
+    const validBid2=new Set(data.bidang.map(b=>b.id));
     for(let m=1;m<=12;m++){
-      const kb=data.kegiatan.filter(k=>k.jadwal.some(j=>j.bulan===m));
+      const kb=data.kegiatan.filter(k=>validBid2.has(k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
       kb.forEach(k=>{
         const j=k.jadwal.find(jj=>jj.bulan===m);
         const done=k.doneBulan.includes(m);
@@ -2851,7 +2860,10 @@ function exportPDF(mode){
     let y=header('Timeline Pelaksanaan');
     const BN_PENDEK=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
     const head=[['No','Kegiatan','Bidang',...BN_PENDEK,'Total']];
-    const body=data.kegiatan.map((k,i)=>{
+    // Hanya kegiatan aktif: bidang masih ada + punya jadwal
+    const validBid=new Set(data.bidang.map(b=>b.id));
+    const aktif=data.kegiatan.filter(k=>validBid.has(k.bidangId)&&k.jadwal&&k.jadwal.length>0);
+    const body=aktif.map((k,i)=>{
       const ta=k.jadwal.reduce((a,j)=>a+j.anggaran,0);
       const bulan_ada=new Set(k.jadwal.map(j=>j.bulan));
       const cells=[i+1,k.nama,getBidangNama(k.bidangId)];
