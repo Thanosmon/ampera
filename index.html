@@ -354,17 +354,87 @@ td.muted{color:var(--txt3);font-size:12px;}
 .toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:white;padding:11px 18px;border-radius:9px;font-size:13px;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,0.22);z-index:9999;transform:translateY(70px);opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);display:flex;align-items:center;gap:8px;border-left:4px solid var(--teal3);max-width:340px;}
 .toast.show{transform:translateY(0);opacity:1;}
 
+/* ═══ MOBILE BOTTOM NAV ═══ */
+.mob-nav{display:none;}
+.mob-more-btn{display:none;}
+.mob-more-dd{display:none;position:fixed;bottom:64px;right:12px;background:var(--ink2);border:1px solid rgba(0,196,224,0.2);border-radius:12px;padding:6px;min-width:190px;box-shadow:0 12px 40px rgba(0,0,0,.5);z-index:900;flex-direction:column;gap:2px;}
+.mob-more-dd.open{display:flex;}
+.mob-dd-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.75);cursor:pointer;transition:background .15s;}
+.mob-dd-item:hover,.mob-dd-item:active{background:rgba(0,164,189,0.15);color:var(--teal3);}
+.mob-dd-overlay{display:none;position:fixed;inset:0;z-index:899;}
+.mob-dd-overlay.open{display:block;}
+
 @media(max-width:768px){
-  .shell{flex-direction:column;}
-  .sidebar{width:100%;flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid rgba(255,255,255,.06);}
-  .sid-section{display:flex;gap:4px;padding:8px;}
-  .sid-section-lbl{display:none;}
-  .sid-stats{display:none;}
-  .scroll-content{padding:14px;}
-  .page-header{padding:12px 14px;}
+  /* ── Full-page scroll ── */
+  html,body{height:auto;overflow:auto;}
+  body{display:block;}
+
+  /* ── Topbar ── */
+  .topbar{position:sticky;top:0;z-index:500;padding:0 12px;}
+  .topbar-center,.storage-ind,.btn-share{display:none;}
+  .topbar-brand{width:auto;}
+
+  /* ── Shell & sidebar ── */
+  .shell{display:block;overflow:visible;}
+  .sidebar{display:none;}
+
+  /* ── Main ── */
+  .main-area{display:block;overflow:visible;height:auto;}
+  .scroll-content{overflow:visible;padding:12px 12px 84px;}
+  .page-header{padding:10px 12px;flex-direction:column;align-items:flex-start;}
+  .page-actions{width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;}
+
+  /* ── Grids ── */
+  .metrics-row{grid-template-columns:repeat(2,1fr);gap:8px;}
   .form-grid{grid-template-columns:1fr;}
-  .metrics-row{grid-template-columns:repeat(2,1fr);}
-  .topbar-center{display:none;}
+  .kal-grid{grid-template-columns:1fr;}
+  .bln-grid{grid-template-columns:repeat(2,1fr);}
+
+  /* ── Tables: horizontal scroll ── */
+  .tbl-wrap{overflow-x:auto;}
+  table{min-width:600px;}
+  .tl-ov{overflow-x:auto;}
+
+  /* ── Modal full-screen ── */
+  .modal{width:100%!important;max-width:100vw;max-height:92vh;border-radius:12px 12px 0 0;margin-top:auto;}
+  .modal-overlay{align-items:flex-end;}
+
+  /* ── Bottom navigation bar ── */
+  .mob-nav{
+    display:flex;
+    position:fixed;bottom:0;left:0;right:0;
+    background:var(--ink);
+    border-top:1px solid rgba(255,255,255,0.08);
+    z-index:500;
+    height:58px;
+    padding:0 4px;
+    align-items:stretch;
+    box-shadow:0 -4px 20px rgba(0,0,0,0.3);
+  }
+  .mob-nav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;padding:4px 2px;
+    font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;
+    color:rgba(255,255,255,0.4);cursor:pointer;
+    border-top:2px solid transparent;transition:all .18s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mob-nav-item .mn-ico{font-size:18px;line-height:1;}
+  .mob-nav-item:active{background:rgba(255,255,255,0.05);}
+  .mob-nav-item.active{color:var(--teal3);border-top-color:var(--teal3);}
+
+  /* ── More button ── */
+  .mob-more-btn{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;padding:4px 2px;
+    font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;
+    color:rgba(255,255,255,0.4);cursor:pointer;
+    border-top:2px solid transparent;
+    -webkit-tap-highlight-color:transparent;
+    min-width:48px;
+  }
+  .mob-more-btn .mn-ico{font-size:18px;line-height:1;}
+  .mob-more-btn:active{background:rgba(255,255,255,0.05);}
 }
 
 /* ═══════════════════════════════════
@@ -933,6 +1003,25 @@ body.logged-in [data-admin].show-admin{display:flex;}
   </div>
 </div>
 
+<!-- ═══ MOBILE BOTTOM NAV ═══ -->
+<div class="mob-dd-overlay" id="mobDDOverlay" onclick="closeMobMore()"></div>
+<div class="mob-more-dd" id="mobMoreDD">
+  <div class="mob-dd-item" onclick="openAddKegiatan();closeMobMore()" data-admin>＋ Tambah Kegiatan</div>
+  <div class="mob-dd-item" onclick="openAddBidang();closeMobMore()" data-admin>🏢 Tambah Bidang</div>
+  <div class="mob-dd-item" onclick="openExportModal();closeMobMore()">📤 Ekspor &amp; Laporan</div>
+  <div class="mob-dd-item" onclick="openSyncModal();closeMobMore()">☁️ Sinkronisasi</div>
+  <div class="mob-dd-item" onclick="openShareModal();closeMobMore()">🔗 Bagikan</div>
+  <div class="mob-dd-item" onclick="doLogout();closeMobMore()">🚪 Keluar</div>
+</div>
+<nav class="mob-nav">
+  <div class="mob-nav-item active" onclick="switchView('dashboard',this)" data-view="dashboard"><span class="mn-ico">📈</span>Dashboard</div>
+  <div class="mob-nav-item" onclick="switchView('kegiatan',this)" data-view="kegiatan"><span class="mn-ico">📋</span>Kegiatan</div>
+  <div class="mob-nav-item" onclick="switchView('bulan',this)" data-view="bulan"><span class="mn-ico">📅</span>Bulan</div>
+  <div class="mob-nav-item" onclick="switchView('kalender',this)" data-view="kalender"><span class="mn-ico">🗓️</span>Kalender</div>
+  <div class="mob-nav-item" onclick="switchView('timeline',this)" data-view="timeline"><span class="mn-ico">📊</span>Timeline</div>
+  <div class="mob-more-btn" onclick="toggleMobMore()"><span class="mn-ico">⋯</span>Lainnya</div>
+</nav>
+
 <!-- MODAL KEGIATAN -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal">
@@ -1273,9 +1362,21 @@ function renderAll(){
 }
 function switchView(v,el){
   cv=v;
-  document.querySelectorAll('.sid-item').forEach(i=>i.classList.remove('active'));
-  if(el)el.classList.add('active');
+  document.querySelectorAll('.sid-item,.mob-nav-item').forEach(i=>i.classList.remove('active'));
+  document.querySelectorAll('[data-view="'+v+'"]').forEach(i=>i.classList.add('active'));
+  if(window.innerWidth<=768)window.scrollTo({top:0,behavior:'smooth'});
   renderAll();
+}
+function toggleMobMore(){
+  const dd=document.getElementById('mobMoreDD');
+  const ov=document.getElementById('mobDDOverlay');
+  const isOpen=dd.classList.contains('open');
+  dd.classList.toggle('open',!isOpen);
+  ov.classList.toggle('open',!isOpen);
+}
+function closeMobMore(){
+  document.getElementById('mobMoreDD').classList.remove('open');
+  document.getElementById('mobDDOverlay').classList.remove('open');
 }
 
 // ── HTML HELPERS ──
