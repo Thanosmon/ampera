@@ -2109,8 +2109,8 @@ function renderDashboard(){
                     <stop offset="100%" stop-color="#5de6b8"/>
                   </linearGradient>
                 </defs>
-                <!-- bg arc -->
-                <path d="M20,110 A70,70 0 0,1 140,110" fill="none" stroke="#e4edf3" stroke-width="14" stroke-linecap="round"/>
+                <!-- bg arc: setengah lingkaran penuh, konsisten dengan fill arc (cx=80,cy=110,r=70) -->
+                <path d="M10,110 A70,70 0 0,1 150,110" fill="none" stroke="#e4edf3" stroke-width="14" stroke-linecap="round"/>
                 <!-- fill arc -->
                 ${(()=>{
                   const r=70,cx=80,cy=110;
