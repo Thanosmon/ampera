@@ -2773,7 +2773,8 @@ function exportPDF(mode){
       kb.forEach(k=>{
         const j=k.jadwal.find(jj=>jj.bulan===m);
         const done=k.doneBulan.includes(m);
-        rows.push([BNAMES[m-1],k.nama,getBidangNama(k.bidangId),fmt(j.anggaran),done?'✅ Terlaksana':'⏳ Direncanakan']);
+        // Gunakan tag khusus agar didParseCell bisa beri warna
+        rows.push([BNAMES[m-1],k.nama,getBidangNama(k.bidangId),fmt(j.anggaran),done?'__DONE__':'__PLAN__']);
       });
     }
     doc.autoTable({
@@ -2783,21 +2784,36 @@ function exportPDF(mode){
       styles:{fontSize:8,cellPadding:2},
       headStyles:{fillColor:teal,textColor:[255,255,255],fontStyle:'bold',fontSize:8},
       alternateRowStyles:{fillColor:[240,245,248]},
-      columnStyles:{0:{cellWidth:16},3:{halign:'right'},4:{halign:'center'}}
+      columnStyles:{0:{cellWidth:16},3:{halign:'right'},4:{halign:'center',cellWidth:26}},
+      didParseCell:function(d){
+        if(d.section==='body'&&d.column.index===4){
+          if(d.cell.raw==='__DONE__'){
+            d.cell.text=['Terlaksana'];
+            d.cell.styles.fillColor=[0,184,122];
+            d.cell.styles.textColor=[255,255,255];
+            d.cell.styles.fontStyle='bold';
+          } else if(d.cell.raw==='__PLAN__'){
+            d.cell.text=['Direncanakan'];
+            d.cell.styles.fillColor=[0,124,145];
+            d.cell.styles.textColor=[255,255,255];
+          }
+        }
+      }
     });
   }
 
   function addTimeline(){
     let y=header('Timeline Pelaksanaan');
-    const head=[['No','Kegiatan','Bidang',...BNAMES,'Total']];
+    const BN_PENDEK=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+    const head=[['No','Kegiatan','Bidang',...BN_PENDEK,'Total']];
     const body=data.kegiatan.map((k,i)=>{
       const ta=k.jadwal.reduce((a,j)=>a+j.anggaran,0);
       const bulan_ada=new Set(k.jadwal.map(j=>j.bulan));
       const cells=[i+1,k.nama,getBidangNama(k.bidangId)];
       for(let m=1;m<=12;m++){
         if(!bulan_ada.has(m)){cells.push('');}
-        else if(k.doneBulan.includes(m)){cells.push('✅');}
-        else{cells.push('■');}
+        else if(k.doneBulan.includes(m)){cells.push('__DONE__');}
+        else{cells.push('__PLAN__');}
       }
       cells.push(fmt(ta));
       return cells;
@@ -2807,8 +2823,19 @@ function exportPDF(mode){
       head:head,body:body,
       styles:{fontSize:6.5,cellPadding:1.5,halign:'center'},
       headStyles:{fillColor:ink,textColor:[255,255,255],fontStyle:'bold',fontSize:6.5},
-      columnStyles:{0:{cellWidth:7},1:{cellWidth:38,halign:'left'},2:{cellWidth:22,halign:'left'},15:{halign:'right',cellWidth:24}},
-      alternateRowStyles:{fillColor:[240,245,248]}
+      columnStyles:{0:{cellWidth:7},1:{cellWidth:36,halign:'left'},2:{cellWidth:20,halign:'left'},15:{halign:'right',cellWidth:22}},
+      alternateRowStyles:{fillColor:[240,245,248]},
+      didParseCell:function(d){
+        if(d.section==='body'&&d.column.index>=3&&d.column.index<=14){
+          if(d.cell.raw==='__DONE__'){
+            d.cell.text=[''];
+            d.cell.styles.fillColor=[0,184,122]; // hijau
+          } else if(d.cell.raw==='__PLAN__'){
+            d.cell.text=[''];
+            d.cell.styles.fillColor=[0,124,145]; // teal
+          }
+        }
+      }
     });
   }
 
