@@ -947,7 +947,20 @@ body.logged-in [data-admin].show-admin{display:flex;}
       </div>
       <div style="height:1px;background:var(--bdr);margin:4px 0 16px"></div>
       <div class="exp-section">
-        <div class="exp-section-lbl">⬆️ Import dari Excel (.xlsx)</div>
+        <div class="exp-section-lbl">🏛️ Import dari Rencana Kemenkeu (.xlsx)</div>
+        <div style="background:#f0f9fc;border:1px solid #b8dde8;border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:var(--txt2);line-height:1.6">
+          Import langsung dari file <strong>"Rencana Kegiatan"</strong> format Kemenkeu (sheet <code style="font-size:10px;background:#e4edf3;padding:1px 5px;border-radius:3px">Sheet1</code>).<br>
+          Kolom yang dibaca: Bidang, Kegiatan, Sub-Komponen, MAK, Uraian Rincian, Satuan, Anggaran, Jadwal Bulan.<br>
+          <strong style="color:var(--red)">⚠️ Data saat ini akan digantikan.</strong>
+        </div>
+        <div class="export-bar">
+          <button class="btn-exp imp" onclick="document.getElementById('kemenkeuImportInput').click()">🏛️ Pilih File Rencana Kemenkeu</button>
+        </div>
+        <input type="file" id="kemenkeuImportInput" accept=".xlsx,.xls" style="display:none" onchange="importFromKemenkeu(this)">
+      </div>
+      <div style="height:1px;background:var(--bdr);margin:4px 0 16px"></div>
+      <div class="exp-section">
+        <div class="exp-section-lbl">⬆️ Import dari Excel AMPERA (.xlsx)</div>
         <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:var(--txt2);line-height:1.6">
           Import file Excel yang sebelumnya diekspor dari AMPERA. Format kolom harus sesuai.<br>
           <strong style="color:var(--red)">⚠️ Data saat ini akan digantikan.</strong>
@@ -2111,21 +2124,22 @@ function renderDashboard(){
                     <stop offset="100%" stop-color="#5de6b8"/>
                   </linearGradient>
                 </defs>
-                <!-- bg arc: setengah lingkaran penuh, konsisten dengan fill arc (cx=80,cy=110,r=70) -->
-                <path d="M10,110 A70,70 0 0,1 150,110" fill="none" stroke="#e4edf3" stroke-width="14" stroke-linecap="round"/>
-                <!-- fill arc -->
                 ${(()=>{
-                  const r=70,cx=80,cy=110;
-                  const startA=Math.PI;
-                  const endA=Math.PI+(pctBln/100)*Math.PI;
-                  const x1=cx+r*Math.cos(startA),y1=cy+r*Math.sin(startA);
-                  const x2=cx+r*Math.cos(endA),y2=cy+r*Math.sin(endA);
+                  const r=66,cx=80,cy=112,SW=12;
+                  const startA=Math.PI, endA=Math.PI+(pctBln/100)*Math.PI;
+                  const x1=cx+r*Math.cos(startA), y1=cy+r*Math.sin(startA);
+                  const x2=cx+r*Math.cos(endA),   y2=cy+r*Math.sin(endA);
                   const lg=pctBln===100?'gaugeFillG':'gaugeFill';
-                  if(pctBln===0)return'';
-                  return`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${pctBln>50?1:0},1 ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="url(#${lg})" stroke-width="14" stroke-linecap="round"/>`;
+                  const fillArc = pctBln===0 ? '' :
+                    `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${pctBln>50?1:0},1 ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="url(#${lg})" stroke-width="${SW}" stroke-linecap="round"/>`;
+                  const dot = pctBln>0 && pctBln<100 ?
+                    `<circle cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="5" fill="${lg==='gaugeFillG'?'#00b87a':'#00c4e0'}" stroke="#fff" stroke-width="2"/>` : '';
+                  return `
+                  <path d="M${(cx-r).toFixed(1)},${cy} A${r},${r} 0 0,1 ${(cx+r).toFixed(1)},${cy}" fill="none" stroke="#e4edf3" stroke-width="${SW}" stroke-linecap="round"/>
+                  ${fillArc}${dot}`;
                 })()}
-                <text x="80" y="106" text-anchor="middle" class="gauge-label" style="font-family:'Sora',sans-serif;font-size:30px;font-weight:800;fill:${pctBln===100?'#00b87a':'#007c91'}">${pctBln}%</text>
-                <text x="80" y="125" text-anchor="middle" class="gauge-sub" style="font-family:'Figtree',sans-serif;font-size:11px;fill:#7a9aac">terlaksana ${blnNm}</text>
+                <text x="80" y="104" text-anchor="middle" class="gauge-label" style="font-family:'Sora',sans-serif;font-size:30px;font-weight:800;fill:${pctBln===100?'#00b87a':'#007c91'}">${pctBln}%</text>
+                <text x="80" y="122" text-anchor="middle" class="gauge-sub" style="font-family:'Figtree',sans-serif;font-size:11px;fill:#7a9aac">terlaksana ${blnNm}</text>
               </svg>
             </div>
             <div style="display:flex;justify-content:center;gap:16px;margin-top:2px;flex-wrap:wrap;">
@@ -2329,7 +2343,7 @@ function renderDashboard(){
         data:bidData.map(b=>b.angg),
         backgroundColor:COLORS_BID.slice(0,bidData.length),
         borderColor:'#ffffff',
-        borderWidth:3,hoverOffset:8
+        borderWidth:4,borderAlign:'inner',hoverOffset:8
       }]
     },
     options:{
@@ -2967,6 +2981,112 @@ function exportExcel(mode){
   XLSX.writeFile(wb,fn);
   toast('Excel berhasil didownload','📊');
   document.getElementById('exportModal').classList.remove('open');
+}
+
+// ════════════════════════════════════
+// IMPORT DARI RENCANA KEMENKEU
+// ════════════════════════════════════
+function importFromKemenkeu(input){
+  const file=input.files[0]; input.value=''; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary',cellDates:true});
+      // Cari sheet flat data (Sheet1)
+      const sheetNm=wb.SheetNames.find(n=>n==='Sheet1')||wb.SheetNames[1];
+      if(!sheetNm)throw new Error('Sheet "Sheet1" tidak ditemukan di file');
+      const ws=wb.Sheets[sheetNm];
+      // Baca mulai row 7 (header di row 6, data row 7+) → skipRows=6
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
+      // Kolom 0-based sesuai analisis:
+      // 5=nmgiat(bidang), 9=nmsoutput(kegiatan), 13=nmskmpnen, 14=kdakun(MAK)
+      // 22=nmitem(uraian), 24=satkeg(satuan), 29=SisaPagu, 30=Peruntukan, 31=RencanaPelaksanaan
+      // Biaya per bulan (0-based): Jan=34,Feb=36,Mar=38,Apr=40,Mei=42,Jun=44,
+      //                             Jul=46,Ags=48,Sep=50,Okt=52,Nov=54,Des=56
+      const BIAYA=[34,36,38,40,42,44,46,48,50,52,54,56];
+      // Temukan baris data (mulai setelah header row 6 = index 5)
+      const dataStart=rows.findIndex((r,i)=>i>=5&&String(r[5]||'').trim()!==''&&String(r[9]||'').trim()!=='');
+      if(dataStart<0)throw new Error('Data tidak ditemukan — pastikan memilih file Rencana Kemenkeu yang benar');
+
+      function parseBulan(txt){
+        const t=String(txt||'').toUpperCase();
+        const NM=['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
+        const res=[];
+        if(t.includes('SEPANJANG TAHUN')||t.includes('PERBULAN')||t.includes('PER BULAN'))
+          return[1,2,3,4,5,6,7,8,9,10,11,12];
+        if(t.includes('PERTRIWULAN')||t.includes('TRIWULANAN'))return[1,4,7,10];
+        if(t.includes('TRIWULAN IV'))return[10,11,12];
+        if(t.includes('TRIWULAN III'))return[7,8,9];
+        if(t.includes('TRIWULAN II')&&!t.includes('III'))return[4,5,6];
+        if(t.includes('TRIWULAN I')&&!t.includes('II'))return[1,2,3];
+        NM.forEach((n,i)=>{if(t.includes(n))res.push(i+1);});
+        return res.length?[...new Set(res)].sort((a,b)=>a-b):[1];
+      }
+
+      const bidangMap={}, kegMap={};
+      for(let i=dataStart;i<rows.length;i++){
+        const r=rows[i];
+        const bidNm=String(r[5]||'').trim();
+        const kegNm=String(r[9]||'').trim();
+        if(!bidNm||!kegNm)continue;
+
+        // Daftarkan bidang
+        if(!bidangMap[bidNm])bidangMap[bidNm]='b_km_'+Object.keys(bidangMap).length;
+        const bId=bidangMap[bidNm];
+
+        // Kunci unik kegiatan = bidang + nmsoutput + nmskmpnen
+        const subKomp=String(r[13]||'').trim();
+        const kKey=bId+'||'+kegNm+(subKomp?'||'+subKomp:'');
+
+        if(!kegMap[kKey]){
+          // Cari jadwal dari kolom biaya per bulan
+          const jadwal=[];
+          BIAYA.forEach((ci,mi)=>{
+            const v=parseFloat(r[ci])||0;
+            if(v>0)jadwal.push({bulan:mi+1,minggu:[2],anggaran:v});
+          });
+          // Fallback: gunakan teks Rencana Pelaksanaan
+          if(!jadwal.length){
+            const rnc=String(r[31]||'').trim();
+            const pagu=parseFloat(r[29])||0;
+            const bln=parseBulan(rnc);
+            const perBln=bln.length>0?Math.round(pagu/bln.length):pagu;
+            bln.forEach(m=>jadwal.push({bulan:m,minggu:[2],anggaran:perBln}));
+          }
+          kegMap[kKey]={
+            id:'k_km_'+Date.now()+'_'+i,
+            bidangId:bId,
+            nama:kegNm+(subKomp&&subKomp!==kegNm?' — '+subKomp:''),
+            tempat:'',catatan:String(r[30]||'').trim(),
+            jadwal,rincian:[],dokumen:[],doneBulan:[]
+          };
+        }
+        // Tambah rincian
+        const uraian=String(r[22]||'').trim();
+        const mak=String(r[14]||'').trim();
+        const satuan=String(r[24]||'').trim();
+        const pagu=parseFloat(r[29])||0;
+        if(uraian||mak){
+          kegMap[kKey].rincian.push({
+            mak,uraian:uraian||String(r[13]||kegNm).trim(),
+            jumlah:1,hari:1,satuan,biayaSatuan:pagu
+          });
+        }
+      }
+      const newBidang=Object.entries(bidangMap).map(([nama,id])=>({id,nama}));
+      const newKeg=Object.values(kegMap);
+      if(!newKeg.length)throw new Error('Tidak ada kegiatan yang berhasil dibaca');
+      if(!confirm(`Import ${newKeg.length} kegiatan dari ${newBidang.length} bidang/program?\n\n⚠️ Data AMPERA saat ini akan DIGANTIKAN.\nLanjutkan?`))return;
+      data={tahunAnggaran:data.tahunAnggaran||2026,bidang:newBidang,kegiatan:newKeg};
+      saveLS();renderAll();
+      toast(`✅ Berhasil import ${newKeg.length} kegiatan dari ${newBidang.length} bidang`,'🏛️');
+      document.getElementById('exportModal').classList.remove('open');
+    }catch(err){
+      toast('Import gagal: '+err.message,'❌');
+      console.error('importFromKemenkeu error:',err);
+    }
+  };
+  reader.readAsBinaryString(file);
 }
 
 // ════════════════════════════════════
