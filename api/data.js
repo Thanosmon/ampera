@@ -40,33 +40,24 @@ export default async function handler(req, res) {
     const { payload, updated_by } = req.body;
     if (!payload) return res.status(400).json({ error: 'payload required' });
 
+    // Upsert: otomatis INSERT jika belum ada, UPDATE jika sudah ada
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${ROW_ID}`,
+      `${SUPABASE_URL}/rest/v1/${TABLE}`,
       {
-        method: 'PATCH',
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=minimal',
-        },
-        body: JSON.stringify({ payload, updated_by, updated_at: new Date().toISOString() }),
-      }
-    );
-
-    if (!response.ok) {
-      // Row belum ada → INSERT
-      const ins = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
         method: 'POST',
         headers: {
           apikey: SUPABASE_KEY,
           Authorization: `Bearer ${SUPABASE_KEY}`,
           'Content-Type': 'application/json',
-          Prefer: 'return=minimal',
+          'Prefer': 'resolution=merge-duplicates,return=minimal',
         },
         body: JSON.stringify({ id: ROW_ID, payload, updated_by, updated_at: new Date().toISOString() }),
-      });
-      if (!ins.ok) return res.status(500).json({ error: 'Insert failed' });
+      }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(500).json({ error: 'Upsert failed', detail: errText });
     }
 
     return res.status(200).json({ ok: true });
