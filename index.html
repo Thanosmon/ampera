@@ -1392,6 +1392,8 @@ function switchView(v,el){
   document.querySelectorAll('.sid-item,.mob-nav-item').forEach(i=>i.classList.remove('active'));
   document.querySelectorAll('[data-view="'+v+'"]').forEach(i=>i.classList.add('active'));
   if(window.innerWidth<=768)window.scrollTo({top:0,behavior:'smooth'});
+  // Pull dari server saat pindah halaman (silent — tanpa toast)
+  pullFromServer(true);
   renderAll();
 }
 function toggleMobMore(){
@@ -2522,16 +2524,17 @@ function setSyncSt(cls,lbl){
   }
 }
 
-// Simpan lokal + jadwalkan push ke server
+// Simpan lokal + jadwalkan push ke server (selalu silent — tanpa toast)
 function saveLS(){
   if(!currentUser)return;
   try{localStorage.setItem('ampera_2026',JSON.stringify(data));}catch(e){}
   setSyncSt('synced','Tersimpan');
   clearTimeout(syncTimer);
-  syncTimer=setTimeout(()=>pushToServer(),2000);
+  syncTimer=setTimeout(()=>pushToServer(true),2000);
 }
 
-async function pushToServer(){
+// silent=true → hanya update indikator topbar, tanpa toast
+async function pushToServer(silent=false){
   if(!currentUser||isSyncing)return;
   isSyncing=true;setSyncSt('syncing','Menyimpan...');
   try{
@@ -2542,15 +2545,16 @@ async function pushToServer(){
     });
     if(!r.ok)throw new Error('HTTP '+r.status);
     setSyncSt('synced','✓ Tersinkron');
-    toast('Data berhasil disimpan ke server','✅');
+    if(!silent)toast('Data berhasil disimpan ke server','✅');
   }catch(e){
     setSyncSt('synced','Tersimpan lokal');
-    toast('Gagal kirim ke server: '+e.message,'⚠️');
+    if(!silent)toast('Gagal kirim ke server: '+e.message,'⚠️');
     console.warn('Push error:',e.message);
   }finally{isSyncing=false;}
 }
 
-async function pullFromServer(){
+// silent=true → hanya update indikator topbar, tanpa toast
+async function pullFromServer(silent=false){
   if(!currentUser)return false;
   setSyncSt('syncing','Memuat...');
   try{
@@ -2564,26 +2568,22 @@ async function pullFromServer(){
       data=migrateData(remoteData);
       try{localStorage.setItem('ampera_2026',JSON.stringify(data));}catch(e){}
       renderAll();setSyncSt('synced','✓ Tersinkron');
-      toast('Data berhasil dimuat dari server','✅');
+      if(!silent)toast('Data berhasil dimuat dari server','✅');
       return true;
     }
     setSyncSt('synced','Tersimpan lokal');
-    toast('Data server kosong atau tidak valid','⚠️');
+    if(!silent)toast('Data server kosong atau tidak valid','⚠️');
     return false;
   }catch(e){
     setSyncSt('synced','Tersimpan lokal');
-    toast('Gagal muat dari server: '+e.message,'⚠️');
+    if(!silent)toast('Gagal muat dari server: '+e.message,'⚠️');
     console.warn('Pull error:',e.message);return false;
   }
 }
 
+// Auto-refresh 30 detik dihapus — pull hanya saat pindah halaman atau refresh manual
 function startAutoRefresh(){
-  setInterval(async()=>{
-    if(!currentUser||isSyncing)return;
-    const snap=JSON.stringify(data);
-    const pulled=await pullFromServer();
-    if(pulled&&JSON.stringify(data)!==snap)toast('Data diperbarui dari server','🔄');
-  },30000);
+  // (tidak ada interval — pull dilakukan di switchView)
 }
 
 function openSyncModal(){
