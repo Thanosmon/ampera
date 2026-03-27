@@ -2168,7 +2168,7 @@ function renderDashboard(){
                   const x2=cx+r*Math.cos(endA),   y2=cy+r*Math.sin(endA);
                   const lg=pctBln===100?'gaugeFillG':'gaugeFill';
                   const fillArc = pctBln===0 ? '' :
-                    `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${pctBln>50?1:0},1 ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="url(#${lg})" stroke-width="${SW}" stroke-linecap="round"/>`;
+                    `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 0,1 ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="url(#${lg})" stroke-width="${SW}" stroke-linecap="round"/>`;
                   const dot = pctBln>0 && pctBln<100 ?
                     `<circle cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="5" fill="${lg==='gaugeFillG'?'#00b87a':'#00c4e0'}" stroke="#fff" stroke-width="2"/>` : '';
                   return `
