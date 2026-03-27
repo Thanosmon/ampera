@@ -114,19 +114,19 @@ select:focus{border-color:var(--teal2);}
 .tbl-wrap{background:var(--card);border-radius:0 0 10px 10px;border:1.5px solid var(--bdr);border-top:none;overflow:hidden;}
 table{width:100%;border-collapse:collapse;}
 /* Tabel per-bulan: kolom tetap agar setiap bulan rata */
-table.bln-tbl{table-layout:fixed;}
+table.bln-tbl{table-layout:fixed;width:100%;min-width:760px;}
 table.bln-tbl col.col-keg{width:auto;}
 table.bln-tbl col.col-bid{width:140px;}
-table.bln-tbl col.col-tmp{width:120px;}
-table.bln-tbl col.col-mgg{width:110px;}
+table.bln-tbl col.col-tmp{width:118px;}
+table.bln-tbl col.col-mgg{width:108px;}
 table.bln-tbl col.col-ang{width:148px;}
-table.bln-tbl col.col-sts{width:118px;}
-table.bln-tbl col.col-tnd{width:64px;}
+table.bln-tbl col.col-sts{width:130px;}
+table.bln-tbl col.col-tnd{width:60px;}
 table.bln-tbl td, table.bln-tbl th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 table.bln-tbl td.keg-td{white-space:normal;word-break:break-word;}
-table.bln-tbl td.c{overflow:visible;text-overflow:clip;}
+table.bln-tbl td.c{overflow:visible!important;text-overflow:clip!important;white-space:nowrap;}
 /* Tabel per-kegiatan: kolom tetap agar antar bidang rata */
-table.keg-tbl{table-layout:fixed;}
+table.keg-tbl{table-layout:fixed;width:100%;min-width:760px;}
 table.keg-tbl col.col-exp{width:28px;}
 table.keg-tbl col.col-nm{width:auto;}
 table.keg-tbl col.col-tmp{width:110px;}
@@ -137,7 +137,7 @@ table.keg-tbl col.col-aks{width:72px;}
 table.keg-tbl td,table.keg-tbl th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 table.keg-tbl td.nm-td{white-space:normal;word-break:break-word;}
 table.keg-tbl td.jad-td{white-space:normal;}
-table.keg-tbl td.c{overflow:visible;text-overflow:clip;}
+table.keg-tbl td.c{overflow:visible!important;text-overflow:clip!important;}
 thead th{background:#f6fafb;padding:8px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--txt3);text-align:left;border-bottom:1.5px solid var(--bdr);white-space:nowrap;}
 thead th.r{text-align:right;} thead th.c{text-align:center;}
 tbody tr{border-bottom:1px solid #edf3f7;transition:background 0.12s;}
@@ -1423,7 +1423,7 @@ function popFB(){
   sel.value=cur;
 }
 function renderAll(){
-  updSum();popFB();saveLS();
+  updSum();popFB();
   document.getElementById('pageTitle').textContent=PAGE_TITLES[cv]||'';
   // Hide normal page-header filters on dashboard (dashboard has its own header)
   const ph=document.querySelector('.page-header');
@@ -2380,7 +2380,7 @@ function renderDashboard(){
         data:bidData.map(b=>b.angg),
         backgroundColor:COLORS_BID.slice(0,bidData.length),
         borderColor:'#ffffff',
-        borderWidth:4,borderAlign:'inner',hoverOffset:8
+        borderWidth:3,hoverOffset:8
       }]
     },
     options:{
@@ -2860,80 +2860,85 @@ function exportPDF(mode){
   function addTimeline(){
     let y=header('Timeline Pelaksanaan');
     const BN_PENDEK=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
-    const head=[['No','Kegiatan','Bidang',...BN_PENDEK,'Total']];
     const validBid=new Set(data.bidang.map(b=>b.id));
     const aktif=data.kegiatan.filter(k=>validBid.has(k.bidangId)&&k.jadwal&&k.jadwal.length>0);
+    // blockMap: key="${rowIdx}_${colIdx}" → 'DONE'|'PLAN'
+    const blockMap=new Map();
     const body=aktif.map((k,i)=>{
       const ta=k.jadwal.reduce((a,j)=>a+j.anggaran,0);
       const bulan_ada=new Set(k.jadwal.map(j=>j.bulan));
-      const cells=[i+1,k.nama,getBidangNama(k.bidangId)];
+      const cells=[i+1, k.nama, getBidangNama(k.bidangId)];
       for(let m=1;m<=12;m++){
-        if(!bulan_ada.has(m))cells.push('');
-        else if(k.doneBulan.includes(m))cells.push('DONE');
-        else cells.push('PLAN');
+        const ci=m+2; // kolom index 3–14
+        if(bulan_ada.has(m)){
+          blockMap.set(i+'_'+ci, k.doneBulan.includes(m)?'DONE':'PLAN');
+        }
+        cells.push(''); // selalu kosong — blok digambar manual di didDrawCell
       }
       cells.push(fmt(ta));
       return cells;
     });
-    const CLR_DONE=[0,184,122],CLR_PLAN=[0,124,145],CLR_DONE_BG=[230,251,242],CLR_PLAN_BG=[224,243,246];
-    const CLR_BORDER=[205,220,228],CLR_ALT=[245,249,251],CLR_HEAD=[13,31,45];
-    // Landscape: W=297, TW=269 → kolom bulan lebih lebar
-    // No=8, Kegiatan=65, Bidang=38, 12×bulan=11.5ea=138, Total=28 → 277 (fit dalam TW=269)
-    const cWBln=Math.floor((TW-8-65-38-28)/12); // ~11mm per bulan
+    const CLR_DONE=[0,184,122],CLR_PLAN=[0,124,145];
+    const CLR_DONE_BG=[230,251,242],CLR_PLAN_BG=[224,243,246];
+    const CLR_BORDER=[200,215,225],CLR_ALT=[246,249,252],CLR_HEAD=[13,31,45];
+    // Kurangi kolom tetap agar bulan lebih lebar
+    // No=7, Keg=55, Bid=32, Tot=24 → 118; available=TW-118; per bulan=(TW-118)/12
+    const cWBln=Math.floor((TW-7-55-32-24)/12);
     doc.autoTable({
       startY:y,margin:{left:M,right:M},
-      head:head,body:body,
+      head:[['No','Kegiatan','Bidang',...BN_PENDEK,'Total']],
+      body:body,
       styles:{
-        fontSize:7,cellPadding:{top:2.5,bottom:2.5,left:2,right:2},
+        fontSize:7,cellPadding:{top:3,bottom:3,left:1.5,right:1.5},
         halign:'center',valign:'middle',
-        lineColor:CLR_BORDER,lineWidth:0.25
+        lineColor:CLR_BORDER,lineWidth:0.3
       },
       headStyles:{
         fillColor:CLR_HEAD,textColor:[255,255,255],fontStyle:'bold',
-        fontSize:7,cellPadding:{top:3,bottom:3,left:2,right:2},
-        lineColor:[255,255,255],lineWidth:0.4
+        fontSize:7,cellPadding:{top:3.5,bottom:3.5,left:1.5,right:1.5},
+        lineColor:[60,80,100],lineWidth:0.4
       },
       alternateRowStyles:{fillColor:CLR_ALT},
       columnStyles:{
-        0:{cellWidth:8,halign:'center'},
-        1:{cellWidth:65,halign:'left'},
-        2:{cellWidth:38,halign:'left'},
+        0:{cellWidth:7,halign:'center'},
+        1:{cellWidth:55,halign:'left'},
+        2:{cellWidth:32,halign:'left'},
         3:{cellWidth:cWBln},4:{cellWidth:cWBln},5:{cellWidth:cWBln},
         6:{cellWidth:cWBln},7:{cellWidth:cWBln},8:{cellWidth:cWBln},
         9:{cellWidth:cWBln},10:{cellWidth:cWBln},11:{cellWidth:cWBln},
         12:{cellWidth:cWBln},13:{cellWidth:cWBln},14:{cellWidth:cWBln},
-        15:{halign:'right',cellWidth:28}
+        15:{halign:'right',cellWidth:24}
       },
       didParseCell:function(d){
         if(d.section!=='body')return;
         const ci=d.column.index;
-        if(ci>=3&&ci<=14){
-          d.cell.text=[''];
-          if(d.cell.raw==='DONE')d.cell.styles.fillColor=CLR_DONE_BG;
-          else if(d.cell.raw==='PLAN')d.cell.styles.fillColor=CLR_PLAN_BG;
-        }
+        if(ci<3||ci>14)return;
+        const key=d.row.index+'_'+ci;
+        const typ=blockMap.get(key);
+        if(typ==='DONE')d.cell.styles.fillColor=CLR_DONE_BG;
+        else if(typ==='PLAN')d.cell.styles.fillColor=CLR_PLAN_BG;
       },
       didDrawCell:function(d){
         if(d.section!=='body')return;
         const ci=d.column.index;
         if(ci<3||ci>14)return;
-        const raw=d.cell.raw;
-        if(raw!=='DONE'&&raw!=='PLAN')return;
-        const mg=1.2,rx=1;
+        const key=d.row.index+'_'+ci;
+        const typ=blockMap.get(key);
+        if(!typ)return;
+        const mg=1.0,rx=1.2;
         const bx=d.cell.x+mg,by=d.cell.y+mg;
         const bw=d.cell.width-mg*2,bh=d.cell.height-mg*2;
-        // Shadow tipis
-        doc.setFillColor(0,0,0);
-        if(doc.setGState)doc.setGState(new doc.GState({opacity:0.06}));
-        doc.roundedRect(bx+0.3,by+0.3,bw,bh,rx,rx,'F');
-        if(doc.setGState)doc.setGState(new doc.GState({opacity:1}));
         // Blok utama
-        doc.setFillColor(...(raw==='DONE'?CLR_DONE:CLR_PLAN));
+        doc.setFillColor(...(typ==='DONE'?CLR_DONE:CLR_PLAN));
         doc.roundedRect(bx,by,bw,bh,rx,rx,'F');
+        // Border tipis agar blok terpisah antar baris
+        doc.setDrawColor(...(typ==='DONE'?[0,150,98]:[0,100,120]));
+        doc.setLineWidth(0.25);
+        doc.roundedRect(bx,by,bw,bh,rx,rx,'S');
         // Glossy strip atas
         doc.setFillColor(255,255,255);
-        if(doc.setGState)doc.setGState(new doc.GState({opacity:0.15}));
-        doc.roundedRect(bx,by,bw,bh/2,rx,rx,'F');
+        if(doc.setGState)doc.setGState(new doc.GState({opacity:0.18}));
+        doc.roundedRect(bx,by,bw,bh*0.45,rx,0,'F');
         if(doc.setGState)doc.setGState(new doc.GState({opacity:1}));
       }
     });
@@ -2942,8 +2947,8 @@ function exportPDF(mode){
     doc.setFontSize(7.5);doc.setTextColor(80,100,115);
     doc.setFillColor(...CLR_DONE);doc.roundedRect(lx,ly,5,3.5,0.8,0.8,'F');
     doc.text('Terlaksana',lx+7,ly+2.8);
-    doc.setFillColor(...CLR_PLAN);doc.roundedRect(lx+35,ly,5,3.5,0.8,0.8,'F');
-    doc.text('Direncanakan',lx+42,ly+2.8);
+    doc.setFillColor(...CLR_PLAN);doc.roundedRect(lx+38,ly,5,3.5,0.8,0.8,'F');
+    doc.text('Direncanakan',lx+45,ly+2.8);
   }
 
   if(mode==='dashboard'){addDashboard();}
