@@ -324,14 +324,15 @@ td.muted{color:var(--txt3);font-size:12px;}
 
 /* Rincian editor */
 .re-wrap{border:1.5px solid var(--bdr);border-radius:8px;overflow:hidden;}
-.re-head{display:grid;grid-template-columns:2.2fr 65px 65px 85px 105px 32px;background:#f0f7fa;border-bottom:1px solid var(--bdr);}
+.re-head{display:grid;grid-template-columns:100px 2.2fr 65px 65px 85px 105px 32px;background:#f0f7fa;border-bottom:1px solid var(--bdr);}
 .re-head span{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--txt3);padding:7px 9px;}
-.re-row{display:grid;grid-template-columns:2.2fr 65px 65px 85px 105px 32px;border-top:1px solid #edf3f7;align-items:stretch;}
+.re-row{display:grid;grid-template-columns:100px 2.2fr 65px 65px 85px 105px 32px;border-top:1px solid #edf3f7;align-items:stretch;}
 .re-row:hover{background:#f8fcfd;}
 .re-row input{border:none;background:transparent;font-family:'Figtree',sans-serif;font-size:12px;color:var(--txt);padding:8px 9px;outline:none;width:100%;border-right:1px solid #edf3f7;}
 .re-row input:focus{background:#f0f9fc;}
+.re-row input.re-mak{font-family:'Fira Code',monospace;font-size:11px;color:var(--teal);background:rgba(0,124,145,0.04);}
 .re-del{display:flex;align-items:center;justify-content:center;padding:3px;}
-.re-foot{display:grid;grid-template-columns:2.2fr 65px 65px 85px 105px 32px;border-top:2px solid var(--teal2);background:rgba(0,164,189,0.06);}
+.re-foot{display:grid;grid-template-columns:100px 2.2fr 65px 65px 85px 105px 32px;border-top:2px solid var(--teal2);background:rgba(0,164,189,0.06);}
 .re-foot span{padding:9px 9px;font-size:12px;font-weight:700;font-family:'Fira Code',monospace;color:var(--teal);}
 .re-foot .lbl{font-family:'Figtree',sans-serif;font-size:11px;color:var(--txt3);font-weight:600;}
 .re-foot .tot{text-align:right;font-size:13px;}
@@ -410,7 +411,7 @@ td.muted{color:var(--txt3);font-size:12px;}
   table{min-width:560px;}
   .tl-ov{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .jad-disp-head,.jad-disp-row{grid-template-columns:80px auto 1fr 110px 80px;font-size:11px;}
-  .re-head,.re-row,.re-foot{grid-template-columns:2fr 55px 55px 75px 95px 30px;}
+  .re-head,.re-row,.re-foot{grid-template-columns:80px 2fr 50px 50px 70px 85px 28px;}
 
   /* ── Font lebih besar & readable ── */
   body{font-size:14px;}
@@ -1100,12 +1101,12 @@ body.logged-in [data-admin].show-admin{display:flex;}
         <label class="flbl2">Rincian Biaya <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--txt3)">(referensi perhitungan)</span></label>
         <div class="re-wrap">
           <div class="re-head">
-            <span>Uraian Biaya</span><span>Jml</span><span>Hr/Frek</span>
+            <span>MAK</span><span>Uraian Biaya</span><span>Jml</span><span>Hr/Frek</span>
             <span>Satuan</span><span style="text-align:right;padding-right:10px">Biaya/Sat</span><span></span>
           </div>
           <div id="reRows"></div>
           <div class="re-foot">
-            <span class="lbl" style="grid-column:1/5">TOTAL RINCIAN (referensi)</span>
+            <span class="lbl" style="grid-column:1/6">TOTAL RINCIAN (referensi)</span>
             <span class="tot" id="modalTotal">Rp 0</span><span></span>
           </div>
           <button class="re-add" onclick="addRincianRow()">＋ Tambah Item Rincian</button>
@@ -1533,9 +1534,9 @@ function renderKeg(){
               <div style="margin-top:14px">
                 <div class="ri-lbl">Rincian Biaya (Referensi) — ${escH(k.nama)}</div>
                 <table class="ri-tbl">
-                  <thead><tr><th>Uraian</th><th>Jml</th><th>Hr/Frek</th><th>Satuan</th><th class="r">Biaya/Sat</th><th class="r">Subtotal</th></tr></thead>
-                  <tbody>${k.rincian.map(r=>`<tr><td>${escH(r.uraian)}</td><td>${r.jumlah}</td><td>${r.hari}</td><td>${escH(r.satuan)}</td><td class="r">${fmt(r.biayaSatuan)}</td><td class="r">${fmt(rT(r))}</td></tr>`).join('')}</tbody>
-                  <tfoot><tr><td colspan="5" style="font-size:11px;color:var(--txt3)">Total Rincian (referensi)</td><td class="r">${fmt(k.rincian.reduce((s,r)=>s+rT(r),0))}</td></tr></tfoot>
+                  <thead><tr><th>MAK</th><th>Uraian</th><th>Jml</th><th>Hr/Frek</th><th>Satuan</th><th class="r">Biaya/Sat</th><th class="r">Subtotal</th></tr></thead>
+                  <tbody>${k.rincian.map(r=>`<tr><td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--teal)">${escH(r.mak||'')}</td><td>${escH(r.uraian)}</td><td>${r.jumlah}</td><td>${r.hari}</td><td>${escH(r.satuan)}</td><td class="r">${fmt(r.biayaSatuan)}</td><td class="r">${fmt(rT(r))}</td></tr>`).join('')}</tbody>
+                  <tfoot><tr><td colspan="6" style="font-size:11px;color:var(--txt3)">Total Rincian (referensi)</td><td class="r">${fmt(k.rincian.reduce((s,r)=>s+rT(r),0))}</td></tr></tfoot>
                 </table>
               </div>
               <div style="margin-top:14px">
@@ -1775,13 +1776,14 @@ function delKeg(id){
 }
 
 // ── RINCIAN EDITOR ──
-function addRincianRow(r={}){mr.push({uraian:r.uraian||'',jumlah:r.jumlah||0,hari:r.hari||0,satuan:r.satuan||'',biayaSatuan:r.biayaSatuan||0});renderRe();}
+function addRincianRow(r={}){mr.push({mak:r.mak||'',uraian:r.uraian||'',jumlah:r.jumlah||0,hari:r.hari||0,satuan:r.satuan||'',biayaSatuan:r.biayaSatuan||0});renderRe();}
 function remRe(i){mr.splice(i,1);renderRe();}
-function syncRe(i,f,v){mr[i][f]=(f==='uraian'||f==='satuan')?v:(parseFloat(v)||0);updReFoot();}
+function syncRe(i,f,v){mr[i][f]=(f==='uraian'||f==='satuan'||f==='mak')?v:(parseFloat(v)||0);updReFoot();}
 function updReFoot(){document.getElementById('modalTotal').textContent=fmt(mr.reduce((s,r)=>s+rT(r),0));}
 function renderRe(){
   document.getElementById('reRows').innerHTML=mr.map((r,i)=>`
     <div class="re-row">
+      <input class="re-mak" value="${escH(r.mak||'')}" placeholder="mis. 521211" oninput="syncRe(${i},'mak',this.value)" title="Mata Anggaran Keluaran">
       <input value="${escH(r.uraian)}" placeholder="Nama biaya" oninput="syncRe(${i},'uraian',this.value)">
       <input type="number" value="${r.jumlah||''}" placeholder="0" min="0" oninput="syncRe(${i},'jumlah',this.value)">
       <input type="number" value="${r.hari||''}" placeholder="0" min="0" oninput="syncRe(${i},'hari',this.value)">
@@ -2908,15 +2910,15 @@ function exportExcel(mode){
   }
 
   if(mode==='semua'||mode==='rincian'){
-    const rows=[['Nama Kegiatan','Bidang','Uraian Biaya','Jumlah','Hari/Frekuensi','Satuan','Biaya/Satuan','Subtotal']];
+    const rows=[['Nama Kegiatan','Bidang','MAK','Uraian Biaya','Jumlah','Hari/Frekuensi','Satuan','Biaya/Satuan','Subtotal']];
     data.kegiatan.forEach(k=>{
       k.rincian.forEach(r=>{
         const sub=r.jumlah*r.hari*r.biayaSatuan;
-        rows.push([k.nama,getBidangNama(k.bidangId),r.uraian,r.jumlah,r.hari,r.satuan,r.biayaSatuan,sub]);
+        rows.push([k.nama,getBidangNama(k.bidangId),r.mak||'',r.uraian,r.jumlah,r.hari,r.satuan,r.biayaSatuan,sub]);
       });
     });
     const ws=XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols']=[{wch:30},{wch:18},{wch:24},{wch:8},{wch:12},{wch:10},{wch:14},{wch:14}];
+    ws['!cols']=[{wch:30},{wch:18},{wch:14},{wch:24},{wch:8},{wch:12},{wch:10},{wch:14},{wch:14}];
     XLSX.utils.book_append_sheet(wb,ws,'Rincian Biaya');
   }
 
