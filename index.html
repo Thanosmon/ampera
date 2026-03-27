@@ -1796,7 +1796,7 @@ function updReFoot(){document.getElementById('modalTotal').textContent=fmt(mr.re
 function renderRe(){
   document.getElementById('reRows').innerHTML=mr.map((r,i)=>`
     <div class="re-row">
-      <input class="re-mak" value="${escH(r.mak||'')}" placeholder="mis. 521211" oninput="syncRe(${i},'mak',this.value)" title="Mata Anggaran Keluaran">
+      <input class="re-mak" value="${escH(r.mak||'')}" placeholder="mis. 6212.FAH.002.100.B.524111" oninput="syncRe(${i},'mak',this.value)" title="Mata Anggaran Keluaran">
       <input value="${escH(r.uraian)}" placeholder="Nama biaya" oninput="syncRe(${i},'uraian',this.value)">
       <input type="number" value="${r.jumlah||''}" placeholder="0" min="0" oninput="syncRe(${i},'jumlah',this.value)">
       <input type="number" value="${r.hari||''}" placeholder="0" min="0" oninput="syncRe(${i},'hari',this.value)">
