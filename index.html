@@ -125,6 +125,19 @@ table.bln-tbl col.col-tnd{width:64px;}
 table.bln-tbl td, table.bln-tbl th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 table.bln-tbl td.keg-td{white-space:normal;word-break:break-word;}
 table.bln-tbl td.c{overflow:visible;text-overflow:clip;}
+/* Tabel per-kegiatan: kolom tetap agar antar bidang rata */
+table.keg-tbl{table-layout:fixed;}
+table.keg-tbl col.col-exp{width:28px;}
+table.keg-tbl col.col-nm{width:auto;}
+table.keg-tbl col.col-tmp{width:110px;}
+table.keg-tbl col.col-jad{width:260px;}
+table.keg-tbl col.col-tot{width:140px;}
+table.keg-tbl col.col-dn{width:130px;}
+table.keg-tbl col.col-aks{width:72px;}
+table.keg-tbl td,table.keg-tbl th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+table.keg-tbl td.nm-td{white-space:normal;word-break:break-word;}
+table.keg-tbl td.jad-td{white-space:normal;}
+table.keg-tbl td.c{overflow:visible;text-overflow:clip;}
 thead th{background:#f6fafb;padding:8px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--txt3);text-align:left;border-bottom:1.5px solid var(--bdr);white-space:nowrap;}
 thead th.r{text-align:right;} thead th.c{text-align:center;}
 tbody tr{border-bottom:1px solid #edf3f7;transition:background 0.12s;}
@@ -1528,23 +1541,25 @@ function renderKeg(){
     if(!ks.length){
       html+=`<div class="kosong">Belum ada kegiatan.<br><button class="btn btn-o" style="margin-top:10px" onclick="openAddKegiatan('${b.id}')">+ Tambah Kegiatan</button></div>`;
     }else{
-      html+=`<table><thead><tr>
-        <th style="width:20px"></th><th>Nama Kegiatan</th><th>Tempat</th>
-        <th>Jadwal per Bulan (klik untuk tandai terlaksana)</th>
-        <th class="r">Total Anggaran</th><th class="r">Terlaksana</th><th class="c">Aksi</th>
-      </tr></thead><tbody>`;
+      html+=`<table class="keg-tbl">
+        <colgroup><col class="col-exp"><col class="col-nm"><col class="col-tmp"><col class="col-jad"><col class="col-tot"><col class="col-dn"><col class="col-aks"></colgroup>
+        <thead><tr>
+          <th></th><th>Nama Kegiatan</th><th>Tempat</th>
+          <th>Jadwal per Bulan (klik untuk tandai terlaksana)</th>
+          <th class="r">Total Anggaran</th><th class="r">Terlaksana</th><th class="c">Aksi</th>
+        </tr></thead><tbody>`;
       ks.forEach(k=>{
         const tot=kT(k),done=kTDone(k),isAll=allDone(k);
         const dokCnt=k.dokumen&&k.dokumen.length?`<span class="dok-cnt">📎 ${k.dokumen.length}</span>`:'';
         html+=`<tr class="${isAll?'done-row':''}">
           <td class="c" style="padding:0 4px"><span class="exp-ico" id="ei-${k.id}" onclick="togExp('${k.id}')">▶</span></td>
-          <td>
+          <td class="nm-td">
             <div class="keg-name" onclick="togExp('${k.id}')">${escH(k.nama)}${dokCnt}</div>
             ${k.catatan?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${escH(k.catatan)}</div>`:''}
             <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan terlaksana</div>
           </td>
           <td class="muted">${escH(k.tempat)}</td>
-          <td><div style="display:flex;flex-wrap:wrap;gap:2px">${jadwalChipsHTML(k)}</div></td>
+          <td class="jad-td"><div style="display:flex;flex-wrap:wrap;gap:2px">${jadwalChipsHTML(k)}</div></td>
           <td class="r mono">${fmt(tot)}</td>
           <td class="r mono" style="color:var(--green)">${fmt(done)}</td>
           <td class="c"><div class="aksi">
