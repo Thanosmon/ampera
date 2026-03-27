@@ -2325,9 +2325,9 @@ function renderDashboard(){
       labels:bidData.map(b=>b.nama),
       datasets:[{
         data:bidData.map(b=>b.angg),
-        backgroundColor:COLORS_BID.slice(0,bidData.length).map(c=>c+'cc'),
-        borderColor:COLORS_BID.slice(0,bidData.length),
-        borderWidth:2,hoverOffset:8
+        backgroundColor:COLORS_BID.slice(0,bidData.length),
+        borderColor:'#ffffff',
+        borderWidth:3,hoverOffset:8
       }]
     },
     options:{
