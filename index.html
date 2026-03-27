@@ -113,6 +113,17 @@ select:focus{border-color:var(--teal2);}
 /* TABLE */
 .tbl-wrap{background:var(--card);border-radius:0 0 10px 10px;border:1.5px solid var(--bdr);border-top:none;overflow:hidden;}
 table{width:100%;border-collapse:collapse;}
+/* Tabel per-bulan: kolom tetap agar setiap bulan rata */
+table.bln-tbl{table-layout:fixed;}
+table.bln-tbl col.col-keg{width:auto;}
+table.bln-tbl col.col-bid{width:140px;}
+table.bln-tbl col.col-tmp{width:120px;}
+table.bln-tbl col.col-mgg{width:110px;}
+table.bln-tbl col.col-ang{width:148px;}
+table.bln-tbl col.col-sts{width:108px;}
+table.bln-tbl col.col-tnd{width:64px;}
+table.bln-tbl td, table.bln-tbl th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+table.bln-tbl td.keg-td{white-space:normal;word-break:break-word;}
 thead th{background:#f6fafb;padding:8px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--txt3);text-align:left;border-bottom:1.5px solid var(--bdr);white-space:nowrap;}
 thead th.r{text-align:right;} thead th.c{text-align:center;}
 tbody tr{border-bottom:1px solid #edf3f7;transition:background 0.12s;}
@@ -1604,16 +1615,18 @@ function renderBulan(){
           <div class="bid-meta"><div class="bid-meta-lbl">Terlaksana</div><div class="bid-meta-val">${fmt(dn)}</div></div>
         </div>
       </div>
-      <div class="tbl-wrap"><table><thead><tr>
-        <th>Kegiatan</th><th>Bidang</th><th>Tempat</th><th>Minggu</th>
-        <th class="r">Anggaran ${m}</th><th class="c">Status</th><th class="c">Tandai</th>
-      </tr></thead><tbody>`;
+      <div class="tbl-wrap"><table class="bln-tbl">
+        <colgroup><col class="col-keg"><col class="col-bid"><col class="col-tmp"><col class="col-mgg"><col class="col-ang"><col class="col-sts"><col class="col-tnd"></colgroup>
+        <thead><tr>
+          <th>Kegiatan</th><th>Bidang</th><th>Tempat</th><th>Minggu</th>
+          <th class="r">Anggaran ${m}</th><th class="c">Status</th><th class="c">Tandai</th>
+        </tr></thead><tbody>`;
     ks.forEach(k=>{
       const pb=kTPB(k,idx),sd=isDB(k,idx);
       const mk=kMinggu(k,idx);
       const mkLabel=mk.length?mk.map(w=>`<span class="jd-wbadge">Minggu ${w}</span>`).join(' '):`<span style="color:var(--txt3)">—</span>`;
       html+=`<tr class="${sd?'done-row':''}">
-        <td><strong>${escH(k.nama)}</strong>${k.dokumen&&k.dokumen.length?`<span class="dok-cnt" style="margin-left:6px">📎 ${k.dokumen.length}</span>`:''}</td>
+        <td class="keg-td"><strong>${escH(k.nama)}</strong>${k.dokumen&&k.dokumen.length?`<span class="dok-cnt" style="margin-left:6px">📎 ${k.dokumen.length}</span>`:''}</td>
         <td class="muted">${escH(bNm(k.bidangId))}</td>
         <td class="muted">${escH(k.tempat)}</td>
         <td>${mkLabel}</td>
