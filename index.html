@@ -2526,7 +2526,8 @@ async function doLogin(){
   setTimeout(()=>{
     ls.classList.add('hidden');ls.style.opacity='';ls.style.transition='';
     document.body.classList.add('logged-in');
-    updateUserUI();loadData();renderAll();
+    updateUserUI();loadData();applyTAYear();renderAll();
+    pullFromServer(true).then(()=>renderAll());
   },300);
 }
 
@@ -4030,11 +4031,12 @@ if(checkAutoLogin()){
   document.getElementById('loginScreen').classList.add('hidden');
   document.body.classList.add('logged-in');
   updateUserUI();
-  // Coba pull dari server, fallback ke lokal
+  // Load lokal dulu (langsung tampil), lalu sync ke server dengan timestamp check
+  loadData();
+  applyTAYear();
+  renderAll();
   (async()=>{
-    const pulled=await pullFromServer();
-    if(!pulled)loadData();
-    applyTAYear();
+    await pullFromServer(true); // timestamp check: server hanya menang jika lebih baru
     renderAll();
     startAutoRefresh();
   })();
