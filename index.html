@@ -951,6 +951,18 @@ body.logged-in [data-admin].show-admin{display:flex;}
     </div>
     <div class="modal-body">
       <div class="exp-section">
+        <div class="exp-section-lbl">🏆 Laporan Kinerja untuk Pimpinan</div>
+        <div style="background:linear-gradient(135deg,#1e3a5f,#2d5a8e);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+          <div style="font-size:12px;color:rgba(255,255,255,.85);line-height:1.6;margin-bottom:10px;">
+            Generate otomatis <strong style="color:#EEB860;">Laporan Kinerja Keuangan</strong> dalam format PDF siap cetak — berisi monitoring penyerapan anggaran, rencana vs realisasi per bulan, rencana kegiatan bulan ini, dan evaluasi IKPA.
+          </div>
+          <button class="btn btn-p" onclick="generateLaporanKinerja()" style="width:100%;justify-content:center;gap:8px;font-size:13px;padding:10px;">
+            📊 Buat Laporan Kinerja Keuangan
+          </button>
+        </div>
+      </div>
+      <div style="height:1px;background:var(--bdr);margin:4px 0 16px"></div>
+      <div class="exp-section">
         <div class="exp-section-lbl">📄 Laporan PDF</div>
         <div class="export-bar">
           <button class="btn-exp pdf" onclick="exportPDF('dashboard')">📊 Dashboard &amp; Ringkasan</button>
@@ -2935,6 +2947,273 @@ function openExportModal(){
   document.getElementById('exportModal').classList.add('open');
 }
 
+// ════════════════════════════════════════════
+// LAPORAN KINERJA KEUANGAN — PDF Otomatis
+// ════════════════════════════════════════════
+function generateLaporanKinerja(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const W=297,H=210;
+  const C={
+    navy:'#203864',navyL:'#416EA0',blue:'#005696',
+    gold:'#EEB860',white:'#FFFFFF',surf:'#F0F4F8',
+    green:'#00B87A',red:'#E05555',teal:'#007C91',gold2:'#E8A020'
+  };
+
+  // ─── helpers ───────────────────────────────
+  function setFill(hex){doc.setFillColor(hex);}
+  function setDraw(hex){doc.setDrawColor(hex);}
+  function rect(x,y,w,h,style='F'){doc.rect(x,y,w,h,style);}
+  function rrect(x,y,w,h,style='F'){doc.roundedRect(x,y,w,h,2,2,style);}
+  function txt(s,x,y,sz,style,color,align='left'){
+    doc.setFontSize(sz);doc.setFont('helvetica',style||'normal');
+    doc.setTextColor(color||'#222222');doc.text(s,x,y,{align});
+  }
+  function pageHeader(title,sub=''){
+    setFill(C.navy);rect(0,0,W,16);
+    setFill(C.gold);rect(0,16,W,1.5);
+    txt(title,10,11,13,'bold',C.white);
+    if(sub)txt(sub,W-10,11,9,'normal',C.gold,'right');
+  }
+  function pageFooter(n,total){
+    setFill(C.navy);rect(0,H-7,W,7);
+    txt('Kanwil DJPb Provinsi Sumatera Selatan',10,H-2.5,7,'normal','rgba(255,255,255,0.6)');
+    txt(`Halaman ${n}/${total}`,W-10,H-2.5,7,'normal','rgba(255,255,255,0.6)','right');
+    txt(`Dicetak: ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}`,W/2,H-2.5,7,'normal','rgba(255,255,255,0.45)','center');
+  }
+  function kpiCard(x,y,w,h,label,val,color){
+    setFill(color+'18');setDraw(color);rrect(x,y,w,h,'FD');
+    txt(label,x+w/2,y+6,7,'normal','#555555','center');
+    txt(val,x+w/2,y+h-4,10,'bold',color,'center');
+  }
+
+  const ikpa=getIKPAData();
+  const tw=getCurrentTW(),twIdx=tw-1;
+  const twRom=['I','II','III','IV'];
+  const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
+  const kodes=Object.keys(IKPA_CONF);
+  const tahun=getTAYear();
+  const nowM=new Date().getMonth()+1;
+  const bulanNm=MN[nowM-1];
+  const tanggal=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+
+  // ═══ HALAMAN 1 — COVER ═══════════════════
+  setFill(C.navy);rect(0,0,W,H);
+  setFill(C.gold);rect(0,0,W,4);rect(0,H-4,W,4);
+  setFill(C.navyL+'66');rect(0,4,W/2,H-8);
+  // Garis vertikal dekoratif
+  setFill(C.blue);rect(W/2-2,4,4,H-8);
+  // Teks kiri
+  txt('LAPORAN KINERJA',W/4,72,26,'bold',C.white,'center');
+  txt('KEUANGAN',W/4,84,26,'bold',C.gold,'center');
+  txt(`Periode ${bulanNm} ${tahun}`,W/4,98,14,'normal',C.white,'center');
+  setFill(C.gold);rrect(W/4-35,104,70,8);
+  txt('Dialog Kinerja Organisasi & Managerial Meeting',W/4,109,8,'bold',C.navy,'center');
+  // Teks kanan
+  txt('Kanwil DJPb',W*3/4,72,20,'bold',C.white,'center');
+  txt('Provinsi Sumatera Selatan',W*3/4,82,13,'normal',C.gold,'center');
+  setFill(C.white+'22');rrect(W/2+8,90,W/2-18,40);
+  txt(`TA ${tahun}`,W*3/4,105,11,'normal',C.white,'center');
+  txt(`TW ${twRom[twIdx]} Aktif`,W*3/4,115,9,'normal','rgba(255,255,255,0.6)','center');
+  txt(`Dicetak: ${tanggal}`,W/2+14,H-10,8,'normal','rgba(255,255,255,0.35)');
+
+  // ═══ HALAMAN 2 — MONITORING PENYERAPAN ═══
+  doc.addPage();
+  pageHeader(`MONITORING PENYERAPAN ANGGARAN TA ${tahun}`,`s.d. ${bulanNm} ${tahun} · TW ${twRom[twIdx]}`);
+
+  // KPI row
+  let totPagu=kodes.reduce((s,k)=>s+(ikpa.belanja[k]?.pagu||0),0);
+  let totReal=kodes.reduce((s,k)=>s+(ikpa.belanja[k]?.realisasi[twIdx]||0),0);
+  const pctReal=totPagu>0?(totReal/totPagu*100):0;
+  const targTWPct=IKPA_CONF['52'].target[twIdx]; // belanja barang sebagai acuan
+  const cw=(W-20)/4-2;
+  kpiCard(10,20,cw,18,'Total Pagu (Rp)',totPagu>0?fmt(totPagu):'—',C.navyL);
+  kpiCard(10+cw+2,20,cw,18,`Realisasi s.d. ${bulanNm}`,totReal>0?fmt(totReal):'—',C.green);
+  kpiCard(10+2*(cw+2),20,cw,18,'% Realisasi',pctReal.toFixed(2)+'%',pctReal>=targTWPct?C.green:pctReal>=targTWPct*0.7?C.gold2:C.red);
+  kpiCard(10+3*(cw+2),20,cw,18,`Target TW ${twRom[twIdx]}`,`${IKPA_CONF['51'].target[twIdx]}% – ${IKPA_CONF['52'].target[twIdx]}%`,C.navy);
+
+  // Tabel per jenis belanja
+  const rowsP=kodes.map(kode=>{
+    const conf=IKPA_CONF[kode],bl=ikpa.belanja[kode];
+    const pg=bl?.pagu||0,rl=bl?.realisasi[twIdx]||0;
+    const pct=pg>0?(rl/pg*100).toFixed(2)+'%':'N/A';
+    const n=bl?.paguSet?ikpaNilai(kode,twIdx):null;
+    const stat=n?{aman:'✓ Aman',toleransi:'≈ Toleransi',perhatian:'! Perhatian',kritis:'✗ Kritis',na:'N/A'}[n.status]:'—';
+    const nilaiStr=n&&n.nilai!==null?String(n.nilai):'—';
+    return [conf.nama,pg>0?fmt(pg):'—',rl>0?fmt(rl):'—',pct,`${conf.target[twIdx]}%`,nilaiStr,stat];
+  });
+  rowsP.push(['TOTAL',fmt(totPagu),fmt(totReal),pctReal.toFixed(2)+'%','—','—','']);
+
+  doc.autoTable({
+    head:[['Jenis Belanja','Pagu','Realisasi TW'+twRom[twIdx],'% Real.','Target','Nilai','Status']],
+    body:rowsP,
+    startY:43,margin:{left:10,right:10},
+    styles:{fontSize:9,cellPadding:3},
+    headStyles:{fillColor:[32,56,100],textColor:255,fontStyle:'bold',halign:'center'},
+    columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'center'},4:{halign:'center'},5:{halign:'center',fontStyle:'bold'},6:{halign:'center'}},
+    didParseCell:(d)=>{
+      if(d.section==='body'&&d.column.index===6){
+        const v=d.cell.raw||'';
+        if(v.includes('✓'))d.cell.styles.textColor=[0,150,100];
+        else if(v.includes('!'))d.cell.styles.textColor=[200,140,0];
+        else if(v.includes('✗'))d.cell.styles.textColor=[200,60,60];
+      }
+      if(d.section==='body'&&d.row.index===rowsP.length-1)d.cell.styles.fontStyle='bold';
+    }
+  });
+
+  // Catatan rencana target
+  const lY=(doc.lastAutoTable?.finalY||100)+8;
+  setFill(C.surf);rect(10,lY,W-20,22);
+  setFill(C.navyL);rect(10,lY,3,22);
+  txt('Target Penyerapan Triwulanan (PER-5/PB/2024 & S-56/PB.2/2026):',16,lY+6,8,'bold',C.navy);
+  txt(`Belanja Pegawai (51): TW I ${IKPA_CONF['51'].target[0]}% | TW II ${IKPA_CONF['51'].target[1]}% | TW III ${IKPA_CONF['51'].target[2]}% | TW IV ${IKPA_CONF['51'].target[3]}%   Threshold ±10% berlaku TW I–III`,16,lY+13,7,'normal','#444444');
+  txt(`Belanja Barang (52): TW I ${IKPA_CONF['52'].target[0]}% | TW II ${IKPA_CONF['52'].target[1]}% | TW III ${IKPA_CONF['52'].target[2]}% | TW IV ${IKPA_CONF['52'].target[3]}%   Belanja Modal (53): TW I ${IKPA_CONF['53'].target[0]}% | TW II ${IKPA_CONF['53'].target[1]}% | TW III ${IKPA_CONF['53'].target[2]}% | TW IV ${IKPA_CONF['53'].target[3]}%`,16,lY+19,7,'normal','#444444');
+  pageFooter(2,5);
+
+  // ═══ HALAMAN 3 — TARGET BELANJA TW ═══════
+  doc.addPage();
+  pageHeader(`TARGET BELANJA TRIWULAN ${twRom[twIdx]} TAHUN ${tahun}`,`${MN[TWMON[twIdx][0]-1]}–${MN[TWMON[twIdx][2]-1]} ${tahun}`);
+
+  const bulanTW=TWMON[twIdx];
+  const rowsTW=[];
+  let totRencBulan=0,totRealBulan=0;
+  bulanTW.forEach(m=>{
+    const kegM=data.kegiatan.filter(k=>data.bidang.some(b=>b.id===k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
+    const renc=kegM.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
+    const real=kegM.filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
+    const dev=real-renc;
+    totRencBulan+=renc;totRealBulan+=real;
+    rowsTW.push([{content:MN[m-1].toUpperCase(),rowSpan:3,styles:{fontStyle:'bold',valign:'middle',fillColor:[240,244,248]}},'RENCANA','—',fmt(renc),'—',fmt(renc)]);
+    rowsTW.push(['REALISASI','—',fmt(real),'—',fmt(real)]);
+    rowsTW.push([{content:'DEVIASI',styles:{textColor:dev<0?[200,60,60]:[0,150,100]}},'—',{content:fmt(dev),styles:{textColor:dev<0?[200,60,60]:[0,150,100]}},'—',{content:fmt(dev),styles:{textColor:dev<0?[200,60,60]:[0,150,100]}}]);
+  });
+  rowsTW.push([{content:'TOTAL TW '+twRom[twIdx],colSpan:2,styles:{fontStyle:'bold',fillColor:[225,230,240]}},
+    '—',fmt(totRencBulan),'—',fmt(totRencBulan)]);
+  rowsTW.push([{content:'REALISASI s.d. '+bulanNm,colSpan:2,styles:{fontStyle:'bold',fillColor:[225,240,230]}},
+    '—',{content:fmt(totRealBulan),styles:{fontStyle:'bold',textColor:[0,120,80]}},'—',
+    {content:fmt(totRealBulan),styles:{fontStyle:'bold',textColor:[0,120,80]}}]);
+
+  doc.autoTable({
+    head:[['BULAN','KOMPONEN','PEGAWAI (51)','BARANG (52) + LAINNYA','MODAL (53)','JUMLAH']],
+    body:rowsTW,
+    startY:22,margin:{left:10,right:10},
+    styles:{fontSize:9,cellPadding:3,valign:'middle'},
+    headStyles:{fillColor:[32,56,100],textColor:255,fontStyle:'bold',halign:'center'},
+    columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right',fontStyle:'bold'}}
+  });
+  pageFooter(3,5);
+
+  // ═══ HALAMAN 4 — RENCANA KEGIATAN ════════
+  doc.addPage();
+  pageHeader(`RENCANA KEGIATAN ${bulanNm.toUpperCase()} ${tahun}`,`Status per ${tanggal}`);
+
+  const kegBln=data.kegiatan.filter(k=>data.bidang.some(b=>b.id===k.bidangId)&&k.jadwal.some(j=>j.bulan===nowM));
+  const rowsK=kegBln.map((k,i)=>{
+    const j=k.jadwal.find(j=>j.bulan===nowM);
+    const done=k.doneBulan.includes(nowM);
+    const mStr=(j?.minggu||[]).map(m=>'M'+m).join(', ');
+    return [i+1,k.nama,getBidangNama(k.bidangId)||'—',mStr,fmt(j?.anggaran||0),done?'Terlaksana':'Belum'];
+  });
+  const totK=kegBln.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===nowM);return s+(j?.anggaran||0);},0);
+  const doneK=kegBln.filter(k=>k.doneBulan.includes(nowM)).length;
+  rowsK.push([{content:'TOTAL',colSpan:4,styles:{fontStyle:'bold',fillColor:[225,230,240]}},{content:fmt(totK),styles:{fontStyle:'bold'}},'']);
+
+  doc.autoTable({
+    head:[['No','Kegiatan','Bidang','Minggu','Anggaran (Rp)','Status']],
+    body:rowsK,
+    startY:22,margin:{left:10,right:10},
+    styles:{fontSize:9,cellPadding:3},
+    headStyles:{fillColor:[32,56,100],textColor:255,fontStyle:'bold'},
+    columnStyles:{0:{halign:'center',cellWidth:10},4:{halign:'right',cellWidth:38},5:{halign:'center',cellWidth:28}},
+    didParseCell:(d)=>{
+      if(d.section==='body'&&d.column.index===5){
+        if(d.cell.raw==='Terlaksana')d.cell.styles.textColor=[0,150,100];
+        else if(d.cell.raw==='Belum')d.cell.styles.textColor=[200,140,0];
+      }
+    }
+  });
+
+  // Progress summary
+  const fY=(doc.lastAutoTable?.finalY||140)+6;
+  if(fY<H-20){
+    setFill(C.surf);rect(10,fY,W-20,16);
+    setFill(C.green);rect(10,fY,3,16);
+    const pctDone=kegBln.length>0?Math.round(doneK/kegBln.length*100):0;
+    txt(`Progress ${bulanNm}: ${doneK} dari ${kegBln.length} kegiatan terlaksana (${pctDone}%)`,16,fY+7,9,'bold',C.navy);
+    const bw=W-40;setFill('#e4edf3');rect(16,fY+10,bw,4);
+    setFill(pctDone>=100?C.green:pctDone>=50?C.teal:C.gold2);rect(16,fY+10,bw*pctDone/100,4);
+  }
+  pageFooter(4,5);
+
+  // ═══ HALAMAN 5 — EVALUASI IKPA ═══════════
+  doc.addPage();
+  pageHeader(`EVALUASI IKPA — PENYERAPAN ANGGARAN TW ${twRom[twIdx]} ${tahun}`,'Berdasarkan S-56/PB.2/2026');
+
+  const rowsIK=kodes.map(kode=>{
+    const conf=IKPA_CONF[kode],bl=ikpa.belanja[kode];
+    const pg=bl?.pagu||0,rl=bl?.realisasi[twIdx]||0;
+    const pct=pg>0?(rl/pg*100).toFixed(2)+'%':'N/A';
+    const n=bl?.paguSet?ikpaNilai(kode,twIdx):null;
+    const minPct=(conf.target[twIdx]-conf.threshold[twIdx])+'%';
+    const nilaiStr=n&&n.nilai!==null?String(n.nilai):'—';
+    const stat=n?{aman:'AMAN',toleransi:'TOLERANSI',perhatian:'PERHATIAN',kritis:'KRITIS',na:'N/A'}[n.status]:'BELUM DIISI';
+    return [conf.nama,pg>0?fmt(pg):'—',rl>0?fmt(rl):'—',pct,conf.target[twIdx]+'%',
+            conf.threshold[twIdx]>0?'±'+conf.threshold[twIdx]+'%':'—',minPct,nilaiStr,stat];
+  });
+
+  doc.autoTable({
+    head:[['Jenis Belanja','Pagu','Realisasi','%','Target','Threshold','Min.','Nilai','Status']],
+    body:rowsIK,
+    startY:22,margin:{left:10,right:10},
+    styles:{fontSize:9,cellPadding:3},
+    headStyles:{fillColor:[32,56,100],textColor:255,fontStyle:'bold',halign:'center'},
+    columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'center'},4:{halign:'center'},
+      5:{halign:'center',textColor:[200,140,0]},6:{halign:'center'},7:{halign:'center',fontStyle:'bold'},8:{halign:'center',fontStyle:'bold'}},
+    didParseCell:(d)=>{
+      if(d.section==='body'&&d.column.index===8){
+        const v=d.cell.raw;
+        if(v==='AMAN')d.cell.styles.textColor=[0,150,100];
+        else if(v==='TOLERANSI')d.cell.styles.textColor=[0,100,145];
+        else if(v==='PERHATIAN')d.cell.styles.textColor=[200,140,0];
+        else if(v==='KRITIS')d.cell.styles.textColor=[200,60,60];
+      }
+    }
+  });
+
+  // Estimasi nilai box
+  const {total:nTot,cnt:nCnt}=kodes.reduce((acc,k)=>{
+    const bl=ikpa.belanja[k];
+    if(!bl?.paguSet||!bl.pagu)return acc;
+    const n=ikpaNilai(k,twIdx);
+    return n&&n.nilai!==null?{total:acc.total+n.nilai,cnt:acc.cnt+1}:acc;
+  },{total:0,cnt:0});
+
+  const eY=(doc.lastAutoTable?.finalY||100)+8;
+  if(nCnt>0){
+    const est=Math.round(nTot/nCnt);
+    const ec=est>=90?C.green:est>=75?C.teal:est>=60?C.gold2:C.red;
+    setFill(ec);rrect(10,eY,90,26);
+    txt('Estimasi Nilai Kinerja Penyerapan',55,eY+8,8,'bold',C.white,'center');
+    txt(`TW ${twRom[twIdx]} ${tahun}`,55,eY+14,8,'normal','rgba(255,255,255,0.7)','center');
+    txt(est.toString(),55,eY+24,18,'bold',C.white,'center');
+    // Keterangan
+    setFill(C.surf);rect(106,eY,W-116,26);
+    setFill(ec);rect(106,eY,2,26);
+    txt('Catatan:',110,eY+7,8,'bold',C.navy);
+    txt(`• Nilai estimasi dihitung dari rata-rata nilai kinerja per jenis belanja yang sudah diisi.`,110,eY+13,7,'normal','#444444');
+    txt(`• Komponen penyerapan merupakan salah satu dari 8 indikator IKPA dengan bobot 20%.`,110,eY+19,7,'normal','#444444');
+    txt(`• Nilai IKPA final dihitung oleh sistem OM SPAN / MyIntress (myintress.kemenkeu.go.id).`,110,eY+25,7,'normal','#888888');
+  } else {
+    setFill('#FFF8E7');rect(10,eY,W-20,18);setFill(C.gold2);rect(10,eY,3,18);
+    txt('Isi data pagu dan realisasi di halaman IKPA untuk melihat estimasi nilai kinerja penyerapan.',16,eY+11,9,'normal',C.navy);
+  }
+  pageFooter(5,5);
+
+  doc.save(`Laporan_Kinerja_${bulanNm}_${tahun}.pdf`);
+  toast('Laporan Kinerja Keuangan berhasil dibuat','📊');
+  document.getElementById('exportModal').classList.remove('open');
+}
 function exportPDF(mode){
   const {jsPDF}=window.jspdf;
   const isLS=mode==='timeline'; // landscape hanya untuk timeline
