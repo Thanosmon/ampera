@@ -1848,13 +1848,13 @@ function togDB(id,bulan){
     const angg=kTPB(k,bulan);
     toast(`"${k.nama}" — ${MN[bulan-1]} terlaksana · ${fmt(angg)} terserap`,'✓');
   }
-  renderAll();
+  saveLS();renderAll();
 }
 function delKeg(id){
   const k=data.kegiatan.find(k=>k.id===id);
   if(k&&confirm(`Hapus kegiatan "${k.nama}"?`)){
     data.kegiatan=data.kegiatan.filter(k=>k.id!==id);
-    toast('Kegiatan dihapus','🗑');renderAll();
+    saveLS();toast('Kegiatan dihapus','🗑');renderAll();
   }
 }
 
@@ -2001,14 +2001,14 @@ function saveKegiatan(){
     data.kegiatan.push(obj);
     toast('Kegiatan berhasil ditambahkan','✓');
   }
-  closeModalDirect();renderAll();
+  saveLS();closeModalDirect();renderAll();
 }
 function openAddBidang(){document.getElementById('fNamaBidang').value='';document.getElementById('bidangModal').classList.add('open');}
 function saveBidang(){
   const nama=document.getElementById('fNamaBidang').value.trim();
   if(!nama){alert('Nama bidang wajib diisi.');return;}
   data.bidang.push({id:'b'+Date.now(),nama});
-  toast('"'+nama+'" ditambahkan','✓');closeBidangModalDirect();renderAll();
+  saveLS();toast('"'+nama+'" ditambahkan','✓');closeBidangModalDirect();renderAll();
 }
 function delBidang(id){
   const b=data.bidang.find(b=>b.id===id);
@@ -2021,7 +2021,7 @@ function delBidang(id){
     if(!confirm(`Hapus bidang "${b.nama}"?`))return;
   }
   data.bidang=data.bidang.filter(b=>b.id!==id);
-  toast(`Bidang "${b.nama}" dihapus`,'🗑');
+  saveLS();toast(`Bidang "${b.nama}" dihapus`,'🗑');
   renderAll();
 }
 function closeModal(e){if(e.target===document.getElementById('modalOverlay'))closeModalDirect();}
