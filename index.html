@@ -1347,6 +1347,8 @@ function migrateData(d){
   }
   // Inisialisasi RPD (Rencana Penarikan Dana) jika belum ada
   if(d&&!d.rpd)d.rpd={'51':{rencana:Array(12).fill(0),realisasi:Array(12).fill(0)}};
+  // users disimpan di data agar tersinkron antar perangkat
+  if(d&&!d.users)d.users=[];
   return d;
 }
 
@@ -1370,7 +1372,7 @@ function loadData(){
   }
   try{
     const saved=localStorage.getItem('ampera_2026')||localStorage.getItem('sirenka_2026');
-    if(saved){let p=JSON.parse(saved);p=migrateData(p);if(p&&p.bidang&&p.kegiatan){data=p;setSyncSt('synced','Tersimpan');}}
+    if(saved){let p=JSON.parse(saved);p=migrateData(p);if(p&&p.bidang&&p.kegiatan){data=p;setSyncSt('synced','Tersimpan');applyRemoteUsers(data);}}
   }catch(e){}
 }
 
@@ -2464,7 +2466,26 @@ function loadUsersDB(){
   if(!usersDB.length){usersDB=DEFAULT_USERS.map(u=>({...u}));}
   saveUsersDB();
 }
-function saveUsersDB(){try{localStorage.setItem(USERS_KEY,JSON.stringify(usersDB));}catch(e){}}
+function saveUsersDB(){
+  try{localStorage.setItem(USERS_KEY,JSON.stringify(usersDB));}catch(e){}
+  // Sync ke data object supaya ikut tersinkron ke server
+  if(typeof data!=='undefined'&&data){
+    data.users=usersDB;
+    if(currentUser)saveLS();
+  }
+}
+function applyRemoteUsers(d){
+  // Terapkan daftar user dari data server ke usersDB lokal
+  if(!d||!d.users||!d.users.length)return;
+  // Merge: server wins untuk user yang ada, tambahkan yang baru
+  const merged=[...usersDB];
+  d.users.forEach(su=>{
+    if(!merged.find(u=>u.id===su.id))merged.push(su);
+    else{const idx=merged.findIndex(u=>u.id===su.id);merged[idx]={...merged[idx],...su};}
+  });
+  usersDB=merged;
+  try{localStorage.setItem(USERS_KEY,JSON.stringify(usersDB));}catch(e){}
+}
 function loadSyncDB(){try{const s=localStorage.getItem(SYNC_KEY);if(s)syncCfg={...syncCfg,...JSON.parse(s)};}catch(e){}}
 function saveSyncDB(){try{localStorage.setItem(SYNC_KEY,JSON.stringify(syncCfg));}catch(e){}}
 
@@ -2645,6 +2666,7 @@ async function pullFromServer(silent=false){
     const remoteData=remote&&remote.payload?remote.payload:remote;
     if(remoteData&&remoteData.bidang&&remoteData.kegiatan){
       data=migrateData(remoteData);
+      applyRemoteUsers(data); // Sync user dari server
       try{localStorage.setItem('ampera_2026',JSON.stringify(data));}catch(e){}
       renderAll();setSyncSt('synced','✓ Tersinkron');
       if(!silent)toast('Data berhasil dimuat dari server','✅');
