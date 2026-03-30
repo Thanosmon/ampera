@@ -2495,12 +2495,25 @@ function setSyncSt(cls,lbl){
   el.className='sync-ind '+cls;lb.textContent=lbl;
 }
 
-function doLogin(){
+async function doLogin(){
   const u=document.getElementById('loginUser').value.trim();
   const p=document.getElementById('loginPass').value;
-  const found=usersDB.find(x=>x.username===u&&x.password===p);
   const err=document.getElementById('loginErr');
+  const btn=document.querySelector('.login-btn');
+
+  // Coba lokal dulu
+  let found=usersDB.find(x=>x.username===u&&x.password===p);
+
+  // Jika tidak ketemu, coba fetch user terbaru dari server sebelum menyerah
+  if(!found){
+    if(btn){btn.textContent='Memeriksa server…';btn.disabled=true;}
+    await fetchRemoteUsersForLogin();
+    found=usersDB.find(x=>x.username===u&&x.password===p);
+    if(btn){btn.textContent='Masuk ke AMPERA';btn.disabled=false;}
+  }
+
   if(!found){err.classList.add('show');setTimeout(()=>err.classList.remove('show'),3000);return;}
+  err.classList.remove('show');
   currentUser=found;
   try{localStorage.setItem(AUTH_KEY,JSON.stringify({id:found.id,ts:Date.now()}));}catch(e){}
   const ls=document.getElementById('loginScreen');
@@ -2510,6 +2523,18 @@ function doLogin(){
     document.body.classList.add('logged-in');
     updateUserUI();loadData();renderAll();
   },300);
+}
+
+async function fetchRemoteUsersForLogin(){
+  // Fetch data dari server hanya untuk mendapat daftar user terbaru (sebelum login)
+  try{
+    const VAPI=(()=>{const h=window.location.hostname;return(h.includes('vercel.app')||(!h.includes('github.io')&&h!=='localhost'&&h!=='127.0.0.1'))?'/api/data':'https://ampera-gamma.vercel.app/api/data';})();
+    const r=await fetch(VAPI+'?secret=ampera-djpb-2026&t='+Date.now(),{headers:{'x-ampera-secret':'ampera-djpb-2026'}});
+    if(!r.ok)return;
+    const remote=await r.json();
+    const rd=remote&&remote.payload?remote.payload:remote;
+    if(rd&&rd.users&&rd.users.length)applyRemoteUsers(rd);
+  }catch(e){console.warn('fetchRemoteUsersForLogin:',e);}
 }
 
 function doLogout(){
