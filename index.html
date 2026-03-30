@@ -1467,9 +1467,14 @@ function switchView(v,el){
   document.querySelectorAll('.sid-item,.mob-nav-item').forEach(i=>i.classList.remove('active'));
   document.querySelectorAll('[data-view="'+v+'"]').forEach(i=>i.classList.add('active'));
   if(window.innerWidth<=768)window.scrollTo({top:0,behavior:'smooth'});
-  // Pull dari server saat pindah halaman (silent — tanpa toast)
-  pullFromServer(true);
   renderAll();
+  // Jika ada perubahan lokal yang belum dipush, flush dulu baru pull
+  if(syncTimer){
+    clearTimeout(syncTimer);syncTimer=null;
+    pushToServer(true).then(()=>pullFromServer(true));
+  }else{
+    pullFromServer(true);
+  }
 }
 function toggleMobMore(){
   const dd=document.getElementById('mobMoreDD');
@@ -2698,10 +2703,11 @@ function setSyncSt(cls,lbl){
 // Simpan lokal + jadwalkan push ke server (selalu silent — tanpa toast)
 function saveLS(){
   if(!currentUser)return;
+  data._lastSaved=Date.now(); // timestamp untuk deteksi data terbaru
   try{localStorage.setItem('ampera_2026',JSON.stringify(data));}catch(e){}
   setSyncSt('synced','Tersimpan');
   clearTimeout(syncTimer);
-  syncTimer=setTimeout(()=>pushToServer(true),2000);
+  syncTimer=setTimeout(()=>pushToServer(true),500); // kurangi delay: 500ms
 }
 
 // silent=true → hanya update indikator topbar, tanpa toast
@@ -2736,11 +2742,22 @@ async function pullFromServer(silent=false){
     const remote=await r.json();
     const remoteData=remote&&remote.payload?remote.payload:remote;
     if(remoteData&&remoteData.bidang&&remoteData.kegiatan){
-      data=migrateData(remoteData);
-      applyRemoteUsers(data); // Sync user dari server
-      try{localStorage.setItem('ampera_2026',JSON.stringify(data));}catch(e){}
-      renderAll();setSyncSt('synced','✓ Tersinkron');
-      if(!silent)toast('Data berhasil dimuat dari server','✅');
+      const remoteTs=remoteData._lastSaved||0;
+      const localTs=data._lastSaved||0;
+      if(remoteTs>=localTs){
+        // Server lebih baru atau sama → gunakan data server
+        data=migrateData(remoteData);
+        applyRemoteUsers(data);
+        try{localStorage.setItem('ampera_2026',JSON.stringify(data));}catch(e){}
+        renderAll();setSyncSt('synced','✓ Tersinkron');
+        if(!silent)toast('Data berhasil dimuat dari server','✅');
+      }else{
+        // Lokal lebih baru → push lokal ke server, jangan overwrite
+        applyRemoteUsers(remoteData); // tetap sync users dari server
+        pushToServer(true);
+        setSyncSt('synced','✓ Tersinkron');
+        if(!silent)toast('Data lokal lebih baru — disimpan ke server','✅');
+      }
       return true;
     }
     setSyncSt('synced','Tersimpan lokal');
