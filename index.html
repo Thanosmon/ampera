@@ -1345,6 +1345,8 @@ function migrateData(d){
   if(d&&!d.ikpa){
     d.ikpa={belanja:{'51':{pagu:0,realisasi:[0,0,0,0]},'52':{pagu:0,realisasi:[0,0,0,0]},'53':{pagu:0,realisasi:[0,0,0,0]},'57':{pagu:0,realisasi:[0,0,0,0]}}};
   }
+  // Inisialisasi RPD (Rencana Penarikan Dana) jika belum ada
+  if(d&&!d.rpd)d.rpd={'51':{rencana:Array(12).fill(0),realisasi:Array(12).fill(0)}};
   return d;
 }
 
@@ -2698,6 +2700,17 @@ function setIKPAPagu(kode,val){
 function setIKPAReal(kode,tw,val){getIKPAData().belanja[kode].realisasi[tw]=parseFloat(val)||0;renderIKPA();}
 function saveIKPA(){saveLS();toast('Data IKPA tersimpan','✅');}
 
+// ─── RPD helpers ─────────────────────────────────────
+function getRPD(){
+  if(!data.rpd)data.rpd={'51':{rencana:Array(12).fill(0),realisasi:Array(12).fill(0)}};
+  if(!data.rpd['51'])data.rpd['51']={rencana:Array(12).fill(0),realisasi:Array(12).fill(0)};
+  if(data.rpd['51'].rencana.length<12)data.rpd['51'].rencana=[...data.rpd['51'].rencana,...Array(12-data.rpd['51'].rencana.length).fill(0)];
+  if(data.rpd['51'].realisasi.length<12)data.rpd['51'].realisasi=[...data.rpd['51'].realisasi,...Array(12-data.rpd['51'].realisasi.length).fill(0)];
+  return data.rpd;
+}
+function setRPDRencana(mi,val){getRPD()['51'].rencana[mi]=parseFloat(val)||0;saveLS();}
+function setRPDRealisasi(mi,val){getRPD()['51'].realisasi[mi]=parseFloat(val)||0;saveLS();}
+
 function renderIKPA(){
   const tw=getCurrentTW(),twIdx=tw-1;
   const twRom=['I','II','III','IV'];
@@ -2865,6 +2878,71 @@ function renderIKPA(){
       <span><span style="display:inline-block;width:10px;height:10px;background:#e05555;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Kritis</span>
       <span style="margin-left:auto;"><span style="color:#e8a020;">±%</span> = batas toleransi (khusus akun 51)</span>
     </div>
+  </div>
+
+  ${renderRPDSection()}`;
+}
+
+function renderRPDSection(){
+  const rpd=getRPD()['51'];
+  const tw=getCurrentTW(),twIdx=tw-1;
+  const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
+  const bulanTW=TWMON[twIdx];
+  const colsHtml=bulanTW.map(m=>{
+    const mi=m-1;
+    const renc=rpd.rencana[mi]||0;
+    const real=rpd.realisasi[mi]||0;
+    const pct=renc>0?Math.round(real/renc*100):0;
+    const clr=pct>=100?'#00b87a':pct>=70?'#007c91':pct>0?'#e8a020':'var(--txt3)';
+    return `<td style="padding:8px 6px;text-align:center;border-right:1px solid var(--bdr);min-width:80px;">
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:3px;">Rencana (jt)</div>
+      <input type="number" style="width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:5px 4px;font-size:11px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--surf);outline:none;box-sizing:border-box;text-align:right;"
+        value="${renc?+(renc/1e6).toFixed(3):''}" placeholder="0"
+        onchange="setRPDRencana(${mi},this.value*1e6)"
+        onfocus="this.style.borderColor='#007c91'" onblur="this.style.borderColor='var(--bdr)'">
+      <div style="font-size:10px;color:var(--txt3);margin:5px 0 3px;">Realisasi (jt)</div>
+      <input type="number" style="width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:5px 4px;font-size:11px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--surf);outline:none;box-sizing:border-box;text-align:right;"
+        value="${real?+(real/1e6).toFixed(3):''}" placeholder="0"
+        onchange="setRPDRealisasi(${mi},this.value*1e6)"
+        onfocus="this.style.borderColor='#00b87a'" onblur="this.style.borderColor='var(--bdr)'">
+      ${renc>0?`<div style="margin-top:5px;font-size:11px;font-weight:700;color:${clr};">${pct}%</div>`:''}
+    </td>`;
+  }).join('');
+
+  const totRenc=bulanTW.reduce((s,m)=>s+(rpd.rencana[m-1]||0),0);
+  const totReal=bulanTW.reduce((s,m)=>s+(rpd.realisasi[m-1]||0),0);
+  const twRom=['I','II','III','IV'];
+
+  return `<div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+    <div style="padding:13px 16px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);">👤 RPD — Belanja Pegawai (Akun 51)</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:2px;">Rencana Penarikan Dana per bulan · Triwulan ${twRom[twIdx]} aktif</div>
+      </div>
+      <div style="font-size:12px;color:var(--txt3);">Total Rencana: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmt(totRenc)}</strong> · Realisasi: <strong style="color:#00b87a;font-family:'Fira Code',monospace;">${fmt(totReal)}</strong></div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+          <tr style="background:var(--surf);">
+            <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">KOMPONEN</th>
+            ${bulanTW.map(m=>`<th style="padding:10px 6px;text-align:center;font-size:10px;font-weight:600;color:var(--teal);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">${MN[m-1].toUpperCase()}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:8px 14px;border-right:1px solid var(--bdr);vertical-align:middle;">
+              <div style="font-weight:600;color:var(--ink);font-size:12px;">👤 Belanja Pegawai</div>
+              <div style="font-size:10px;color:var(--txt3);">Input manual per bulan</div>
+            </td>
+            ${colsHtml}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:10px 16px;border-top:1px solid var(--bdr);font-size:10px;color:var(--txt3);">
+      💡 Data RPD Belanja Pegawai digunakan di halaman 3 Laporan Kinerja. Belanja Barang dihitung otomatis dari rencana kegiatan.
+    </div>
   </div>`;
 }
 
@@ -2984,7 +3062,7 @@ function generateLaporanKinerja(){
     txt(`Dicetak: ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}`,W/2,H-2.5,7,'normal',C.wht45,'center');
   }
   function kpiCard(x,y,w,h,label,val,color){
-    setFill(color+'18');setDraw(color);rrect(x,y,w,h,'FD');
+    setFill(C.surf);setDraw(color);rrect(x,y,w,h,'FD');
     txt(label,x+w/2,y+6,7,'normal','#555555','center');
     txt(val,x+w/2,y+h-4,10,'bold',color,'center');
   }
@@ -3002,7 +3080,8 @@ function generateLaporanKinerja(){
   // ═══ HALAMAN 1 — COVER ═══════════════════
   setFill(C.navy);rect(0,0,W,H);
   setFill(C.gold);rect(0,0,W,4);rect(0,H-4,W,4);
-  setFill(C.navyL+'66');rect(0,4,W/2,H-8);
+  // Panel kiri semi-transparan (warna solid sedikit lebih terang dari navy)
+  setFill('#2D4D7A');rect(0,4,W/2,H-8);
   // Garis vertikal dekoratif
   setFill(C.blue);rect(W/2-2,4,4,H-8);
   // Teks kiri
@@ -3014,7 +3093,7 @@ function generateLaporanKinerja(){
   // Teks kanan
   txt('Kanwil DJPb',W*3/4,72,20,'bold',C.white,'center');
   txt('Provinsi Sumatera Selatan',W*3/4,82,13,'normal',C.gold,'center');
-  setFill(C.white+'22');rrect(W/2+8,90,W/2-18,40);
+  setFill('#38537A');rrect(W/2+8,90,W/2-18,40);
   txt(`TA ${tahun}`,W*3/4,105,11,'normal',C.white,'center');
   txt(`TW ${twRom[twIdx]} Aktif`,W*3/4,115,9,'normal',C.wht6,'center');
   txt(`Dicetak: ${tanggal}`,W/2+14,H-10,8,'normal',C.wht35);
@@ -3078,29 +3157,67 @@ function generateLaporanKinerja(){
   pageHeader(`TARGET BELANJA TRIWULAN ${twRom[twIdx]} TAHUN ${tahun}`,`${MN[TWMON[twIdx][0]-1]}–${MN[TWMON[twIdx][2]-1]} ${tahun}`);
 
   const bulanTW=TWMON[twIdx];
+  const rpd51=getRPD()['51'];
+  // Bidang Umum: nama bidang yang mengandung kata "umum" (case-insensitive)
+  const bidangUmumIds=new Set(data.bidang.filter(b=>/umum/i.test(b.nama)).map(b=>b.id));
+
   const rowsTW=[];
-  let totRencBulan=0,totRealBulan=0;
+  let totRenc51=0,totReal51=0,totRenc52=0,totReal52=0,totRenc53=0,totReal53=0;
   bulanTW.forEach(m=>{
-    const kegM=data.kegiatan.filter(k=>data.bidang.some(b=>b.id===k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
-    const renc=kegM.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
-    const real=kegM.filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
-    const dev=real-renc;
-    totRencBulan+=renc;totRealBulan+=real;
-    rowsTW.push([{content:MN[m-1].toUpperCase(),rowSpan:3,styles:{fontStyle:'bold',valign:'middle',fillColor:[240,244,248]}},'RENCANA','—',fmt(renc),'—',fmt(renc)]);
-    rowsTW.push(['REALISASI','—',fmt(real),'—',fmt(real)]);
-    rowsTW.push([{content:'DEVIASI',styles:{textColor:dev<0?[200,60,60]:[0,150,100]}},'—',{content:fmt(dev),styles:{textColor:dev<0?[200,60,60]:[0,150,100]}},'—',{content:fmt(dev),styles:{textColor:dev<0?[200,60,60]:[0,150,100]}}]);
+    const mi=m-1;
+    // Akun 51: dari RPD
+    const r51renc=rpd51.rencana[mi]||0;
+    const r51real=rpd51.realisasi[mi]||0;
+    totRenc51+=r51renc; totReal51+=r51real;
+    // Akun 52: kegiatan non-bagian-umum
+    const keg52=data.kegiatan.filter(k=>!bidangUmumIds.has(k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
+    const r52renc=keg52.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
+    const r52real=keg52.filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
+    totRenc52+=r52renc; totReal52+=r52real;
+    // Akun 53: kegiatan bagian umum
+    const keg53=data.kegiatan.filter(k=>bidangUmumIds.has(k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
+    const r53renc=keg53.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
+    const r53real=keg53.filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
+    totRenc53+=r53renc; totReal53+=r53real;
+
+    const totRenc=r51renc+r52renc+r53renc, totReal=r51real+r52real+r53real;
+    const devJml=totReal-totRenc;
+    rowsTW.push([
+      {content:MN[m-1].toUpperCase(),rowSpan:3,styles:{fontStyle:'bold',valign:'middle',fillColor:[240,244,248]}},
+      'RENCANA',
+      r51renc>0?fmt(r51renc):'—',r52renc>0?fmt(r52renc):'—',r53renc>0?fmt(r53renc):'—',
+      {content:totRenc>0?fmt(totRenc):'—',styles:{fontStyle:'bold'}}
+    ]);
+    rowsTW.push([
+      'REALISASI',
+      r51real>0?fmt(r51real):'—',r52real>0?fmt(r52real):'—',r53real>0?fmt(r53real):'—',
+      {content:totReal>0?fmt(totReal):'—',styles:{fontStyle:'bold',textColor:[0,120,80]}}
+    ]);
+    rowsTW.push([
+      {content:'DEVIASI',styles:{textColor:devJml<0?[200,60,60]:[0,150,100]}},
+      '—','—','—',
+      {content:fmt(devJml),styles:{fontStyle:'bold',textColor:devJml<0?[200,60,60]:[0,150,100]}}
+    ]);
   });
-  rowsTW.push([{content:'TOTAL TW '+twRom[twIdx],colSpan:2,styles:{fontStyle:'bold',fillColor:[225,230,240]}},
-    '—',fmt(totRencBulan),'—',fmt(totRencBulan)]);
-  rowsTW.push([{content:'REALISASI s.d. '+bulanNm,colSpan:2,styles:{fontStyle:'bold',fillColor:[225,240,230]}},
-    '—',{content:fmt(totRealBulan),styles:{fontStyle:'bold',textColor:[0,120,80]}},'—',
-    {content:fmt(totRealBulan),styles:{fontStyle:'bold',textColor:[0,120,80]}}]);
+  const totAllRenc=totRenc51+totRenc52+totRenc53, totAllReal=totReal51+totReal52+totReal53;
+  rowsTW.push([
+    {content:'TOTAL RENCANA TW '+twRom[twIdx],colSpan:2,styles:{fontStyle:'bold',fillColor:[225,230,240]}},
+    fmt(totRenc51),fmt(totRenc52),fmt(totRenc53),
+    {content:fmt(totAllRenc),styles:{fontStyle:'bold'}}
+  ]);
+  rowsTW.push([
+    {content:'REALISASI s.d. '+bulanNm,colSpan:2,styles:{fontStyle:'bold',fillColor:[225,240,230]}},
+    {content:fmt(totReal51),styles:{textColor:[0,120,80]}},
+    {content:fmt(totReal52),styles:{textColor:[0,120,80]}},
+    {content:fmt(totReal53),styles:{textColor:[0,120,80]}},
+    {content:fmt(totAllReal),styles:{fontStyle:'bold',textColor:[0,120,80]}}
+  ]);
 
   doc.autoTable({
-    head:[['BULAN','KOMPONEN','PEGAWAI (51)','BARANG (52) + LAINNYA','MODAL (53)','JUMLAH']],
+    head:[['BULAN','KOMPONEN','PEGAWAI (51)\n(RPD)','BARANG (52)\n(Kegiatan)','MODAL (53)\n(Bag. Umum)','JUMLAH']],
     body:rowsTW,
     startY:22,margin:{left:10,right:10},
-    styles:{fontSize:9,cellPadding:3,valign:'middle'},
+    styles:{fontSize:8.5,cellPadding:2.5,valign:'middle'},
     headStyles:{fillColor:[32,56,100],textColor:255,fontStyle:'bold',halign:'center'},
     columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right',fontStyle:'bold'}}
   });
