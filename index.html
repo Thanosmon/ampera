@@ -2777,13 +2777,16 @@ function renderIKPA(){
     const realRow=`<tr style="background:${bg};">
       ${[0,1,2,3].map(i=>{
         const active=i===twIdx;
+        const isFuture=i>twIdx;
+        const isPast=i<twIdx;
         const real=bl?bl.realisasi[i]:0;
-        const n=bl&&bl.paguSet?ikpaNilai(kode,i):null;
+        const n=bl&&bl.paguSet&&!isFuture?ikpaNilai(kode,i):null;
         const sc=n?statusColor[n.status]:'#7a9aac';
-        const pct=n&&n.status!=='na'&&bl.pagu>0?(real/bl.pagu*100):0;
+        const pct=n&&n.status!=='na'&&bl&&bl.pagu>0?(real/bl.pagu*100):0;
         return `<td style="padding:3px 14px 10px;text-align:center;background:${active?'rgba(0,124,145,.05)':''};border-bottom:1px solid var(--bdr)30;">
-          ${n&&n.status==='na'?`<div style="font-size:10px;color:var(--txt3);">N/A</div>`:
-            n&&bl.pagu>0?`<div style="font-size:12px;font-weight:600;font-family:'Fira Code',monospace;color:${sc};">${pct.toFixed(1)}%</div>
+          ${isFuture?`<div style="font-size:10px;color:var(--bdr);font-style:italic;">—</div>`:
+            n&&n.status==='na'?`<div style="font-size:10px;color:var(--txt3);">N/A</div>`:
+            n&&bl&&bl.pagu>0?`<div style="font-size:12px;font-weight:600;font-family:'Fira Code',monospace;color:${sc};">${pct.toFixed(1)}%</div>
             <div style="font-size:9px;color:${sc};">nilai ${n.nilai}</div>`:
             `<div style="font-size:11px;color:var(--txt3);">—</div>`}
         </td>`;
