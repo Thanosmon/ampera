@@ -1125,6 +1125,23 @@ body.logged-in [data-admin].show-admin{display:flex;}
         </div>
       </div>
 
+      <!-- RINCIAN BIAYA -->
+      <div class="fg">
+        <label class="flbl2">Rincian Biaya <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--txt3)">(referensi perhitungan)</span></label>
+        <div class="re-wrap">
+          <div class="re-head">
+            <span>MAK</span><span>Uraian Biaya</span><span>Jml</span><span>Hr/Frek</span>
+            <span>Satuan</span><span style="text-align:right;padding-right:10px">Biaya/Sat</span><span></span>
+          </div>
+          <div id="reRows"></div>
+          <div class="re-foot">
+            <span class="lbl" style="grid-column:1/6">TOTAL RINCIAN (referensi)</span>
+            <span class="tot" id="modalTotal">Rp 0</span><span></span>
+          </div>
+          <button class="re-add" onclick="addRincianRow()">＋ Tambah Item Rincian</button>
+        </div>
+      </div>
+
       <!-- JADWAL PELAKSANAAN -->
       <div class="fg">
         <label class="flbl2">Jadwal Pelaksanaan &amp; Anggaran per Bulan</label>
@@ -1145,23 +1162,6 @@ body.logged-in [data-admin].show-admin{display:flex;}
             <button class="jad-add" onclick="addJadwal()">＋ Tambah Bulan Pelaksanaan</button>
             <button class="jad-rata" onclick="distribusiRata()" title="Isi anggaran per bulan secara merata dari total rincian biaya">⚖️ Bagi rata dari Rincian</button>
           </div>
-        </div>
-      </div>
-
-      <!-- RINCIAN BIAYA -->
-      <div class="fg">
-        <label class="flbl2">Rincian Biaya <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--txt3)">(referensi perhitungan)</span></label>
-        <div class="re-wrap">
-          <div class="re-head">
-            <span>MAK</span><span>Uraian Biaya</span><span>Jml</span><span>Hr/Frek</span>
-            <span>Satuan</span><span style="text-align:right;padding-right:10px">Biaya/Sat</span><span></span>
-          </div>
-          <div id="reRows"></div>
-          <div class="re-foot">
-            <span class="lbl" style="grid-column:1/6">TOTAL RINCIAN (referensi)</span>
-            <span class="tot" id="modalTotal">Rp 0</span><span></span>
-          </div>
-          <button class="re-add" onclick="addRincianRow()">＋ Tambah Item Rincian</button>
         </div>
       </div>
 
