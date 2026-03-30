@@ -2951,13 +2951,15 @@ function openExportModal(){
 // LAPORAN KINERJA KEUANGAN — PDF Otomatis
 // ════════════════════════════════════════════
 function generateLaporanKinerja(){
+  try{
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   const W=297,H=210;
   const C={
     navy:'#203864',navyL:'#416EA0',blue:'#005696',
     gold:'#EEB860',white:'#FFFFFF',surf:'#F0F4F8',
-    green:'#00B87A',red:'#E05555',teal:'#007C91',gold2:'#E8A020'
+    green:'#00B87A',red:'#E05555',teal:'#007C91',gold2:'#E8A020',
+    wht6:'#A6AFC1',wht45:'#8492AA',wht35:'#6E7E9A',wht7:'#BCC3D0'
   };
 
   // ─── helpers ───────────────────────────────
@@ -2977,9 +2979,9 @@ function generateLaporanKinerja(){
   }
   function pageFooter(n,total){
     setFill(C.navy);rect(0,H-7,W,7);
-    txt('Kanwil DJPb Provinsi Sumatera Selatan',10,H-2.5,7,'normal','rgba(255,255,255,0.6)');
-    txt(`Halaman ${n}/${total}`,W-10,H-2.5,7,'normal','rgba(255,255,255,0.6)','right');
-    txt(`Dicetak: ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}`,W/2,H-2.5,7,'normal','rgba(255,255,255,0.45)','center');
+    txt('Kanwil DJPb Provinsi Sumatera Selatan',10,H-2.5,7,'normal',C.wht6);
+    txt(`Halaman ${n}/${total}`,W-10,H-2.5,7,'normal',C.wht6,'right');
+    txt(`Dicetak: ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}`,W/2,H-2.5,7,'normal',C.wht45,'center');
   }
   function kpiCard(x,y,w,h,label,val,color){
     setFill(color+'18');setDraw(color);rrect(x,y,w,h,'FD');
@@ -3014,8 +3016,8 @@ function generateLaporanKinerja(){
   txt('Provinsi Sumatera Selatan',W*3/4,82,13,'normal',C.gold,'center');
   setFill(C.white+'22');rrect(W/2+8,90,W/2-18,40);
   txt(`TA ${tahun}`,W*3/4,105,11,'normal',C.white,'center');
-  txt(`TW ${twRom[twIdx]} Aktif`,W*3/4,115,9,'normal','rgba(255,255,255,0.6)','center');
-  txt(`Dicetak: ${tanggal}`,W/2+14,H-10,8,'normal','rgba(255,255,255,0.35)');
+  txt(`TW ${twRom[twIdx]} Aktif`,W*3/4,115,9,'normal',C.wht6,'center');
+  txt(`Dicetak: ${tanggal}`,W/2+14,H-10,8,'normal',C.wht35);
 
   // ═══ HALAMAN 2 — MONITORING PENYERAPAN ═══
   doc.addPage();
@@ -3195,7 +3197,7 @@ function generateLaporanKinerja(){
     const ec=est>=90?C.green:est>=75?C.teal:est>=60?C.gold2:C.red;
     setFill(ec);rrect(10,eY,90,26);
     txt('Estimasi Nilai Kinerja Penyerapan',55,eY+8,8,'bold',C.white,'center');
-    txt(`TW ${twRom[twIdx]} ${tahun}`,55,eY+14,8,'normal','rgba(255,255,255,0.7)','center');
+    txt(`TW ${twRom[twIdx]} ${tahun}`,55,eY+14,8,'normal',C.wht7,'center');
     txt(est.toString(),55,eY+24,18,'bold',C.white,'center');
     // Keterangan
     setFill(C.surf);rect(106,eY,W-116,26);
@@ -3213,6 +3215,7 @@ function generateLaporanKinerja(){
   doc.save(`Laporan_Kinerja_${bulanNm}_${tahun}.pdf`);
   toast('Laporan Kinerja Keuangan berhasil dibuat','📊');
   document.getElementById('exportModal').classList.remove('open');
+  }catch(e){console.error('generateLaporanKinerja error:',e);toast('Gagal buat laporan: '+e.message,'❌');}
 }
 function exportPDF(mode){
   const {jsPDF}=window.jspdf;
