@@ -1022,6 +1022,7 @@ body.logged-in [data-admin].show-admin{display:flex;}
       <div class="sid-item" onclick="switchView('bulan',this)" data-view="bulan"><span class="sid-icon">📅</span> Per Bulan</div>
       <div class="sid-item" onclick="switchView('kalender',this)" data-view="kalender"><span class="sid-icon">🗓️</span> Kalender</div>
       <div class="sid-item" onclick="switchView('timeline',this)" data-view="timeline"><span class="sid-icon">📊</span> Timeline</div>
+      <div class="sid-item" onclick="switchView('ikpa',this)" data-view="ikpa"><span class="sid-icon">🎯</span> IKPA</div>
     </div>
     <div class="sid-divider"></div>
     <div class="sid-section">
@@ -1074,6 +1075,7 @@ body.logged-in [data-admin].show-admin{display:flex;}
 <div class="mob-more-dd" id="mobMoreDD">
   <div class="mob-dd-item" onclick="openAddKegiatan();closeMobMore()" data-admin>＋ Tambah Kegiatan</div>
   <div class="mob-dd-item" onclick="openAddBidang();closeMobMore()" data-admin>🏢 Tambah Bidang</div>
+  <div class="mob-dd-item" onclick="switchView('ikpa',this);closeMobMore()" data-view="ikpa">🎯 IKPA</div>
   <div class="mob-dd-item" onclick="openExportModal();closeMobMore()">📤 Ekspor &amp; Laporan</div>
   <div class="mob-dd-item" onclick="openSyncModal();closeMobMore()">☁️ Sinkronisasi</div>
   <div class="mob-dd-item" onclick="openShareModal();closeMobMore()">🔗 Bagikan</div>
@@ -1234,7 +1236,13 @@ body.logged-in [data-admin].show-admin{display:flex;}
 <script>
 const MN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const MS=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
-const PAGE_TITLES={dashboard:'📈 Dashboard Pimpinan',kegiatan:'📋 Monitoring Per Kegiatan',bulan:'📅 Monitoring Per Bulan',kalender:'🗓️ Kalender Kegiatan',timeline:'📊 Timeline Pelaksanaan'};
+const PAGE_TITLES={dashboard:'📈 Dashboard Pimpinan',kegiatan:'📋 Monitoring Per Kegiatan',bulan:'📅 Monitoring Per Bulan',kalender:'🗓️ Kalender Kegiatan',timeline:'📊 Timeline Pelaksanaan',ikpa:'🎯 IKPA — Penyerapan Anggaran'};
+const IKPA_CONF={
+  '51':{nama:'Belanja Pegawai',icon:'👤',color:'#007c91',target:[20,50,75,95],threshold:[10,10,10,0]},
+  '52':{nama:'Belanja Barang',icon:'📦',color:'#e8a020',target:[15,50,70,90],threshold:[0,0,0,0]},
+  '53':{nama:'Belanja Modal',icon:'🏗️',color:'#7c5cbf',target:[10,40,70,90],threshold:[0,0,0,0]},
+  '57':{nama:'Belanja Bansos',icon:'🤝',color:'#00b87a',target:[25,50,75,95],threshold:[0,0,0,0]}
+};
 const DOK_TYPES=['KAK','RAB','SK','Undangan','Laporan','Foto','Lainnya'];
 const DOK_COLORS={KAK:'#007c91',RAB:'#e8a020',SK:'#7c5cbf',Undangan:'#2980b9',Laporan:'#00b87a',Foto:'#e67e22',Lainnya:'#7a9aac'};
 
@@ -1321,6 +1329,10 @@ function migrateData(d){
   if(d&&d.bidang&&d.kegiatan){
     const validIds=new Set(d.bidang.map(b=>b.id));
     d.kegiatan=d.kegiatan.filter(k=>validIds.has(k.bidangId));
+  }
+  // Inisialisasi data IKPA jika belum ada
+  if(d&&!d.ikpa){
+    d.ikpa={belanja:{'51':{pagu:0,realisasi:[0,0,0,0]},'52':{pagu:0,realisasi:[0,0,0,0]},'53':{pagu:0,realisasi:[0,0,0,0]},'57':{pagu:0,realisasi:[0,0,0,0]}}};
   }
   return d;
 }
@@ -1427,11 +1439,12 @@ function renderAll(){
   document.getElementById('pageTitle').textContent=PAGE_TITLES[cv]||'';
   // Hide normal page-header filters on dashboard (dashboard has its own header)
   const ph=document.querySelector('.page-header');
-  if(ph) ph.style.display=cv==='dashboard'?'none':'';
+  if(ph) ph.style.display=(cv==='dashboard'||cv==='ikpa')?'none':'';
   if(cv==='dashboard')renderDashboard();
   else if(cv==='kegiatan')renderKeg();
   else if(cv==='bulan')renderBulan();
   else if(cv==='kalender')renderKal();
+  else if(cv==='ikpa')renderIKPA();
   else renderTL();
 }
 function switchView(v,el){
@@ -2637,6 +2650,197 @@ async function pullFromServer(silent=false){
 // Auto-refresh 30 detik dihapus — pull hanya saat pindah halaman atau refresh manual
 function startAutoRefresh(){
   // (tidak ada interval — pull dilakukan di switchView)
+}
+
+// ════════════════════════════════════
+// IKPA — INDIKATOR KINERJA PELAKSANAAN ANGGARAN
+// ════════════════════════════════════
+function getIKPAData(){
+  if(!data.ikpa||!data.ikpa.belanja){
+    data.ikpa={belanja:{'51':{pagu:0,realisasi:[0,0,0,0]},'52':{pagu:0,realisasi:[0,0,0,0]},'53':{pagu:0,realisasi:[0,0,0,0]},'57':{pagu:0,realisasi:[0,0,0,0]}}};
+  }
+  return data.ikpa;
+}
+function getCurrentTW(){return Math.ceil((new Date().getMonth()+1)/3);}
+function ikpaNilai(kode,twIdx){
+  const conf=IKPA_CONF[kode],bl=getIKPAData().belanja[kode];
+  if(!bl||!bl.pagu)return null;
+  const pct=(bl.realisasi[twIdx]/bl.pagu)*100;
+  const target=conf.target[twIdx],threshold=conf.threshold[twIdx],minPct=target-threshold;
+  let nilai,status;
+  if(pct>=target){nilai=100;status='aman';}
+  else if(threshold>0&&pct>=minPct){nilai=100;status='toleransi';}
+  else{nilai=minPct>0?Math.min(100,Math.round((pct/minPct)*100)):0;status=pct<minPct*0.7?'kritis':'perhatian';}
+  return{pct,target,minPct,threshold,nilai,status};
+}
+function setIKPAPagu(kode,val){getIKPAData().belanja[kode].pagu=parseFloat(val)||0;}
+function setIKPAReal(kode,tw,val){getIKPAData().belanja[kode].realisasi[tw]=parseFloat(val)||0;renderIKPA();}
+function saveIKPA(){saveLS();toast('Data IKPA tersimpan','✅');}
+
+function renderIKPA(){
+  const tw=getCurrentTW(),twIdx=tw-1;
+  const twRom=['I','II','III','IV'];
+  const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
+  const statusColor={aman:'#00b87a',toleransi:'#007c91',perhatian:'#e8a020',kritis:'#e05555'};
+  const statusLabel={aman:'Aman',toleransi:'Dalam Toleransi',perhatian:'Perlu Perhatian',kritis:'Kritis'};
+  const ikpa=getIKPAData();
+  const codes=Object.keys(IKPA_CONF);
+
+  // Hitung estimasi nilai rata-rata TW saat ini
+  let totN=0,cntN=0;
+  codes.forEach(kode=>{const bl=ikpa.belanja[kode];if(bl&&bl.pagu>0){const n=ikpaNilai(kode,twIdx);if(n){totN+=n.nilai;cntN++;}}});
+  const avgN=cntN>0?Math.round(totN/cntN):null;
+  const avgColor=avgN===null?'#7a9aac':avgN>=90?'#00b87a':avgN>=75?'#007c91':avgN>=60?'#e8a020':'#e05555';
+
+  const cardsHtml=codes.map(kode=>{
+    const conf=IKPA_CONF[kode],bl=ikpa.belanja[kode];
+    const n=bl&&bl.pagu>0?ikpaNilai(kode,twIdx):null;
+    const pct=n?+n.pct.toFixed(1):0;
+    const stColor=n?statusColor[n.status]:'#7a9aac';
+    const stLabel=n?statusLabel[n.status]:'Belum diisi';
+    const targetPct=conf.target[twIdx],thPct=conf.threshold[twIdx],minPct=targetPct-thPct;
+    const barPct=Math.min(100,pct);
+    return `<div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+      <div style="padding:13px 16px 11px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <div>
+          <div style="font-size:10px;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;">Akun ${kode}</div>
+          <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-top:1px;">${conf.icon} ${conf.nama}</div>
+        </div>
+        <div style="padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;background:${stColor}18;color:${stColor};border:1px solid ${stColor}40;">${stLabel}</div>
+      </div>
+      <div style="padding:14px 16px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt3);margin-bottom:7px;">
+          <span>Realisasi: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${pct}%</strong></span>
+          <span>Target TW${twRom[twIdx]}: <strong style="color:${conf.color};">${targetPct}%</strong>${thPct>0?` <span style="color:#e8a020;font-size:10px;">(min ${minPct}%)</span>`:''}</span>
+        </div>
+        <div style="position:relative;height:11px;background:#e4edf3;border-radius:99px;">
+          ${thPct>0?`<div style="position:absolute;left:${minPct}%;width:${thPct}%;height:100%;background:${conf.color}22;border-radius:99px;"></div>`:''}
+          <div style="position:absolute;left:0;width:${barPct}%;height:100%;background:${stColor};border-radius:99px;transition:width .4s;"></div>
+          <div style="position:absolute;left:${Math.min(98,targetPct)}%;top:-3px;width:2.5px;height:17px;background:${conf.color};border-radius:1px;"></div>
+          ${thPct>0&&minPct>0?`<div style="position:absolute;left:${Math.min(98,minPct)}%;top:-3px;width:2px;height:17px;background:#e8a020;border-radius:1px;"></div>`:''}
+        </div>
+        <div style="display:flex;gap:12px;margin-top:5px;font-size:10px;color:var(--txt3);flex-wrap:wrap;">
+          <span><span style="display:inline-block;width:8px;height:8px;background:${conf.color};border-radius:1px;margin-right:3px;vertical-align:middle;"></span>Target ${targetPct}%</span>
+          ${thPct>0?`<span><span style="display:inline-block;width:8px;height:8px;background:#e8a020;border-radius:1px;margin-right:3px;vertical-align:middle;"></span>Min ${minPct}%</span>`:''}
+          ${n?`<span style="margin-left:auto;font-size:11px;font-weight:700;color:${n.nilai>=100?'#00b87a':'#e05555'};">Nilai: ${n.nilai}</span>`:''}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);">
+          <div>
+            <div style="font-size:10px;color:var(--txt3);margin-bottom:3px;">Pagu (juta Rp)</div>
+            <input type="number" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--surf);outline:none;box-sizing:border-box;"
+              value="${bl&&bl.pagu?+(bl.pagu/1e6).toFixed(3):''}" placeholder="0"
+              onchange="setIKPAPagu('${kode}',this.value*1e6)"
+              onfocus="this.style.borderColor='${conf.color}'"
+              onblur="this.style.borderColor='var(--bdr)'">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--txt3);margin-bottom:3px;">Realisasi TW${twRom[twIdx]} (juta Rp)</div>
+            <input type="number" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--surf);outline:none;box-sizing:border-box;"
+              value="${bl&&bl.realisasi[twIdx]?+(bl.realisasi[twIdx]/1e6).toFixed(3):''}" placeholder="0"
+              onchange="setIKPAReal('${kode}',${twIdx},this.value*1e6)"
+              onfocus="this.style.borderColor='${conf.color}'"
+              onblur="this.style.borderColor='var(--bdr)'">
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const tabelRows=codes.map((kode,ki)=>{
+    const conf=IKPA_CONF[kode],bl=ikpa.belanja[kode];
+    const bg=ki%2===0?'':'rgba(0,0,0,.015)';
+    const targetRow=`<tr style="background:${bg};">
+      <td rowspan="2" style="padding:10px 14px;border-right:1px solid var(--bdr);vertical-align:middle;border-bottom:1px solid var(--bdr)30;">
+        <div style="font-weight:600;color:var(--ink);font-size:12px;">${conf.icon} ${conf.nama}</div>
+        <div style="font-size:10px;color:var(--txt3);">Akun ${kode}</div>
+      </td>
+      ${[0,1,2,3].map(i=>{
+        const active=i===twIdx;
+        return `<td style="padding:8px 14px;text-align:center;background:${active?'rgba(0,124,145,.05)':''};border-bottom:1px solid var(--bdr)15;">
+          <div style="font-size:12px;font-weight:700;color:${conf.color};">${conf.target[i]}%</div>
+          ${conf.threshold[i]>0?`<div style="font-size:9px;color:#e8a020;">±${conf.threshold[i]}%</div>`:'<div style="font-size:9px;color:var(--txt3);">target</div>'}
+        </td>`;
+      }).join('')}
+      <td rowspan="2" style="padding:10px 14px;text-align:right;border-left:1px solid var(--bdr);vertical-align:middle;font-family:'Fira Code',monospace;font-size:12px;color:var(--ink);border-bottom:1px solid var(--bdr)30;">
+        ${bl&&bl.pagu>0?fmt(bl.pagu):'<span style="color:var(--txt3);">—</span>'}
+      </td>
+    </tr>`;
+    const realRow=`<tr style="background:${bg};">
+      ${[0,1,2,3].map(i=>{
+        const active=i===twIdx;
+        const real=bl?bl.realisasi[i]:0;
+        const pct=bl&&bl.pagu>0?(real/bl.pagu*100):0;
+        const n=bl&&bl.pagu>0&&real>0?ikpaNilai(kode,i):null;
+        const sc=n?statusColor[n.status]:'#7a9aac';
+        return `<td style="padding:3px 14px 10px;text-align:center;background:${active?'rgba(0,124,145,.05)':''};border-bottom:1px solid var(--bdr)30;">
+          ${n?`<div style="font-size:12px;font-weight:600;font-family:'Fira Code',monospace;color:${sc};">${pct.toFixed(1)}%</div>
+          <div style="font-size:9px;color:${sc};">nilai ${n.nilai}</div>`:
+          `<div style="font-size:11px;color:var(--txt3);">—</div>`}
+        </td>`;
+      }).join('')}
+    </tr>`;
+    return targetRow+realRow;
+  }).join('');
+
+  document.getElementById('mainContent').innerHTML=`
+  <div class="dash-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+    <div>
+      <h2 style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:var(--ink);margin:0 0 3px;">🎯 IKPA — Penyerapan Anggaran</h2>
+      <div style="font-size:11px;color:var(--txt3);">Berdasarkan S-56/PB.2/2026 · PER-5/PB/2024 · Kanwil DJPb Prov. Sumatera Selatan</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      ${[1,2,3,4].map(i=>`<div style="padding:5px 11px;border-radius:20px;font-size:11px;font-weight:600;background:${i===tw?'var(--teal)':'rgba(0,0,0,.05)'};color:${i===tw?'white':'var(--txt3)'};border:1px solid ${i===tw?'var(--teal)':'var(--bdr)'};">TW ${twRom[i-1]} <span style="opacity:.7;font-size:10px;">${TWMON[i-1].map(m=>MS[m-1]).join('-')}</span></div>`).join('')}
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:${avgN!==null?'160px 1fr':'1fr'};background:var(--ink);border-radius:12px;overflow:hidden;margin:0 0 20px;">
+    ${avgN!==null?`<div style="padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid rgba(255,255,255,.08);">
+      <div style="font-family:'Sora',sans-serif;font-size:38px;font-weight:800;color:${avgColor};line-height:1;">${avgN}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.4);text-align:center;margin-top:4px;line-height:1.4;">Estimasi Nilai<br>TW ${twRom[twIdx]}</div>
+    </div>`:''}
+    <div style="padding:20px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:180px;">
+        <div style="font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;">Periode Aktif</div>
+        <div style="font-size:15px;font-weight:600;color:white;">Triwulan ${twRom[twIdx]} · ${MN[TWMON[twIdx][0]-1]}–${MN[TWMON[twIdx][2]-1]} ${getTAYear()}</div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,.35);max-width:340px;line-height:1.6;">
+        Nilai kinerja = rata-rata tertimbang realisasi vs target per jenis belanja.<br>
+        Threshold <span style="color:#e8a020;">±10%</span> berlaku khusus Belanja Pegawai (51) TW I–III.
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-bottom:22px;">
+    ${cardsHtml}
+  </div>
+
+  <div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+    <div style="padding:13px 16px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);">📋 Target & Realisasi per Triwulan</div>
+      <button class="btn btn-p" onclick="saveIKPA()" style="font-size:12px;padding:6px 14px;">💾 Simpan Data</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+          <tr style="background:var(--surf);">
+            <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);min-width:160px;">JENIS BELANJA</th>
+            ${[0,1,2,3].map(i=>`<th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:600;color:${i===twIdx?'var(--teal)':'var(--txt3)'};letter-spacing:.5px;border-bottom:1px solid var(--bdr);background:${i===twIdx?'rgba(0,124,145,.05)':''};">
+              TW ${twRom[i]}<div style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">${TWMON[i].map(m=>MS[m-1]).join('-')}</div>
+            </th>`).join('')}
+            <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-left:1px solid var(--bdr);">PAGU</th>
+          </tr>
+        </thead>
+        <tbody>${tabelRows}</tbody>
+      </table>
+    </div>
+    <div style="padding:10px 16px;border-top:1px solid var(--bdr);display:flex;gap:14px;flex-wrap:wrap;font-size:10px;color:var(--txt3);">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#00b87a;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Aman (≥ target)</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#007c91;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Dalam Toleransi</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#e8a020;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Perlu Perhatian</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#e05555;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Kritis</span>
+      <span style="margin-left:auto;"><span style="color:#e8a020;">±%</span> = batas toleransi (khusus akun 51)</span>
+    </div>
+  </div>`;
 }
 
 function openSyncModal(){
