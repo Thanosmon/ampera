@@ -1240,8 +1240,7 @@ const PAGE_TITLES={dashboard:'📈 Dashboard Pimpinan',kegiatan:'📋 Monitoring
 const IKPA_CONF={
   '51':{nama:'Belanja Pegawai',icon:'👤',color:'#007c91',target:[20,50,75,95],threshold:[10,10,10,0]},
   '52':{nama:'Belanja Barang',icon:'📦',color:'#e8a020',target:[15,50,70,90],threshold:[0,0,0,0]},
-  '53':{nama:'Belanja Modal',icon:'🏗️',color:'#7c5cbf',target:[10,40,70,90],threshold:[0,0,0,0]},
-  '57':{nama:'Belanja Bansos',icon:'🤝',color:'#00b87a',target:[25,50,75,95],threshold:[0,0,0,0]}
+  '53':{nama:'Belanja Modal',icon:'🏗️',color:'#7c5cbf',target:[10,40,70,90],threshold:[0,0,0,0]}
 };
 const DOK_TYPES=['KAK','RAB','SK','Undangan','Laporan','Foto','Lainnya'];
 const DOK_COLORS={KAK:'#007c91',RAB:'#e8a020',SK:'#7c5cbf',Undangan:'#2980b9',Laporan:'#00b87a',Foto:'#e67e22',Lainnya:'#7a9aac'};
@@ -2657,14 +2656,20 @@ function startAutoRefresh(){
 // ════════════════════════════════════
 function getIKPAData(){
   if(!data.ikpa||!data.ikpa.belanja){
-    data.ikpa={belanja:{'51':{pagu:0,realisasi:[0,0,0,0]},'52':{pagu:0,realisasi:[0,0,0,0]},'53':{pagu:0,realisasi:[0,0,0,0]},'57':{pagu:0,realisasi:[0,0,0,0]}}};
+    data.ikpa={belanja:{'51':{pagu:0,realisasi:[0,0,0,0],paguSet:false},'52':{pagu:0,realisasi:[0,0,0,0],paguSet:false},'53':{pagu:0,realisasi:[0,0,0,0],paguSet:false}}};
   }
+  // Pastikan setiap entry punya flag paguSet
+  Object.keys(IKPA_CONF).forEach(k=>{
+    if(!data.ikpa.belanja[k])data.ikpa.belanja[k]={pagu:0,realisasi:[0,0,0,0],paguSet:false};
+    if(data.ikpa.belanja[k].paguSet===undefined)data.ikpa.belanja[k].paguSet=false;
+  });
   return data.ikpa;
 }
 function getCurrentTW(){return Math.ceil((new Date().getMonth()+1)/3);}
 function ikpaNilai(kode,twIdx){
   const conf=IKPA_CONF[kode],bl=getIKPAData().belanja[kode];
-  if(!bl||!bl.pagu)return null;
+  if(!bl||!bl.paguSet)return null;        // belum diisi sama sekali
+  if(bl.pagu===0)return{pct:0,target:conf.target[twIdx],minPct:conf.target[twIdx]-conf.threshold[twIdx],threshold:conf.threshold[twIdx],nilai:null,status:'na'}; // pagu 0 = N/A
   const pct=(bl.realisasi[twIdx]/bl.pagu)*100;
   const target=conf.target[twIdx],threshold=conf.threshold[twIdx],minPct=target-threshold;
   let nilai,status;
@@ -2673,7 +2678,11 @@ function ikpaNilai(kode,twIdx){
   else{nilai=minPct>0?Math.min(100,Math.round((pct/minPct)*100)):0;status=pct<minPct*0.7?'kritis':'perhatian';}
   return{pct,target,minPct,threshold,nilai,status};
 }
-function setIKPAPagu(kode,val){getIKPAData().belanja[kode].pagu=parseFloat(val)||0;}
+function setIKPAPagu(kode,val){
+  const bl=getIKPAData().belanja[kode];
+  bl.pagu=parseFloat(val)||0;
+  bl.paguSet=true;
+}
 function setIKPAReal(kode,tw,val){getIKPAData().belanja[kode].realisasi[tw]=parseFloat(val)||0;renderIKPA();}
 function saveIKPA(){saveLS();toast('Data IKPA tersimpan','✅');}
 
@@ -2681,21 +2690,21 @@ function renderIKPA(){
   const tw=getCurrentTW(),twIdx=tw-1;
   const twRom=['I','II','III','IV'];
   const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
-  const statusColor={aman:'#00b87a',toleransi:'#007c91',perhatian:'#e8a020',kritis:'#e05555'};
-  const statusLabel={aman:'Aman',toleransi:'Dalam Toleransi',perhatian:'Perlu Perhatian',kritis:'Kritis'};
+  const statusColor={aman:'#00b87a',toleransi:'#007c91',perhatian:'#e8a020',kritis:'#e05555',na:'#7a9aac'};
+  const statusLabel={aman:'Aman',toleransi:'Dalam Toleransi',perhatian:'Perlu Perhatian',kritis:'Kritis',na:'Tidak Ada'};
   const ikpa=getIKPAData();
   const codes=Object.keys(IKPA_CONF);
 
-  // Hitung estimasi nilai rata-rata TW saat ini
+  // Hitung estimasi nilai rata-rata TW saat ini (skip yg na/belum diisi)
   let totN=0,cntN=0;
-  codes.forEach(kode=>{const bl=ikpa.belanja[kode];if(bl&&bl.pagu>0){const n=ikpaNilai(kode,twIdx);if(n){totN+=n.nilai;cntN++;}}});
+  codes.forEach(kode=>{const bl=ikpa.belanja[kode];if(bl&&bl.paguSet&&bl.pagu>0){const n=ikpaNilai(kode,twIdx);if(n&&n.nilai!==null){totN+=n.nilai;cntN++;}}});
   const avgN=cntN>0?Math.round(totN/cntN):null;
   const avgColor=avgN===null?'#7a9aac':avgN>=90?'#00b87a':avgN>=75?'#007c91':avgN>=60?'#e8a020':'#e05555';
 
   const cardsHtml=codes.map(kode=>{
     const conf=IKPA_CONF[kode],bl=ikpa.belanja[kode];
-    const n=bl&&bl.pagu>0?ikpaNilai(kode,twIdx):null;
-    const pct=n?+n.pct.toFixed(1):0;
+    const n=bl&&bl.paguSet?ikpaNilai(kode,twIdx):null;
+    const pct=(n&&n.status!=='na')?+n.pct.toFixed(1):0;
     const stColor=n?statusColor[n.status]:'#7a9aac';
     const stLabel=n?statusLabel[n.status]:'Belum diisi';
     const targetPct=conf.target[twIdx],thPct=conf.threshold[twIdx],minPct=targetPct-thPct;
@@ -2722,13 +2731,13 @@ function renderIKPA(){
         <div style="display:flex;gap:12px;margin-top:5px;font-size:10px;color:var(--txt3);flex-wrap:wrap;">
           <span><span style="display:inline-block;width:8px;height:8px;background:${conf.color};border-radius:1px;margin-right:3px;vertical-align:middle;"></span>Target ${targetPct}%</span>
           ${thPct>0?`<span><span style="display:inline-block;width:8px;height:8px;background:#e8a020;border-radius:1px;margin-right:3px;vertical-align:middle;"></span>Min ${minPct}%</span>`:''}
-          ${n?`<span style="margin-left:auto;font-size:11px;font-weight:700;color:${n.nilai>=100?'#00b87a':'#e05555'};">Nilai: ${n.nilai}</span>`:''}
+          ${n&&n.status!=='na'&&n.nilai!==null?`<span style="margin-left:auto;font-size:11px;font-weight:700;color:${n.nilai>=100?'#00b87a':'#e05555'};">Nilai: ${n.nilai}</span>`:n&&n.status==='na'?`<span style="margin-left:auto;font-size:10px;color:var(--txt3);">Tidak diperhitungkan</span>`:''}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);">
           <div>
             <div style="font-size:10px;color:var(--txt3);margin-bottom:3px;">Pagu (juta Rp)</div>
             <input type="number" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--surf);outline:none;box-sizing:border-box;"
-              value="${bl&&bl.pagu?+(bl.pagu/1e6).toFixed(3):''}" placeholder="0"
+              value="${bl&&bl.paguSet?+(bl.pagu/1e6).toFixed(3):''}" placeholder="0"
               onchange="setIKPAPagu('${kode}',this.value*1e6)"
               onfocus="this.style.borderColor='${conf.color}'"
               onblur="this.style.borderColor='var(--bdr)'">
@@ -2762,20 +2771,21 @@ function renderIKPA(){
         </td>`;
       }).join('')}
       <td rowspan="2" style="padding:10px 14px;text-align:right;border-left:1px solid var(--bdr);vertical-align:middle;font-family:'Fira Code',monospace;font-size:12px;color:var(--ink);border-bottom:1px solid var(--bdr)30;">
-        ${bl&&bl.pagu>0?fmt(bl.pagu):'<span style="color:var(--txt3);">—</span>'}
+        ${bl&&bl.paguSet?(bl.pagu>0?fmt(bl.pagu):'<span style="color:var(--txt3);font-size:11px;">Tidak Ada</span>'):'<span style="color:var(--txt3);">—</span>'}
       </td>
     </tr>`;
     const realRow=`<tr style="background:${bg};">
       ${[0,1,2,3].map(i=>{
         const active=i===twIdx;
         const real=bl?bl.realisasi[i]:0;
-        const pct=bl&&bl.pagu>0?(real/bl.pagu*100):0;
-        const n=bl&&bl.pagu>0&&real>0?ikpaNilai(kode,i):null;
+        const n=bl&&bl.paguSet?ikpaNilai(kode,i):null;
         const sc=n?statusColor[n.status]:'#7a9aac';
+        const pct=n&&n.status!=='na'&&bl.pagu>0?(real/bl.pagu*100):0;
         return `<td style="padding:3px 14px 10px;text-align:center;background:${active?'rgba(0,124,145,.05)':''};border-bottom:1px solid var(--bdr)30;">
-          ${n?`<div style="font-size:12px;font-weight:600;font-family:'Fira Code',monospace;color:${sc};">${pct.toFixed(1)}%</div>
-          <div style="font-size:9px;color:${sc};">nilai ${n.nilai}</div>`:
-          `<div style="font-size:11px;color:var(--txt3);">—</div>`}
+          ${n&&n.status==='na'?`<div style="font-size:10px;color:var(--txt3);">N/A</div>`:
+            n&&bl.pagu>0?`<div style="font-size:12px;font-weight:600;font-family:'Fira Code',monospace;color:${sc};">${pct.toFixed(1)}%</div>
+            <div style="font-size:9px;color:${sc};">nilai ${n.nilai}</div>`:
+            `<div style="font-size:11px;color:var(--txt3);">—</div>`}
         </td>`;
       }).join('')}
     </tr>`;
@@ -2785,8 +2795,8 @@ function renderIKPA(){
   document.getElementById('mainContent').innerHTML=`
   <div class="dash-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
     <div>
-      <h2 style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:var(--ink);margin:0 0 3px;">🎯 IKPA — Penyerapan Anggaran</h2>
-      <div style="font-size:11px;color:var(--txt3);">Berdasarkan S-56/PB.2/2026 · PER-5/PB/2024 · Kanwil DJPb Prov. Sumatera Selatan</div>
+      <h2 style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:white;margin:0 0 3px;">🎯 IKPA — Penyerapan Anggaran</h2>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);">Kanwil DJPb Prov. Sumatera Selatan</div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
       ${[1,2,3,4].map(i=>`<div style="padding:5px 11px;border-radius:20px;font-size:11px;font-weight:600;background:${i===tw?'var(--teal)':'rgba(0,0,0,.05)'};color:${i===tw?'white':'var(--txt3)'};border:1px solid ${i===tw?'var(--teal)':'var(--bdr)'};">TW ${twRom[i-1]} <span style="opacity:.7;font-size:10px;">${TWMON[i-1].map(m=>MS[m-1]).join('-')}</span></div>`).join('')}
