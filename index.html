@@ -1031,6 +1031,7 @@ body.logged-in [data-admin].show-admin{display:flex;}
       <div class="sid-section-lbl">Menu Utama</div>
       <div class="sid-item" onclick="switchView('dashboard',this)" data-view="dashboard"><span class="sid-icon">📈</span> Dashboard</div>
       <div class="sid-item active" onclick="switchView('kegiatan',this)" data-view="kegiatan"><span class="sid-icon">📋</span> Per Kegiatan</div>
+      <div class="sid-item" onclick="switchView('bidang',this)" data-view="bidang"><span class="sid-icon">🏢</span> Per Bidang</div>
       <div class="sid-item" onclick="switchView('bulan',this)" data-view="bulan"><span class="sid-icon">📅</span> Per Bulan</div>
       <div class="sid-item" onclick="switchView('kalender',this)" data-view="kalender"><span class="sid-icon">🗓️</span> Kalender</div>
       <div class="sid-item" onclick="switchView('timeline',this)" data-view="timeline"><span class="sid-icon">📊</span> Timeline</div>
@@ -1087,6 +1088,7 @@ body.logged-in [data-admin].show-admin{display:flex;}
 <div class="mob-more-dd" id="mobMoreDD">
   <div class="mob-dd-item" onclick="openAddKegiatan();closeMobMore()" data-admin>＋ Tambah Kegiatan</div>
   <div class="mob-dd-item" onclick="openAddBidang();closeMobMore()" data-admin>🏢 Tambah Bidang</div>
+  <div class="mob-dd-item" onclick="switchView('bidang',this);closeMobMore()" data-view="bidang">🏢 Per Bidang</div>
   <div class="mob-dd-item" onclick="switchView('ikpa',this);closeMobMore()" data-view="ikpa">🎯 IKPA</div>
   <div class="mob-dd-item" onclick="openExportModal();closeMobMore()">📤 Ekspor &amp; Laporan</div>
   <div class="mob-dd-item" onclick="openSyncModal();closeMobMore()">☁️ Sinkronisasi</div>
@@ -1096,6 +1098,7 @@ body.logged-in [data-admin].show-admin{display:flex;}
 <nav class="mob-nav">
   <div class="mob-nav-item active" onclick="switchView('dashboard',this)" data-view="dashboard"><span class="mn-ico">📈</span>Dashboard</div>
   <div class="mob-nav-item" onclick="switchView('kegiatan',this)" data-view="kegiatan"><span class="mn-ico">📋</span>Kegiatan</div>
+  <div class="mob-nav-item" onclick="switchView('bidang',this)" data-view="bidang"><span class="mn-ico">🏢</span>Per Bidang</div>
   <div class="mob-nav-item" onclick="switchView('bulan',this)" data-view="bulan"><span class="mn-ico">📅</span>Bulan</div>
   <div class="mob-nav-item" onclick="switchView('kalender',this)" data-view="kalender"><span class="mn-ico">🗓️</span>Kalender</div>
   <div class="mob-nav-item" onclick="switchView('timeline',this)" data-view="timeline"><span class="mn-ico">📊</span>Timeline</div>
@@ -1248,7 +1251,7 @@ body.logged-in [data-admin].show-admin{display:flex;}
 <script>
 const MN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const MS=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
-const PAGE_TITLES={dashboard:'📈 Dashboard Pimpinan',kegiatan:'📋 Monitoring Per Kegiatan',bulan:'📅 Monitoring Per Bulan',kalender:'🗓️ Kalender Kegiatan',timeline:'📊 Timeline Pelaksanaan',ikpa:'🎯 IKPA — Penyerapan Anggaran'};
+const PAGE_TITLES={dashboard:'📈 Dashboard Pimpinan',kegiatan:'📋 Monitoring Per Kegiatan',bidang:'🏢 Fokus Per Bidang/Bagian',bulan:'📅 Monitoring Per Bulan',kalender:'🗓️ Kalender Kegiatan',timeline:'📊 Timeline Pelaksanaan',ikpa:'🎯 IKPA — Penyerapan Anggaran'};
 const IKPA_CONF={
   '51':{nama:'Belanja Pegawai',icon:'👤',color:'#007c91',target:[20,50,75,95],threshold:[10,10,10,0]},
   '52':{nama:'Belanja Barang',icon:'📦',color:'#e8a020',target:[15,50,70,90],threshold:[0,0,0,0]},
@@ -1457,6 +1460,7 @@ function renderAll(){
   if(ph) ph.style.display=(cv==='dashboard'||cv==='ikpa')?'none':'';
   if(cv==='dashboard')renderDashboard();
   else if(cv==='kegiatan')renderKeg();
+  else if(cv==='bidang')renderPerBidang();
   else if(cv==='bulan')renderBulan();
   else if(cv==='kalender')renderKal();
   else if(cv==='ikpa')renderIKPA();
@@ -1639,6 +1643,108 @@ function renderKeg(){
 function togExp(id){
   document.getElementById('rr-'+id)?.classList.toggle('open');
   document.getElementById('ei-'+id)?.classList.toggle('open');
+}
+
+// ── RENDER PER BIDANG ──
+let _activeBidangId=null;
+function renderPerBidang(){
+  const cont=document.getElementById('mainContent');
+  if(!data.bidang||!data.bidang.length){
+    cont.innerHTML=`<div class="kosong" style="padding:60px">Belum ada bidang.<br><button class="btn btn-o" style="margin-top:10px" onclick="openAddBidang()">+ Tambah Bidang</button></div>`;
+    return;
+  }
+  if(!_activeBidangId||!data.bidang.find(b=>b.id===_activeBidangId)){
+    _activeBidangId=data.bidang[0].id;
+  }
+  const b=data.bidang.find(b=>b.id===_activeBidangId);
+  const ks=data.kegiatan.filter(k=>k.bidangId===_activeBidangId);
+  const totB=ks.reduce((s,k)=>s+kT(k),0);
+  const dnB=ks.reduce((s,k)=>s+kTDone(k),0);
+  const pct=totB>0?Math.round(dnB/totB*100):0;
+  const ksDone=ks.filter(k=>allDone(k)).length;
+
+  // Tab bar
+  let tabsHtml=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">`;
+  data.bidang.forEach(bd=>{
+    const active=bd.id===_activeBidangId;
+    const ksBd=data.kegiatan.filter(k=>k.bidangId===bd.id);
+    const totBd=ksBd.reduce((s,k)=>s+kT(k),0);
+    const dnBd=ksBd.reduce((s,k)=>s+kTDone(k),0);
+    const pBd=totBd>0?Math.round(dnBd/totBd*100):0;
+    tabsHtml+=`<button onclick="_activeBidangId='${bd.id}';renderAll()" style="padding:8px 16px;border-radius:10px;border:1.5px solid ${active?'var(--accent)':'rgba(255,255,255,0.12)'};background:${active?'rgba(99,179,237,0.18)':'rgba(255,255,255,0.05)'};color:${active?'var(--accent)':'var(--txt2)'};font-family:'Figtree',sans-serif;font-size:13px;font-weight:${active?700:500};cursor:pointer;transition:all 0.15s;white-space:nowrap">
+      ${escH(bd.nama)}<span style="margin-left:8px;font-size:11px;opacity:0.7">${pBd}%</span>
+    </button>`;
+  });
+  tabsHtml+=`</div>`;
+
+  // Summary cards
+  let html=tabsHtml;
+  html+=`<div class="bid-block">
+    <div class="bid-head">
+      <div class="bid-head-left"><div class="bid-head-accent"></div><h2>${escH(b.nama)}</h2></div>
+      <div class="bid-metas">
+        <div class="bid-meta"><div class="bid-meta-lbl">Total Anggaran</div><div class="bid-meta-val">${fmt(totB)}</div></div>
+        <div class="bid-meta"><div class="bid-meta-lbl">Terlaksana</div><div class="bid-meta-val">${fmt(dnB)}</div></div>
+        <div class="bid-meta"><div class="bid-meta-lbl">Kegiatan Selesai</div><div class="bid-meta-val">${ksDone} / ${ks.length}</div></div>
+        <div class="bid-prog-outer"><div class="bid-prog-track"><div class="bid-prog-bar" style="width:${pct}%"></div></div><div class="bid-prog-pct">${pct}% selesai</div></div>
+      </div>
+    </div>
+    <div class="tbl-wrap">`;
+
+  if(!ks.length){
+    html+=`<div class="kosong">Belum ada kegiatan di bidang ini.<br><button class="btn btn-o" style="margin-top:10px" onclick="openAddKegiatan('${b.id}')">+ Tambah Kegiatan</button></div>`;
+  }else{
+    html+=`<table class="keg-tbl">
+      <colgroup><col class="col-exp"><col class="col-nm"><col class="col-tmp"><col class="col-jad"><col class="col-tot"><col class="col-dn"><col class="col-aks"></colgroup>
+      <thead><tr>
+        <th></th><th>Nama Kegiatan</th><th>Tempat</th>
+        <th>Jadwal per Bulan (klik untuk tandai terlaksana)</th>
+        <th class="r">Total Anggaran</th><th class="r">Terlaksana</th><th class="c">Aksi</th>
+      </tr></thead><tbody>`;
+    ks.forEach(k=>{
+      const tot=kT(k),done=kTDone(k),isAll=allDone(k);
+      const dokCnt=k.dokumen&&k.dokumen.length?`<span class="dok-cnt">📎 ${k.dokumen.length}</span>`:'';
+      html+=`<tr class="${isAll?'done-row':''}">
+        <td class="c" style="padding:0 4px"><span class="exp-ico" id="ei-${k.id}" onclick="togExp('${k.id}')">▶</span></td>
+        <td class="nm-td">
+          <div class="keg-name" onclick="togExp('${k.id}')">${escH(k.nama)}${dokCnt}</div>
+          ${k.catatan?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${escH(k.catatan)}</div>`:''}
+          <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan terlaksana</div>
+        </td>
+        <td class="muted">${escH(k.tempat)}</td>
+        <td class="jad-td"><div style="display:flex;flex-wrap:wrap;gap:2px">${jadwalChipsHTML(k)}</div></td>
+        <td class="r mono">${fmt(tot)}</td>
+        <td class="r mono" style="color:var(--green)">${fmt(done)}</td>
+        <td class="c"><div class="aksi">
+          <button class="ico-btn" title="Edit" onclick="openEdit('${k.id}')">✎</button>
+          <button class="ico-btn del" title="Hapus" onclick="delKeg('${k.id}')">✕</button>
+        </div></td>
+      </tr>
+      <tr class="rin-row" id="rr-${k.id}">
+        <td colspan="7" style="padding:0">
+          <div class="rin-inner">
+            ${jadwalTableHTML(k)}
+            <div style="margin-top:14px">
+              <div class="ri-lbl">Rincian Biaya (Referensi) — ${escH(k.nama)}</div>
+              <table class="ri-tbl">
+                <thead><tr><th>MAK</th><th>Uraian</th><th>Jml</th><th>Hr/Frek</th><th>Satuan</th><th class="r">Biaya/Sat</th><th class="r">Subtotal</th></tr></thead>
+                <tbody>${k.rincian.map(r=>`<tr><td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--teal)">${escH(r.mak||'')}</td><td>${escH(r.uraian)}</td><td>${r.jumlah}</td><td>${r.hari}</td><td>${escH(r.satuan)}</td><td class="r">${fmt(r.biayaSatuan)}</td><td class="r">${fmt(rT(r))}</td></tr>`).join('')}</tbody>
+                <tfoot><tr><td colspan="6" style="font-size:11px;color:var(--txt3)">Total Rincian (referensi)</td><td class="r">${fmt(k.rincian.reduce((s,r)=>s+rT(r),0))}</td></tr></tfoot>
+              </table>
+            </div>
+            <div style="margin-top:14px">
+              <div class="ri-lbl" style="margin-bottom:8px">📎 Dokumen Pendukung</div>
+              <div class="dok-chips">${dokChipsHTML(k.dokumen)}</div>
+            </div>
+          </div>
+        </td>
+      </tr>`;
+    });
+    html+=`</tbody></table>`;
+  }
+  html+=`</div></div>`;
+  html+=`<div class="tkr"><button class="btn btn-o" onclick="openAddKegiatan('${b.id}')">+ Kegiatan untuk ${escH(b.nama)}</button></div>`;
+  cont.innerHTML=html;
 }
 
 // ── RENDER PER BULAN ──
@@ -2883,17 +2989,19 @@ function renderIKPA(){
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);">
           <div>
-            <div style="font-size:10px;color:var(--txt3);margin-bottom:3px;">Pagu (Rp)</div>
-            <input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--surf);outline:none;box-sizing:border-box;"
-              value="${bl&&bl.paguSet?bl.pagu:''}" placeholder="0"
+            <div style="font-size:10px;color:var(--txt3);margin-bottom:2px;">Pagu (Rp)</div>
+            ${bl&&bl.paguSet&&bl.pagu?`<div style="font-size:13px;font-weight:700;font-family:'Fira Code',monospace;color:var(--ink);margin-bottom:3px;letter-spacing:0.3px">${new Intl.NumberFormat('id-ID').format(bl.pagu)}</div>`:''}
+            <input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
+              value="${bl&&bl.paguSet?bl.pagu:''}" placeholder="ketik angka..."
               onchange="setIKPAPagu('${kode}',this.value)"
               onfocus="this.style.borderColor='${conf.color}'"
               onblur="this.style.borderColor='var(--bdr)'">
           </div>
           <div>
-            <div style="font-size:10px;color:var(--txt3);margin-bottom:3px;">Realisasi TW${twRom[twIdx]} (Rp)</div>
-            <input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--surf);outline:none;box-sizing:border-box;"
-              value="${bl&&bl.realisasi[twIdx]?bl.realisasi[twIdx]:''}" placeholder="0"
+            <div style="font-size:10px;color:var(--txt3);margin-bottom:2px;">Realisasi TW${twRom[twIdx]} (Rp)</div>
+            ${bl&&bl.realisasi[twIdx]?`<div style="font-size:13px;font-weight:700;font-family:'Fira Code',monospace;color:var(--green);margin-bottom:3px;letter-spacing:0.3px">${new Intl.NumberFormat('id-ID').format(bl.realisasi[twIdx])}</div>`:''}
+            <input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
+              value="${bl&&bl.realisasi[twIdx]?bl.realisasi[twIdx]:''}" placeholder="ketik angka..."
               onchange="setIKPAReal('${kode}',${twIdx},this.value)"
               onfocus="this.style.borderColor='${conf.color}'"
               onblur="this.style.borderColor='var(--bdr)'">
