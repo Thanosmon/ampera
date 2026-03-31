@@ -2562,20 +2562,34 @@ const AUTH_KEY='ampera_auth';
 const USERS_KEY='ampera_users';
 const SYNC_KEY='ampera_sync';
 
+// Password disimpan sebagai SHA-256 hash — tidak ada plaintext di source
+async function hashPw(pw){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
 const DEFAULT_USERS=[
-  {id:'u1',nama:'Administrator',username:'admin',password:'ampera2026',role:'admin',color:'#007c91'},
-  {id:'u2',nama:'Kepala Kanwil',username:'kakanwil',password:'djpb2026',role:'viewer',color:'#e8a020'},
+  {id:'u1',nama:'Administrator',username:'admin',passwordHash:'adde62303103e1eed71e2cd6f9af9ec335a9fa219e62fb6c83fe5f5668790e82',role:'admin',color:'#007c91'},
+  {id:'u2',nama:'Kepala Kanwil',username:'kakanwil',passwordHash:'f638123304254373a41f94f7828cf8392cc486f34380dc7bfbe7397326577033',role:'viewer',color:'#e8a020'},
 ];
 
 let currentUser=null;
 let usersDB=[];
 let syncCfg={mode:'local',spSite:'',spLib:'',spFile:'ampera-data.json',token:''};
 
-function loadUsersDB(){
+async function loadUsersDB(){
   try{const s=localStorage.getItem(USERS_KEY);usersDB=s?JSON.parse(s):DEFAULT_USERS.map(u=>({...u}));}
   catch(e){usersDB=DEFAULT_USERS.map(u=>({...u}));}
   if(!usersDB.length){usersDB=DEFAULT_USERS.map(u=>({...u}));}
-  saveUsersDB();
+  // Migrasi: hash plaintext password lama
+  let migrated=false;
+  for(const u of usersDB){
+    if(u.password&&!u.passwordHash){
+      u.passwordHash=await hashPw(u.password);
+      delete u.password;
+      migrated=true;
+    }
+  }
+  if(migrated)saveUsersDB();
 }
 function saveUsersDB(){
   try{localStorage.setItem(USERS_KEY,JSON.stringify(usersDB));}catch(e){}
@@ -2612,14 +2626,15 @@ async function doLogin(){
   const err=document.getElementById('loginErr');
   const btn=document.querySelector('.login-btn');
 
+  const ph=await hashPw(p);
   // Coba lokal dulu
-  let found=usersDB.find(x=>x.username===u&&x.password===p);
+  let found=usersDB.find(x=>x.username===u&&(x.passwordHash===ph||(x.password&&x.password===p)));
 
   // Jika tidak ketemu, coba fetch user terbaru dari server sebelum menyerah
   if(!found){
     if(btn){btn.textContent='Memeriksa server…';btn.disabled=true;}
     await fetchRemoteUsersForLogin();
-    found=usersDB.find(x=>x.username===u&&x.password===p);
+    found=usersDB.find(x=>x.username===u&&(x.passwordHash===ph||(x.password&&x.password===p)));
     if(btn){btn.textContent='Masuk ke AMPERA';btn.disabled=false;}
   }
 
@@ -2744,7 +2759,7 @@ function renderUserList(){
     </div>`;
   }).join('');
 }
-function saveEditUser(id){
+async function saveEditUser(id){
   const u=usersDB.find(u=>u.id===id);if(!u)return;
   const nama=(document.getElementById('eu-nama')?.value||'').trim();
   const username=(document.getElementById('eu-user')?.value||'').trim().toLowerCase();
@@ -2753,13 +2768,13 @@ function saveEditUser(id){
   if(!nama||!username){toast('Nama dan username wajib diisi','⚠️');return;}
   if(username!==u.username&&usersDB.find(x=>x.username===username&&x.id!==id)){toast('Username sudah dipakai pengguna lain','⚠️');return;}
   u.nama=nama;u.username=username;u.role=role;
-  if(pass)u.password=pass;
+  if(pass){u.passwordHash=await hashPw(pass);delete u.password;}
   if(id===currentUser.id){currentUser={...currentUser,...u};updateUserUI();}
   _editingUserId=null;
   saveUsersDB();renderUserList();
   toast(`Data "${nama}" berhasil diperbarui`,'✅');
 }
-function addUser(){
+async function addUser(){
   const nama=document.getElementById('nuNama').value.trim();
   const username=document.getElementById('nuUser').value.trim().toLowerCase();
   const password=document.getElementById('nuPass').value;
@@ -2767,7 +2782,8 @@ function addUser(){
   if(!nama||!username||!password){alert('Semua kolom wajib diisi.');return;}
   if(usersDB.find(u=>u.username===username)){alert('Username sudah dipakai.');return;}
   const cols=['#007c91','#00b87a','#e8a020','#7c5cbf','#e05555'];
-  usersDB.push({id:'u'+Date.now(),nama,username,password,role,color:cols[usersDB.length%cols.length]});
+  const passwordHash=await hashPw(password);
+  usersDB.push({id:'u'+Date.now(),nama,username,passwordHash,role,color:cols[usersDB.length%cols.length]});
   saveUsersDB();
   document.getElementById('nuNama').value='';document.getElementById('nuUser').value='';document.getElementById('nuPass').value='';
   renderUserList();toast(`Pengguna "${nama}" ditambahkan`,'👤');
@@ -4133,8 +4149,8 @@ function downloadImportTemplate(){
 }
 
 // ── INIT ──
-loadUsersDB();
 loadSyncDB();
+loadUsersDB().then(()=>{
 if(checkAutoLogin()){
   document.getElementById('loginScreen').classList.add('hidden');
   document.body.classList.add('logged-in');
@@ -4151,6 +4167,7 @@ if(checkAutoLogin()){
 } else {
   setTimeout(()=>{const i=document.getElementById('loginUser');if(i)i.focus();},300);
 }
+}); // end loadUsersDB().then
 </script>
 </body>
 </html>
