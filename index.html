@@ -3150,24 +3150,34 @@ function renderRPDSection(){
   const tw=getCurrentTW(),twIdx=tw-1;
   const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
   const bulanTW=TWMON[twIdx];
+  const fmtN=n=>n?new Intl.NumberFormat('id-ID').format(n):'—';
+  const inpStyle='width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:5px 8px;font-size:11px;font-family:\'Fira Code\',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;text-align:right;';
   const colsHtml=bulanTW.map(m=>{
     const mi=m-1;
     const renc=rpd.rencana[mi]||0;
     const real=rpd.realisasi[mi]||0;
     const pct=renc>0?Math.round(real/renc*100):0;
     const clr=pct>=100?'#00b87a':pct>=70?'#007c91':pct>0?'#e8a020':'var(--txt3)';
-    return `<td style="padding:8px 6px;text-align:center;border-right:1px solid var(--bdr);min-width:110px;">
-      <div style="font-size:10px;color:var(--txt3);margin-bottom:3px;">Rencana (Rp)</div>
-      <input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:5px 4px;font-size:11px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--surf);outline:none;box-sizing:border-box;text-align:right;"
-        value="${renc||''}" placeholder="0"
-        onchange="setRPDRencana(${mi},this.value)"
-        onfocus="this.style.borderColor='#007c91'" onblur="this.style.borderColor='var(--bdr)'">
-      <div style="font-size:10px;color:var(--txt3);margin:5px 0 3px;">Realisasi (Rp)</div>
-      <input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:5px 4px;font-size:11px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--surf);outline:none;box-sizing:border-box;text-align:right;"
-        value="${real||''}" placeholder="0"
-        onchange="setRPDRealisasi(${mi},this.value)"
-        onfocus="this.style.borderColor='#00b87a'" onblur="this.style.borderColor='var(--bdr)'">
-      ${renc>0?`<div style="margin-top:5px;font-size:12px;font-weight:700;color:${clr};">${pct}%</div><div style="height:3px;border-radius:99px;background:#e4edf3;margin-top:3px;"><div style="height:100%;width:${Math.min(100,pct)}%;background:${clr};border-radius:99px;"></div></div>`:''}
+    return `<td style="padding:10px 8px;text-align:center;border-right:1px solid var(--bdr);min-width:160px;vertical-align:top;">
+      <div style="margin-bottom:10px;">
+        <div style="font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;">Rencana (Rp)</div>
+        <div style="min-height:22px;font-size:13px;font-weight:700;font-family:'Fira Code',monospace;color:var(--ink);text-align:right;${!renc?'color:var(--txt3);font-size:11px;font-weight:400;':''}">${fmtN(renc)}</div>
+        <div style="border-top:1px dashed var(--bdr);margin:5px 0;"></div>
+        <input type="number" step="1" style="${inpStyle}"
+          value="${renc||''}" placeholder="0"
+          onchange="setRPDRencana(${mi},this.value)"
+          onfocus="this.style.borderColor='#007c91'" onblur="this.style.borderColor='var(--bdr)'">
+      </div>
+      <div>
+        <div style="font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;">Realisasi (Rp)</div>
+        <div style="min-height:22px;font-size:13px;font-weight:700;font-family:'Fira Code',monospace;color:${real?'#00b87a':'var(--txt3)'};text-align:right;${!real?'font-size:11px;font-weight:400;':''}">${fmtN(real)}</div>
+        <div style="border-top:1px dashed var(--bdr);margin:5px 0;"></div>
+        <input type="number" step="1" style="${inpStyle}"
+          value="${real||''}" placeholder="0"
+          onchange="setRPDRealisasi(${mi},this.value)"
+          onfocus="this.style.borderColor='#00b87a'" onblur="this.style.borderColor='var(--bdr)'">
+      </div>
+      ${renc>0?`<div style="margin-top:8px;font-size:13px;font-weight:700;color:${clr};text-align:center;">${pct}%</div><div style="height:3px;border-radius:99px;background:#e4edf3;margin-top:3px;"><div style="height:100%;width:${Math.min(100,pct)}%;background:${clr};border-radius:99px;"></div></div>`:''}
     </td>`;
   }).join('');
 
@@ -3205,7 +3215,7 @@ function renderRPDSection(){
       </table>
     </div>
     <div style="padding:10px 16px;border-top:1px solid var(--bdr);font-size:10px;color:var(--txt3);">
-      💡 Data RPD Belanja Pegawai digunakan di halaman 3 Laporan Kinerja. Belanja Barang dihitung otomatis dari rencana kegiatan.
+      💡 Data RPD Belanja Pegawai digunakan di Laporan Kinerja. Untuk Belanja Barang dihitung otomatis dari pelaksanaan rencana kegiatan.
     </div>
   </div>`;
 }
