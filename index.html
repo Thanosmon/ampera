@@ -3011,19 +3011,25 @@ function renderIKPA(){
           ${thPct>0?`<span><span style="display:inline-block;width:8px;height:8px;background:#e8a020;border-radius:1px;margin-right:3px;vertical-align:middle;"></span>Min ${minPct}%</span>`:''}
           ${n&&n.status!=='na'&&n.nilai!==null?`<span style="margin-left:auto;font-size:11px;font-weight:700;color:${n.nilai>=100?'#00b87a':'#e05555'};">Nilai: ${n.nilai}</span>`:n&&n.status==='na'?`<span style="margin-left:auto;font-size:10px;color:var(--txt3);">Tidak diperhitungkan</span>`:''}
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);">
-          <div>
-            <div style="font-size:10px;color:var(--txt3);margin-bottom:2px;">Pagu (Rp)</div>
-            ${bl&&bl.paguSet&&bl.pagu?`<div style="font-size:13px;font-weight:700;font-family:'Fira Code',monospace;color:var(--ink);margin-bottom:3px;letter-spacing:0.3px">${new Intl.NumberFormat('id-ID').format(bl.pagu)}</div>`:''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);">
+          <div style="display:flex;flex-direction:column;">
+            <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Pagu (Rp)</div>
+            <div style="min-height:26px;font-size:14px;font-weight:700;font-family:'Fira Code',monospace;color:var(--ink);letter-spacing:0.3px;display:flex;align-items:center;">
+              ${bl&&bl.paguSet&&bl.pagu?new Intl.NumberFormat('id-ID').format(bl.pagu):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`}
+            </div>
+            <div style="border-top:1px dashed var(--bdr);margin:6px 0;"></div>
             <input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
               value="${bl&&bl.paguSet?bl.pagu:''}" placeholder="ketik angka..."
               onchange="setIKPAPagu('${kode}',this.value)"
               onfocus="this.style.borderColor='${conf.color}'"
               onblur="this.style.borderColor='var(--bdr)'">
           </div>
-          <div>
-            <div style="font-size:10px;color:var(--txt3);margin-bottom:2px;">Realisasi TW${twRom[twIdx]} (Rp)</div>
-            ${bl&&bl.realisasi[twIdx]?`<div style="font-size:13px;font-weight:700;font-family:'Fira Code',monospace;color:var(--green);margin-bottom:3px;letter-spacing:0.3px">${new Intl.NumberFormat('id-ID').format(bl.realisasi[twIdx])}</div>`:''}
+          <div style="display:flex;flex-direction:column;">
+            <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Realisasi TW${twRom[twIdx]} (Rp)</div>
+            <div style="min-height:26px;font-size:14px;font-weight:700;font-family:'Fira Code',monospace;color:var(--green);letter-spacing:0.3px;display:flex;align-items:center;">
+              ${bl&&bl.realisasi[twIdx]?new Intl.NumberFormat('id-ID').format(bl.realisasi[twIdx]):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`}
+            </div>
+            <div style="border-top:1px dashed var(--bdr);margin:6px 0;"></div>
             <input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
               value="${bl&&bl.realisasi[twIdx]?bl.realisasi[twIdx]:''}" placeholder="ketik angka..."
               onchange="setIKPAReal('${kode}',${twIdx},this.value)"
