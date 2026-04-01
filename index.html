@@ -1800,10 +1800,22 @@ function renderPerBidang(){
 // ── RENDER PER BULAN ──
 function renderBulan(){
   const cont=document.getElementById('mainContent');
+  const fb=document.getElementById('filterBidang').value;
+  const bidangNama=fb!=='all'?(data.bidang.find(b=>b.id===fb)||{}).nama||'':'';
+  const filtBase=getFilt(); // semua kegiatan setelah filter bidang+status+bulan
+  // Untuk grid ringkasan bulan: pakai filter bidang+status saja (tanpa filter bulan)
+  const filtGrid=data.kegiatan.filter(k=>{
+    if(fb!=='all'&&k.bidangId!==fb)return false;
+    const fs=document.getElementById('filterStatus').value;
+    if(fs==='done'&&!allDone(k))return false;
+    if(fs==='pending'&&allDone(k))return false;
+    return true;
+  });
+
   let html=metricsHTML();
-  html+=`<p class="seclbl">Ringkasan Belanja per Bulan — 2026</p><div class="bln-grid">`;
+  html+=`<p class="seclbl">Ringkasan Belanja per Bulan — 2026${bidangNama?` · <span style="color:var(--teal)">${escH(bidangNama)}</span>`:''}</p><div class="bln-grid">`;
   MN.forEach((m,i)=>{
-    const idx=i+1,ks=data.kegiatan.filter(k=>kBulanList(k).includes(idx));
+    const idx=i+1,ks=filtGrid.filter(k=>kBulanList(k).includes(idx));
     const tot=ks.reduce((s,k)=>s+kTPB(k,idx),0);
     const dn=ks.filter(k=>isDB(k,idx)).reduce((s,k)=>s+kTPB(k,idx),0);
     const pct=tot>0?Math.round(dn/tot*100):0;
@@ -1816,7 +1828,7 @@ function renderBulan(){
   });
   html+=`</div>`;
   MN.forEach((m,i)=>{
-    const idx=i+1,ks=sortByBidang(getFilt().filter(k=>kBulanList(k).includes(idx)));
+    const idx=i+1,ks=sortByBidang(filtBase.filter(k=>kBulanList(k).includes(idx)));
     if(!ks.length)return;
     const tot=ks.reduce((s,k)=>s+kTPB(k,idx),0);
     const dn=ks.filter(k=>isDB(k,idx)).reduce((s,k)=>s+kTPB(k,idx),0);
@@ -1850,7 +1862,25 @@ function renderBulan(){
     });
     html+=`</tbody></table></div></div>`;
   });
-  cont.innerHTML=html;updSum();
+  cont.innerHTML=html;
+  updSum(); // sidebar pakai data global
+  // Update metric cards dengan data terfilter (bidang+status)
+  const tot=filtGrid.reduce((s,k)=>s+kT(k),0);
+  const dn=filtGrid.reduce((s,k)=>s+kTDone(k),0);
+  const totP=filtGrid.reduce((s,k)=>s+kBulanList(k).length,0);
+  const dnP=filtGrid.reduce((s,k)=>s+(k.doneBulan||[]).length,0);
+  const mc=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  mc('mc1',fmt(tot));mc('mc2',fmt(dn));mc('mc3',fmt(tot-dn));
+  mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
+  // Update sub-label jika ada filter bidang
+  if(bidangNama){
+    const sub1=document.querySelector('#mc1')?.closest('.metric-card')?.querySelector('.metric-sub');
+    if(sub1)sub1.textContent=bidangNama;
+    const sub2=document.querySelector('#mc2')?.closest('.metric-card')?.querySelector('.metric-sub');
+    if(sub2)sub2.textContent='Terserap · '+bidangNama;
+    const sub3=document.querySelector('#mc3')?.closest('.metric-card')?.querySelector('.metric-sub');
+    if(sub3)sub3.textContent='Belum terlaksana · '+bidangNama;
+  }
 }
 
 function filtBulan(m){
