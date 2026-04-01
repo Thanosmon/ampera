@@ -1639,15 +1639,18 @@ function renderKeg(){
           <th>Jadwal per Bulan (klik untuk tandai terlaksana)</th>
           <th class="r">Total Anggaran</th><th class="r">Terlaksana</th><th class="c">Aksi</th>
         </tr></thead><tbody>`;
-      ks.forEach(k=>{
+      ks.forEach((k,ki)=>{
         const tot=kT(k),done=kTDone(k),isAll=allDone(k);
         const dokCnt=k.dokumen&&k.dokumen.length?`<span class="dok-cnt">📎 ${k.dokumen.length}</span>`:'';
         html+=`<tr class="${isAll?'done-row':''}">
           <td class="c" style="padding:0 4px"><span class="exp-ico" id="ei-${k.id}" onclick="togExp('${k.id}')">▶</span></td>
           <td class="nm-td">
-            <div class="keg-name" onclick="togExp('${k.id}')">${escH(k.nama)}${dokCnt}</div>
-            ${k.catatan?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${escH(k.catatan)}</div>`:''}
-            <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan terlaksana</div>
+            <div style="display:flex;align-items:flex-start;gap:8px">
+              <span style="min-width:20px;text-align:right;font-size:11px;color:var(--txt3);font-weight:700;flex-shrink:0;padding-top:2px;font-family:'Fira Code',monospace">${ki+1}</span>
+              <div><div class="keg-name" onclick="togExp('${k.id}')">${escH(k.nama)}${dokCnt}</div>
+              ${k.catatan?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${escH(k.catatan)}</div>`:''}
+              <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan terlaksana</div></div>
+            </div>
           </td>
           <td class="muted">${escH(k.tempat)}</td>
           <td class="jad-td"><div style="display:flex;flex-wrap:wrap;gap:2px">${jadwalChipsHTML(k)}</div></td>
@@ -1769,15 +1772,18 @@ function renderPerBidang(){
         <th>Jadwal per Bulan (klik untuk tandai terlaksana)</th>
         <th class="r">Total Anggaran</th><th class="r">Terlaksana</th><th class="c">Aksi</th>
       </tr></thead><tbody>`;
-    ks.forEach(k=>{
+    ks.forEach((k,ki)=>{
       const tot=kT(k),done=kTDone(k),isAll=allDone(k);
       const dokCnt=k.dokumen&&k.dokumen.length?`<span class="dok-cnt">📎 ${k.dokumen.length}</span>`:'';
       html+=`<tr class="${isAll?'done-row':''}">
         <td class="c" style="padding:0 4px"><span class="exp-ico" id="ei-${k.id}" onclick="togExp('${k.id}')">▶</span></td>
         <td class="nm-td">
-          <div class="keg-name" onclick="togExp('${k.id}')">${escH(k.nama)}${dokCnt}</div>
-          ${k.catatan?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${escH(k.catatan)}</div>`:''}
-          <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan terlaksana</div>
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <span style="min-width:20px;text-align:right;font-size:11px;color:var(--txt3);font-weight:700;flex-shrink:0;padding-top:2px;font-family:'Fira Code',monospace">${ki+1}</span>
+            <div><div class="keg-name" onclick="togExp('${k.id}')">${escH(k.nama)}${dokCnt}</div>
+            ${k.catatan?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${escH(k.catatan)}</div>`:''}
+            <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan terlaksana</div></div>
+          </div>
         </td>
         <td class="muted">${escH(k.tempat)}</td>
         <td class="jad-td"><div style="display:flex;flex-wrap:wrap;gap:2px">${jadwalChipsHTML(k)}</div></td>
@@ -1864,12 +1870,12 @@ function renderBulan(){
           <th>Kegiatan</th><th>Bidang</th><th>Tempat</th><th>Minggu</th>
           <th class="r">Anggaran ${m}</th><th class="c">Status</th><th class="c">Tandai</th>
         </tr></thead><tbody>`;
-    ks.forEach(k=>{
+    ks.forEach((k,ki)=>{
       const pb=kTPB(k,idx),sd=isDB(k,idx);
       const mk=kMinggu(k,idx);
       const mkLabel=mk.length?mk.map(w=>`<span class="jd-wbadge">Minggu ${w}</span>`).join(' '):`<span style="color:var(--txt3)">—</span>`;
       html+=`<tr class="${sd?'done-row':''}">
-        <td class="keg-td"><strong>${escH(k.nama)}</strong>${k.dokumen&&k.dokumen.length?`<span class="dok-cnt" style="margin-left:6px">📎 ${k.dokumen.length}</span>`:''}</td>
+        <td class="keg-td"><div style="display:flex;align-items:center;gap:7px"><span style="min-width:20px;text-align:right;font-size:11px;color:var(--txt3);font-weight:700;flex-shrink:0;font-family:'Fira Code',monospace">${ki+1}</span><div><strong>${escH(k.nama)}</strong>${k.dokumen&&k.dokumen.length?`<span class="dok-cnt" style="margin-left:6px">📎 ${k.dokumen.length}</span>`:''}</div></div></td>
         <td class="muted">${escH(bNm(k.bidangId))}</td>
         <td class="muted">${escH(k.tempat)}</td>
         <td>${mkLabel}</td>
@@ -1994,7 +2000,7 @@ function renderTL(){
     ks=sortByJadwal(ks);
     if(!ks.length)return;
     rows+=`<tr class="tl-sec"><td colspan="13">${escH(b.nama)}</td></tr>`;
-    ks.forEach(k=>{
+    ks.forEach((k,ki)=>{
       const cells=MN.map((_,mi)=>{
         const mI=mi+1,has=kBulanList(k).includes(mI),iC=mI===CM;
         const bg=iC?'class="tl-cell bi-bg"':'class="tl-cell"';
@@ -2011,7 +2017,7 @@ function renderTL(){
       }).join('');
       const isAll=allDone(k);
       rows+=`<tr class="${isAll?'tls':''}">
-        <td class="tnm">${escH(k.nama)}
+        <td class="tnm"><span style="font-size:10px;color:var(--txt3);font-weight:700;font-family:'Fira Code',monospace;margin-right:5px;opacity:0.8">${ki+1}</span>${escH(k.nama)}
           <small>${escH(k.tempat)} · ${fmt(kT(k))}</small>
           <small style="color:${isAll?'var(--green)':'var(--txt3)'}">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan selesai${k.dokumen&&k.dokumen.length?` · 📎 ${k.dokumen.length} dok`:''}</small>
         </td>${cells}
