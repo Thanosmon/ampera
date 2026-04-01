@@ -1437,6 +1437,19 @@ function sortByBidang(ks){
   data.bidang.forEach((b,i)=>{order[b.id]=i;});
   return [...ks].sort((a,b)=>(order[a.bidangId]??999)-(order[b.bidangId]??999));
 }
+// Urutkan kegiatan sesuai bulan & minggu pelaksanaan tercepat
+function sortByJadwal(ks){
+  const minBulan=k=>kBulanList(k).length?Math.min(...kBulanList(k)):99;
+  const minMinggu=(k,bulan)=>{
+    const j=(k.jadwal||[]).find(j=>j.bulan===bulan);
+    return j&&j.minggu&&j.minggu.length?Math.min(...j.minggu):99;
+  };
+  return [...ks].sort((a,b)=>{
+    const mA=minBulan(a),mB=minBulan(b);
+    if(mA!==mB)return mA-mB;
+    return minMinggu(a,mA)-minMinggu(b,mB);
+  });
+}
 function updSum(){
   const tot=data.kegiatan.reduce((s,k)=>s+kT(k),0);
   const dn=data.kegiatan.reduce((s,k)=>s+kTDone(k),0);
@@ -1574,7 +1587,7 @@ function renderKeg(){
   const bidangs=fb==='all'?data.bidang:data.bidang.filter(b=>b.id===fb);
   let html=metricsHTML();
   bidangs.forEach(b=>{
-    const ks=filt.filter(k=>k.bidangId===b.id);
+    const ks=sortByJadwal(filt.filter(k=>k.bidangId===b.id));
     const totB=ks.reduce((s,k)=>s+kT(k),0);
     const dnB=ks.reduce((s,k)=>s+kTDone(k),0);
     const pct=totB>0?Math.round(dnB/totB*100):0;
@@ -1663,7 +1676,7 @@ function renderPerBidang(){
     _activeBidangId=data.bidang[0].id;
   }
   const b=data.bidang.find(b=>b.id===_activeBidangId);
-  const ks=data.kegiatan.filter(k=>k.bidangId===_activeBidangId);
+  const ks=sortByJadwal(data.kegiatan.filter(k=>k.bidangId===_activeBidangId));
   const totB=ks.reduce((s,k)=>s+kT(k),0);
   const dnB=ks.reduce((s,k)=>s+kTDone(k),0);
   const pct=totB>0?Math.round(dnB/totB*100):0;
@@ -1896,6 +1909,7 @@ function renderTL(){
     let ks=data.kegiatan.filter(k=>k.bidangId===b.id);
     if(fs==='done')ks=ks.filter(k=>allDone(k));
     if(fs==='pending')ks=ks.filter(k=>!allDone(k));
+    ks=sortByJadwal(ks);
     if(!ks.length)return;
     rows+=`<tr class="tl-sec"><td colspan="13">${escH(b.nama)}</td></tr>`;
     ks.forEach(k=>{
