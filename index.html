@@ -1465,6 +1465,21 @@ function updSum(){
   mc('mc1',fmt(tot));mc('mc2',fmt(dn));mc('mc3',fmt(tot-dn));
   mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
 }
+// Update metric cards dengan data terfilter (bidang/status)
+function updMetricCards(ks,label){
+  const tot=ks.reduce((s,k)=>s+kT(k),0);
+  const dn=ks.reduce((s,k)=>s+kTDone(k),0);
+  const totP=ks.reduce((s,k)=>s+kBulanList(k).length,0);
+  const dnP=ks.reduce((s,k)=>s+(k.doneBulan||[]).length,0);
+  const mc=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  mc('mc1',fmt(tot));mc('mc2',fmt(dn));mc('mc3',fmt(tot-dn));
+  mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
+  if(label){
+    const setSub=(id,txt)=>{const el=document.getElementById(id);const s=el?.closest('.metric-card')?.querySelector('.metric-sub');if(s)s.textContent=txt;};
+    setSub('mc1',label);setSub('mc2','Terserap · '+label);setSub('mc3','Belum terlaksana · '+label);
+    setSub('mc4','Jadwal · '+label);setSub('mc5','Dari total jadwal · '+label);
+  }
+}
 function popFB(){
   const sel=document.getElementById('filterBidang'),cur=sel.value;
   sel.innerHTML='<option value="all">Semua Bidang</option>';
@@ -1669,6 +1684,9 @@ function renderKeg(){
   });
   cont.innerHTML=html||`<div class="kosong" style="padding:60px">Tidak ada data yang sesuai filter.</div>`;
   updSum();
+  const _fb=document.getElementById('filterBidang').value;
+  const _bNm=_fb!=='all'?(data.bidang.find(b=>b.id===_fb)||{}).nama||'':'';
+  updMetricCards(getFilt(),_bNm||null);
 }
 
 function togExp(id){
@@ -1956,6 +1974,9 @@ function renderKal(){
   });
   html+=`</div>`;
   cont.innerHTML=html;updSum();
+  const _fbKal=document.getElementById('filterBidang').value;
+  const _bNmKal=_fbKal!=='all'?(data.bidang.find(b=>b.id===_fbKal)||{}).nama||'':'';
+  updMetricCards(ks,_bNmKal||null);
 }
 
 // ── RENDER TIMELINE ──
@@ -2021,6 +2042,16 @@ function renderTL(){
     </div>`;
   }
   cont.innerHTML=html;updSum();
+  const _fbTL=document.getElementById('filterBidang').value;
+  const _fsTL=document.getElementById('filterStatus').value;
+  const _bNmTL=_fbTL!=='all'?(data.bidang.find(b=>b.id===_fbTL)||{}).nama||'':'';
+  const _ksTL=data.kegiatan.filter(k=>{
+    if(_fbTL!=='all'&&k.bidangId!==_fbTL)return false;
+    if(_fsTL==='done'&&!allDone(k))return false;
+    if(_fsTL==='pending'&&allDone(k))return false;
+    return true;
+  });
+  updMetricCards(_ksTL,_bNmTL||null);
 }
 
 // ── ACTIONS ──
