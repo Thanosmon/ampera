@@ -349,15 +349,15 @@ td.muted{color:var(--txt3);font-size:12px;}
 
 /* Rincian editor */
 .re-wrap{border:1.5px solid var(--bdr);border-radius:8px;overflow:hidden;}
-.re-head{display:grid;grid-template-columns:100px 2.2fr 65px 65px 85px 105px 32px;background:#f0f7fa;border-bottom:1px solid var(--bdr);}
+.re-head{display:grid;grid-template-columns:100px 2.2fr 65px 65px 85px 105px 115px 32px;background:#f0f7fa;border-bottom:1px solid var(--bdr);}
 .re-head span{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--txt3);padding:7px 9px;}
-.re-row{display:grid;grid-template-columns:100px 2.2fr 65px 65px 85px 105px 32px;border-top:1px solid #edf3f7;align-items:stretch;}
+.re-row{display:grid;grid-template-columns:100px 2.2fr 65px 65px 85px 105px 115px 32px;border-top:1px solid #edf3f7;align-items:stretch;}
 .re-row:hover{background:#f8fcfd;}
 .re-row input{border:none;background:transparent;font-family:'Figtree',sans-serif;font-size:12px;color:var(--txt);padding:8px 9px;outline:none;width:100%;border-right:1px solid #edf3f7;}
 .re-row input:focus{background:#f0f9fc;}
 .re-row input.re-mak{font-family:'Fira Code',monospace;font-size:11px;color:var(--teal);background:rgba(0,124,145,0.04);}
 .re-del{display:flex;align-items:center;justify-content:center;padding:3px;}
-.re-foot{display:grid;grid-template-columns:100px 2.2fr 65px 65px 85px 105px 32px;border-top:2px solid var(--teal2);background:rgba(0,164,189,0.06);}
+.re-foot{display:grid;grid-template-columns:100px 2.2fr 65px 65px 85px 105px 115px 32px;border-top:2px solid var(--teal2);background:rgba(0,164,189,0.06);}
 .re-foot span{padding:9px 9px;font-size:12px;font-weight:700;font-family:'Fira Code',monospace;color:var(--teal);}
 .re-foot .lbl{font-family:'Figtree',sans-serif;font-size:11px;color:var(--txt3);font-weight:600;}
 .re-foot .tot{text-align:right;font-size:13px;}
@@ -436,7 +436,7 @@ td.muted{color:var(--txt3);font-size:12px;}
   table{min-width:560px;}
   .tl-ov{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .jad-disp-head,.jad-disp-row{grid-template-columns:80px auto 1fr 110px 80px;font-size:11px;}
-  .re-head,.re-row,.re-foot{grid-template-columns:80px 2fr 50px 50px 70px 85px 28px;}
+  .re-head,.re-row,.re-foot{grid-template-columns:80px 2fr 50px 50px 70px 85px 95px 28px;}
 
   /* ── Font lebih besar & readable ── */
   body{font-size:14px;}
@@ -1134,11 +1134,11 @@ body.logged-in [data-admin].show-admin{display:flex;}
         <div class="re-wrap">
           <div class="re-head">
             <span>MAK</span><span>Uraian Biaya</span><span>Jml</span><span>Hr/Frek</span>
-            <span>Satuan</span><span style="text-align:right;padding-right:10px">Biaya/Sat</span><span></span>
+            <span>Satuan</span><span style="text-align:right;padding-right:10px">Biaya/Satuan</span><span style="text-align:right;padding-right:10px">Subtotal</span><span></span>
           </div>
           <div id="reRows"></div>
           <div class="re-foot">
-            <span class="lbl" style="grid-column:1/6">TOTAL RINCIAN (referensi)</span>
+            <span class="lbl" style="grid-column:1/7">TOTAL RINCIAN (referensi)</span>
             <span class="tot" id="modalTotal">Rp 0</span><span></span>
           </div>
           <button class="re-add" onclick="addRincianRow()">＋ Tambah Item Rincian</button>
@@ -1987,8 +1987,12 @@ function delKeg(id){
 // ── RINCIAN EDITOR ──
 function addRincianRow(r={}){mr.push({mak:r.mak||'',uraian:r.uraian||'',jumlah:r.jumlah||0,hari:r.hari||0,satuan:r.satuan||'',biayaSatuan:r.biayaSatuan||0});renderRe();}
 function remRe(i){mr.splice(i,1);renderRe();}
-function syncRe(i,f,v){mr[i][f]=(f==='uraian'||f==='satuan'||f==='mak')?v:(parseFloat(v)||0);updReFoot();}
+function syncRe(i,f,v){mr[i][f]=(f==='uraian'||f==='satuan'||f==='mak')?v:(parseFloat(v)||0);updReSubtotals();}
 function updReFoot(){document.getElementById('modalTotal').textContent=fmt(mr.reduce((s,r)=>s+rT(r),0));}
+function updReSubtotals(){
+  mr.forEach((r,i)=>{const el=document.getElementById('re-sub-'+i);if(el)el.textContent=rT(r)?fmt(rT(r)):'—';});
+  updReFoot();
+}
 function renderRe(){
   document.getElementById('reRows').innerHTML=mr.map((r,i)=>`
     <div class="re-row">
@@ -1998,6 +2002,7 @@ function renderRe(){
       <input type="number" value="${r.hari||''}" placeholder="0" min="0" oninput="syncRe(${i},'hari',this.value)">
       <input value="${escH(r.satuan)}" placeholder="orang/malam..." oninput="syncRe(${i},'satuan',this.value)">
       <input type="number" value="${r.biayaSatuan||''}" placeholder="0" min="0" style="text-align:right" oninput="syncRe(${i},'biayaSatuan',this.value)">
+      <div id="re-sub-${i}" style="display:flex;align-items:center;justify-content:flex-end;padding:0 10px;font-size:11px;font-weight:700;font-family:'Fira Code',monospace;color:${rT(r)?'var(--teal)':'var(--txt3)'};border-right:1px solid #edf3f7;background:${rT(r)?'rgba(0,124,145,0.04)':'transparent'};">${rT(r)?fmt(rT(r)):'—'}</div>
       <div class="re-del"><button class="re-del-btn" onclick="remRe(${i})">✕</button></div>
     </div>`).join('');
   updReFoot();
