@@ -127,7 +127,7 @@ table.bln-tbl td.keg-td{white-space:normal;word-break:break-word;}
 table.bln-tbl td.c{overflow:visible!important;text-overflow:clip!important;white-space:nowrap;}
 /* Tabel per-kegiatan: kolom tetap agar antar bidang rata */
 table.keg-tbl{table-layout:fixed;width:100%;min-width:760px;}
-table.keg-tbl col.col-exp{width:28px;}
+table.keg-tbl col.col-exp{width:38px;}
 table.keg-tbl col.col-nm{width:auto;}
 table.keg-tbl col.col-tmp{width:110px;}
 table.keg-tbl col.col-jad{width:260px;}
@@ -150,8 +150,12 @@ td.mono{font-family:'Fira Code',monospace;font-size:11.5px;}
 td.muted{color:var(--txt3);font-size:12px;}
 .keg-name{font-weight:600;color:var(--txt);cursor:pointer;display:flex;align-items:center;gap:6px;}
 .keg-name:hover{color:var(--teal);}
-.exp-ico{font-size:8px;color:var(--teal2);transition:transform 0.18s;display:inline-block;flex-shrink:0;}
-.exp-ico.open{transform:rotate(90deg);}
+.exp-ico{display:none;}
+.exp-ico.open{display:none;}
+.tl-tbl th.cno{width:36px;text-align:center;position:sticky;left:0;z-index:2;background:var(--surf);padding:8px 4px;border-right:none;}
+.tl-tbl td.tno{width:36px;text-align:center;font-size:11px;font-weight:700;color:var(--teal);font-family:'Fira Code',monospace;position:sticky;left:0;z-index:1;background:var(--card);padding:10px 4px;}
+.tl-tbl tr.tls td.tno{background:#f2fbf7;}
+.tl-tbl tr:hover td.tno{background:#f8fcfd;}
 .rin-row{display:none;}
 .rin-row.open{display:table-row;}
 .rin-inner{padding:10px 16px 16px 36px;background:#f4fafc;border-top:1px dashed var(--bdr2);}
@@ -302,11 +306,11 @@ td.muted{color:var(--txt3);font-size:12px;}
 .tl-ov{overflow-x:auto;}
 .tl-tbl{width:100%;border-collapse:collapse;min-width:900px;}
 .tl-tbl th{background:#f0f7fa;padding:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--txt3);border-bottom:1.5px solid var(--bdr);border-right:1px solid var(--bdr);white-space:nowrap;}
-.tl-tbl th.cnm{text-align:left;min-width:220px;position:sticky;left:0;z-index:2;border-right:2px solid var(--bdr2);}
+.tl-tbl th.cnm{text-align:left;min-width:220px;position:sticky;left:36px;z-index:2;border-right:2px solid var(--bdr2);}
 .tl-tbl th.cm{text-align:center;min-width:62px;}
 .tl-tbl th.cm.bi{background:rgba(0,164,189,0.08);color:var(--teal);}
 .tl-tbl td{padding:0;border-bottom:1px solid #edf3f7;border-right:1px solid #edf3f7;}
-.tl-tbl td.tnm{padding:10px 14px;font-size:12px;font-weight:600;background:var(--card);position:sticky;left:0;z-index:1;min-width:220px;border-right:2px solid var(--bdr2);color:var(--txt);}
+.tl-tbl td.tnm{padding:10px 14px;font-size:12px;font-weight:600;background:var(--card);position:sticky;left:36px;z-index:1;min-width:220px;border-right:2px solid var(--bdr2);color:var(--txt);}
 .tl-tbl td.tnm small{display:block;font-weight:400;color:var(--txt3);font-size:10.5px;margin-top:2px;}
 .tl-tbl tr:hover td.tnm{background:#f8fcfd;}
 .tl-tbl tr.tls td.tnm{background:#f2fbf7;}
@@ -1643,14 +1647,11 @@ function renderKeg(){
         const tot=kT(k),done=kTDone(k),isAll=allDone(k);
         const dokCnt=k.dokumen&&k.dokumen.length?`<span class="dok-cnt">📎 ${k.dokumen.length}</span>`:'';
         html+=`<tr class="${isAll?'done-row':''}">
-          <td class="c" style="padding:0 4px"><span class="exp-ico" id="ei-${k.id}" onclick="togExp('${k.id}')">▶</span></td>
+          <td class="c" onclick="togExp('${k.id}')" style="cursor:pointer;padding:0;border-right:1px solid var(--bdr)"><span style="font-size:11px;font-weight:700;color:var(--teal);font-family:'Fira Code',monospace">${ki+1}</span></td>
           <td class="nm-td">
-            <div style="display:flex;align-items:flex-start;gap:8px">
-              <span style="min-width:20px;text-align:right;font-size:11px;color:var(--txt3);font-weight:700;flex-shrink:0;padding-top:2px;font-family:'Fira Code',monospace">${ki+1}</span>
-              <div><div class="keg-name" onclick="togExp('${k.id}')">${escH(k.nama)}${dokCnt}</div>
-              ${k.catatan?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${escH(k.catatan)}</div>`:''}
-              <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan terlaksana</div></div>
-            </div>
+            <div class="keg-name" onclick="togExp('${k.id}')">${escH(k.nama)}${dokCnt}</div>
+            ${k.catatan?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${escH(k.catatan)}</div>`:''}
+            <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan terlaksana</div>
           </td>
           <td class="muted">${escH(k.tempat)}</td>
           <td class="jad-td"><div style="display:flex;flex-wrap:wrap;gap:2px">${jadwalChipsHTML(k)}</div></td>
@@ -1776,14 +1777,11 @@ function renderPerBidang(){
       const tot=kT(k),done=kTDone(k),isAll=allDone(k);
       const dokCnt=k.dokumen&&k.dokumen.length?`<span class="dok-cnt">📎 ${k.dokumen.length}</span>`:'';
       html+=`<tr class="${isAll?'done-row':''}">
-        <td class="c" style="padding:0 4px"><span class="exp-ico" id="ei-${k.id}" onclick="togExp('${k.id}')">▶</span></td>
+        <td class="c" onclick="togExp('${k.id}')" style="cursor:pointer;padding:0;border-right:1px solid var(--bdr)"><span style="font-size:11px;font-weight:700;color:var(--teal);font-family:'Fira Code',monospace">${ki+1}</span></td>
         <td class="nm-td">
-          <div style="display:flex;align-items:flex-start;gap:8px">
-            <span style="min-width:20px;text-align:right;font-size:11px;color:var(--txt3);font-weight:700;flex-shrink:0;padding-top:2px;font-family:'Fira Code',monospace">${ki+1}</span>
-            <div><div class="keg-name" onclick="togExp('${k.id}')">${escH(k.nama)}${dokCnt}</div>
-            ${k.catatan?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${escH(k.catatan)}</div>`:''}
-            <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan terlaksana</div></div>
-          </div>
+          <div class="keg-name" onclick="togExp('${k.id}')">${escH(k.nama)}${dokCnt}</div>
+          ${k.catatan?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${escH(k.catatan)}</div>`:''}
+          <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan terlaksana</div>
         </td>
         <td class="muted">${escH(k.tempat)}</td>
         <td class="jad-td"><div style="display:flex;flex-wrap:wrap;gap:2px">${jadwalChipsHTML(k)}</div></td>
@@ -1865,9 +1863,9 @@ function renderBulan(){
         </div>
       </div>
       <div class="tbl-wrap"><table class="bln-tbl">
-        <colgroup><col class="col-keg"><col class="col-bid"><col class="col-tmp"><col class="col-mgg"><col class="col-ang"><col class="col-sts"><col class="col-tnd"></colgroup>
+        <colgroup><col style="width:38px"><col class="col-keg"><col class="col-bid"><col class="col-tmp"><col class="col-mgg"><col class="col-ang"><col class="col-sts"><col class="col-tnd"></colgroup>
         <thead><tr>
-          <th>Kegiatan</th><th>Bidang</th><th>Tempat</th><th>Minggu</th>
+          <th style="width:38px;text-align:center;padding:8px 4px">#</th><th>Kegiatan</th><th>Bidang</th><th>Tempat</th><th>Minggu</th>
           <th class="r">Anggaran ${m}</th><th class="c">Status</th><th class="c">Tandai</th>
         </tr></thead><tbody>`;
     ks.forEach((k,ki)=>{
@@ -1875,7 +1873,8 @@ function renderBulan(){
       const mk=kMinggu(k,idx);
       const mkLabel=mk.length?mk.map(w=>`<span class="jd-wbadge">Minggu ${w}</span>`).join(' '):`<span style="color:var(--txt3)">—</span>`;
       html+=`<tr class="${sd?'done-row':''}">
-        <td class="keg-td"><div style="display:flex;align-items:center;gap:7px"><span style="min-width:20px;text-align:right;font-size:11px;color:var(--txt3);font-weight:700;flex-shrink:0;font-family:'Fira Code',monospace">${ki+1}</span><div><strong>${escH(k.nama)}</strong>${k.dokumen&&k.dokumen.length?`<span class="dok-cnt" style="margin-left:6px">📎 ${k.dokumen.length}</span>`:''}</div></div></td>
+        <td class="c" style="padding:0;border-right:1px solid var(--bdr);font-size:11px;font-weight:700;color:var(--teal);font-family:'Fira Code',monospace">${ki+1}</td>
+        <td class="keg-td"><strong>${escH(k.nama)}</strong>${k.dokumen&&k.dokumen.length?`<span class="dok-cnt" style="margin-left:6px">📎 ${k.dokumen.length}</span>`:''}</td>
         <td class="muted">${escH(bNm(k.bidangId))}</td>
         <td class="muted">${escH(k.tempat)}</td>
         <td>${mkLabel}</td>
@@ -1999,7 +1998,7 @@ function renderTL(){
     if(fs==='pending')ks=ks.filter(k=>!allDone(k));
     ks=sortByJadwal(ks);
     if(!ks.length)return;
-    rows+=`<tr class="tl-sec"><td colspan="13">${escH(b.nama)}</td></tr>`;
+    rows+=`<tr class="tl-sec"><td colspan="14">${escH(b.nama)}</td></tr>`;
     ks.forEach((k,ki)=>{
       const cells=MN.map((_,mi)=>{
         const mI=mi+1,has=kBulanList(k).includes(mI),iC=mI===CM;
@@ -2017,7 +2016,8 @@ function renderTL(){
       }).join('');
       const isAll=allDone(k);
       rows+=`<tr class="${isAll?'tls':''}">
-        <td class="tnm"><span style="font-size:10px;color:var(--txt3);font-weight:700;font-family:'Fira Code',monospace;margin-right:5px;opacity:0.8">${ki+1}</span>${escH(k.nama)}
+        <td class="tno">${ki+1}</td>
+        <td class="tnm">${escH(k.nama)}
           <small>${escH(k.tempat)} · ${fmt(kT(k))}</small>
           <small style="color:${isAll?'var(--green)':'var(--txt3)'}">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan selesai${k.dokumen&&k.dokumen.length?` · 📎 ${k.dokumen.length} dok`:''}</small>
         </td>${cells}
@@ -2035,7 +2035,7 @@ function renderTL(){
       </div>
       <div class="tl-ov">
         <table class="tl-tbl">
-          <thead><tr><th class="cnm">Nama Kegiatan</th>${mH}</tr></thead>
+          <thead><tr><th class="cno"></th><th class="cnm">Nama Kegiatan</th>${mH}</tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
