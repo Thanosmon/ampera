@@ -1431,6 +1431,12 @@ function getFilt(){
     return true;
   });
 }
+// Urutkan kegiatan sesuai urutan bidang di data.bidang
+function sortByBidang(ks){
+  const order={};
+  data.bidang.forEach((b,i)=>{order[b.id]=i;});
+  return [...ks].sort((a,b)=>(order[a.bidangId]??999)-(order[b.bidangId]??999));
+}
 function updSum(){
   const tot=data.kegiatan.reduce((s,k)=>s+kT(k),0);
   const dn=data.kegiatan.reduce((s,k)=>s+kTDone(k),0);
@@ -1766,7 +1772,7 @@ function renderBulan(){
   });
   html+=`</div>`;
   MN.forEach((m,i)=>{
-    const idx=i+1,ks=getFilt().filter(k=>kBulanList(k).includes(idx));
+    const idx=i+1,ks=sortByBidang(getFilt().filter(k=>kBulanList(k).includes(idx)));
     if(!ks.length)return;
     const tot=ks.reduce((s,k)=>s+kTPB(k,idx),0);
     const dn=ks.filter(k=>isDB(k,idx)).reduce((s,k)=>s+kTPB(k,idx),0);
@@ -1815,12 +1821,12 @@ function renderKal(){
   const cont=document.getElementById('mainContent');
   const TODAY=new Date(),CM=TODAY.getMonth()+1;
   const fb=document.getElementById('filterBidang').value,fs=document.getElementById('filterStatus').value;
-  const ks=data.kegiatan.filter(k=>{
+  const ks=sortByBidang(data.kegiatan.filter(k=>{
     if(fb!=='all'&&k.bidangId!==fb)return false;
     if(fs==='done'&&!allDone(k))return false;
     if(fs==='pending'&&allDone(k))return false;
     return true;
-  });
+  }));
   let html=metricsHTML();
   html+=`<div class="kal-legend">
     <div class="leg-i"><div class="leg-d" style="background:rgba(0,164,189,.15);border:1px solid rgba(0,164,189,.3)"></div>Ada Kegiatan</div>
