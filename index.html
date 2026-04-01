@@ -1474,9 +1474,21 @@ function popFB(){
 function renderAll(){
   updSum();popFB();
   document.getElementById('pageTitle').textContent=PAGE_TITLES[cv]||'';
-  // Hide normal page-header filters on dashboard (dashboard has its own header)
   const ph=document.querySelector('.page-header');
-  if(ph) ph.style.display=(cv==='dashboard'||cv==='ikpa')?'none':'';
+  const elFB=document.getElementById('filterBidang');
+  const elFS=document.getElementById('filterStatus');
+  const elFM=document.getElementById('filterBulan');
+  const noHeader=cv==='dashboard'||cv==='ikpa';
+  if(ph) ph.style.display=noHeader?'none':'';
+  // Tampilkan/sembunyikan dropdown sesuai view
+  if(!noHeader){
+    // filterBidang: sembunyikan di bidang (sudah ada tab selector)
+    if(elFB) elFB.style.display=cv==='bidang'?'none':'';
+    // filterBulan: sembunyikan di kalender & timeline (tidak relevan)
+    if(elFM) elFM.style.display=(cv==='kalender'||cv==='timeline')?'none':'';
+    // filterStatus: tampil di semua view
+    if(elFS) elFS.style.display='';
+  }
   if(cv==='dashboard')renderDashboard();
   else if(cv==='kegiatan')renderKeg();
   else if(cv==='bidang')renderPerBidang();
@@ -1675,43 +1687,62 @@ function renderPerBidang(){
   if(!_activeBidangId||!data.bidang.find(b=>b.id===_activeBidangId)){
     _activeBidangId=data.bidang[0].id;
   }
+  const fs=document.getElementById('filterStatus').value;
+  const fm=document.getElementById('filterBulan').value;
   const b=data.bidang.find(b=>b.id===_activeBidangId);
-  const ks=sortByJadwal(data.kegiatan.filter(k=>k.bidangId===_activeBidangId));
-  const totB=ks.reduce((s,k)=>s+kT(k),0);
-  const dnB=ks.reduce((s,k)=>s+kTDone(k),0);
-  const pct=totB>0?Math.round(dnB/totB*100):0;
-  const ksDone=ks.filter(k=>allDone(k)).length;
 
-  // Tab bar
-  let tabsHtml=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">`;
-  data.bidang.forEach(bd=>{
+  // Semua kegiatan bidang ini (untuk summary — tidak terpengaruh filter)
+  const ksAll=data.kegiatan.filter(k=>k.bidangId===_activeBidangId);
+  const totB=ksAll.reduce((s,k)=>s+kT(k),0);
+  const dnB=ksAll.reduce((s,k)=>s+kTDone(k),0);
+  const pct=totB>0?Math.round(dnB/totB*100):0;
+  const ksDoneAll=ksAll.filter(k=>allDone(k)).length;
+
+  // Kegiatan setelah filter status & bulan
+  const ks=sortByJadwal(ksAll.filter(k=>{
+    if(fs==='done'&&!allDone(k))return false;
+    if(fs==='pending'&&allDone(k))return false;
+    if(fm!=='all'&&!kBulanList(k).includes(+fm))return false;
+    return true;
+  }));
+
+  // Tab selector bergaya pill
+  const tabColors=['#007c91','#00b87a','#7c5cbf','#e8a020','#e05555','#3b82f6'];
+  let tabsHtml=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;padding:6px;background:var(--surf);border:1.5px solid var(--bdr);border-radius:14px;">`;
+  data.bidang.forEach((bd,idx)=>{
     const active=bd.id===_activeBidangId;
     const ksBd=data.kegiatan.filter(k=>k.bidangId===bd.id);
     const totBd=ksBd.reduce((s,k)=>s+kT(k),0);
     const dnBd=ksBd.reduce((s,k)=>s+kTDone(k),0);
     const pBd=totBd>0?Math.round(dnBd/totBd*100):0;
-    tabsHtml+=`<button onclick="_activeBidangId='${bd.id}';renderAll()" style="padding:8px 16px;border-radius:10px;border:1.5px solid ${active?'var(--accent)':'rgba(255,255,255,0.12)'};background:${active?'rgba(99,179,237,0.18)':'rgba(255,255,255,0.05)'};color:${active?'var(--accent)':'var(--txt2)'};font-family:'Figtree',sans-serif;font-size:13px;font-weight:${active?700:500};cursor:pointer;transition:all 0.15s;white-space:nowrap">
-      ${escH(bd.nama)}<span style="margin-left:8px;font-size:11px;opacity:0.7">${pBd}%</span>
+    const col=tabColors[idx%tabColors.length];
+    const doneCnt=ksBd.filter(k=>allDone(k)).length;
+    tabsHtml+=`<button onclick="_activeBidangId='${bd.id}';renderAll()" style="flex:1;min-width:120px;padding:9px 14px;border-radius:10px;border:none;background:${active?col:'transparent'};color:${active?'white':'var(--txt2)'};font-family:'Figtree',sans-serif;font-size:12px;font-weight:${active?700:500};cursor:pointer;transition:all 0.18s;white-space:nowrap;text-align:center;${active?'box-shadow:0 2px 8px '+col+'44;':''}">
+      <div style="font-size:13px;font-weight:inherit;">${escH(bd.nama)}</div>
+      <div style="font-size:10px;opacity:${active?0.85:0.55};margin-top:2px;">${doneCnt}/${ksBd.length} kegiatan · ${pBd}%</div>
     </button>`;
   });
   tabsHtml+=`</div>`;
 
-  // Summary cards
-  let html=tabsHtml;
+  // Summary + filter info
+  const filterInfo=(fs!=='all'||fm!=='all')?`<div style="font-size:11px;color:var(--teal);margin-bottom:12px;padding:7px 14px;background:rgba(0,124,145,0.08);border-radius:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">🔍 Filter aktif:${fs!=='all'?` <strong>${fs==='done'?'Sudah Terlaksana':'Belum Terlaksana'}</strong>`:''} ${fm!=='all'?` · Bulan: <strong>${MN[+fm-1]}</strong>`:''} — menampilkan ${ks.length} dari ${ksAll.length} kegiatan <button onclick="document.getElementById('filterStatus').value='all';document.getElementById('filterBulan').value='all';renderAll()" style="background:none;border:none;color:var(--teal);cursor:pointer;font-size:11px;padding:0;font-family:'Figtree',sans-serif;text-decoration:underline;margin-left:4px;">✕ Reset Filter</button></div>`:'';
+  let html=tabsHtml+filterInfo;
   html+=`<div class="bid-block">
     <div class="bid-head">
       <div class="bid-head-left"><div class="bid-head-accent"></div><h2>${escH(b.nama)}</h2></div>
       <div class="bid-metas">
         <div class="bid-meta"><div class="bid-meta-lbl">Total Anggaran</div><div class="bid-meta-val">${fmt(totB)}</div></div>
         <div class="bid-meta"><div class="bid-meta-lbl">Terlaksana</div><div class="bid-meta-val">${fmt(dnB)}</div></div>
-        <div class="bid-meta"><div class="bid-meta-lbl">Kegiatan Selesai</div><div class="bid-meta-val">${ksDone} / ${ks.length}</div></div>
+        <div class="bid-meta"><div class="bid-meta-lbl">Kegiatan Selesai</div><div class="bid-meta-val">${ksDoneAll} / ${ksAll.length}</div></div>
         <div class="bid-prog-outer"><div class="bid-prog-track"><div class="bid-prog-bar" style="width:${pct}%"></div></div><div class="bid-prog-pct">${pct}% selesai</div></div>
       </div>
     </div>
     <div class="tbl-wrap">`;
 
-  if(!ks.length){
+  if(!ks.length&&!ksAll.length){
     html+=`<div class="kosong">Belum ada kegiatan di bidang ini.<br><button class="btn btn-o" style="margin-top:10px" onclick="openAddKegiatan('${b.id}')">+ Tambah Kegiatan</button></div>`;
+  }else if(!ks.length){
+    html+=`<div class="kosong">Tidak ada kegiatan yang sesuai filter.<br><button class="btn btn-o" style="margin-top:10px" onclick="document.getElementById('filterStatus').value='all';document.getElementById('filterBulan').value='all';renderAll()">✕ Reset Filter</button></div>`;
   }else{
     html+=`<table class="keg-tbl">
       <colgroup><col class="col-exp"><col class="col-nm"><col class="col-tmp"><col class="col-jad"><col class="col-tot"><col class="col-dn"><col class="col-aks"></colgroup>
