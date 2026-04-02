@@ -119,7 +119,7 @@ table.bln-tbl col.col-tmp{width:118px;}
 table.bln-tbl col.col-mgg{width:108px;}
 table.bln-tbl col.col-ang{width:148px;}
 table.bln-tbl col.col-sts{width:130px;}
-table.bln-tbl col.col-tnd{width:60px;}
+table.bln-tbl col.col-tnd{width:76px;}
 table.bln-tbl td, table.bln-tbl th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 table.bln-tbl td.keg-td{white-space:normal;word-break:break-word;}
 table.bln-tbl td.c{overflow:visible!important;text-overflow:clip!important;white-space:nowrap;}
@@ -1547,7 +1547,7 @@ function renderKeg(){
         <colgroup><col class="col-exp"><col class="col-nm"><col class="col-tmp"><col class="col-jad"><col class="col-tot"><col class="col-dn"><col class="col-aks"></colgroup>
         <thead><tr>
           <th></th><th>Nama Kegiatan</th><th>Tempat</th>
-          <th>Jadwal per Bulan (klik untuk tandai terlaksana)</th>
+          <th>Jadwal per Bulan</th>
           <th class="r">Total Anggaran</th><th class="r">Terlaksana</th><th class="c">Aksi</th>
         </tr></thead><tbody>`;
       ks.forEach((k,ki)=>{
@@ -1772,7 +1772,7 @@ function renderBulan(){
       <div class="tbl-wrap"><table class="bln-tbl">
         <colgroup><col style="width:38px"><col class="col-keg"><col class="col-bid"><col class="col-tmp"><col class="col-mgg"><col class="col-ang"><col class="col-sts"><col class="col-tnd"></colgroup>
         <thead><tr>
-          <th style="width:38px;text-align:center;padding:8px 4px">#</th><th>Kegiatan</th><th>Bidang</th><th>Tempat</th><th>Minggu</th>
+          <th style="width:38px;text-align:center;padding:8px 4px">No.</th><th>Kegiatan</th><th>Bidang</th><th>Tempat</th><th>Minggu</th>
           <th class="r">Anggaran ${m}</th><th class="c">Status</th><th class="c">Tandai</th>
         </tr></thead><tbody>`;
     ks.forEach((k,ki)=>{
