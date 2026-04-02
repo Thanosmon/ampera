@@ -1141,6 +1141,9 @@ body.logged-in [data-admin].show-admin{display:flex;}
             <button class="jad-add" onclick="addJadwal()">＋ Tambah Bulan Pelaksanaan</button>
             <button class="jad-rata" onclick="distribusiRata()" title="Isi anggaran per bulan secara merata dari total rincian biaya">⚖️ Bagi rata dari Rincian</button>
           </div>
+          <div id="bpAutoHint" style="display:none;margin-top:6px;padding:6px 10px;background:rgba(0,124,145,0.08);border-left:3px solid var(--primary);border-radius:0 6px 6px 0;font-size:11px;color:var(--primary)">
+            💡 <strong>Mode Belanja Pegawai:</strong> Saat anggaran bulan diisi, bulan-bulan sesudahnya otomatis menyesuaikan sisa anggaran secara merata.
+          </div>
         </div>
       </div>
 
@@ -2058,9 +2061,30 @@ function addJadwal(j={}){
 }
 function remJadwal(i){mj.splice(i,1);renderJadwal();}
 function syncJadwal(i,f,v){
-  if(f==='bulan')mj[i].bulan=+v;
-  else if(f==='anggaran')mj[i].anggaran=parseFloat(v)||0;
-  updJadwalFoot();
+  if(f==='bulan'){mj[i].bulan=+v;updJadwalFoot();}
+  else if(f==='anggaran'){
+    // Tangkap total referensi SEBELUM update (rincian prioritas, fallback ke sum mj saat ini)
+    const rincianTot=mr.reduce((s,r)=>s+rT(r),0);
+    const prevMjTot=mj.reduce((s,j)=>s+(j.anggaran||0),0);
+    const totalRef=rincianTot||prevMjTot;
+    // Update nilai bulan ini
+    mj[i].anggaran=parseFloat(v)||0;
+    // Auto-distribusi khusus Belanja Pegawai (akun='51')
+    const isBP=document.getElementById('fAkun')?.value==='51';
+    if(isBP&&totalRef>0){
+      const bulanIni=mj[i].bulan;
+      const afterRows=mj.filter(j=>j.bulan>bulanIni);
+      if(afterRows.length>0){
+        const sumUpTo=mj.filter(j=>j.bulan<=bulanIni).reduce((s,j)=>s+(j.anggaran||0),0);
+        const sisa=totalRef-sumUpTo;
+        const perBulan=Math.round(sisa/afterRows.length);
+        afterRows.forEach(j=>j.anggaran=Math.max(0,perBulan));
+        renderJadwal();
+        return;
+      }
+    }
+    updJadwalFoot();
+  }
 }
 function togMinggu(i,w){
   const m=mj[i].minggu;
@@ -2130,6 +2154,8 @@ function toggleAkun(){
   const v=document.getElementById('fAkun')?.value;
   const wrap=document.getElementById('fSubAkunWrap');
   if(wrap)wrap.style.display=v==='51'?'':'none';
+  const hint=document.getElementById('bpAutoHint');
+  if(hint)hint.style.display=v==='51'?'':'none';
 }
 function openAddKegiatan(bid=''){
   editId=null;mr=[{uraian:'',jumlah:0,hari:0,satuan:'',biayaSatuan:0}];md=[];mj=[];
