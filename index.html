@@ -2079,8 +2079,9 @@ function syncJadwal(i,f,v){
         const sisa=totalRef-sumUpTo;
         const perBulan=Math.round(sisa/afterRows.length);
         afterRows.forEach(j=>j.anggaran=Math.max(0,perBulan));
-        renderJadwal();
-        return;
+        // Update DOM langsung (tanpa renderJadwal) agar fokus input tidak hilang
+        const inputs=document.querySelectorAll('#jadwalRows .jad-angg-cell input');
+        mj.forEach((j,idx)=>{if(idx!==i&&inputs[idx])inputs[idx].value=j.anggaran||'';});
       }
     }
     updJadwalFoot();
