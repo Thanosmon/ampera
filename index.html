@@ -1011,6 +1011,7 @@ body.logged-in [data-admin].show-admin{display:flex;}
     <div class="sid-stats">
       <div class="sid-section-lbl" style="font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Ringkasan</div>
       <div class="sid-stat-row"><span class="sid-stat-lbl">Total Anggaran</span><span class="sid-stat-val gold" id="sTotal">—</span></div>
+      <div class="sid-stat-row" style="margin-top:-3px;"><span class="sid-stat-lbl" style="font-size:9px;opacity:.6;">Akum. kegiatan</span><span style="font-size:9px;color:rgba(255,255,255,.45);font-family:'Fira Code',monospace;" id="sKegPagu">—</span></div>
       <div class="sid-stat-row"><span class="sid-stat-lbl">Terlaksana</span><span class="sid-stat-val green" id="sDone">—</span></div>
       <div class="sid-stat-row"><span class="sid-stat-lbl">Sisa</span><span class="sid-stat-val teal" id="sSisa">—</span></div>
       <div class="sid-prog-wrap"><div class="sid-prog-fill" id="sidProg" style="width:0%"></div></div>
@@ -1392,14 +1393,16 @@ function sortByJadwal(ks){
   });
 }
 function updSum(){
-  const tot=getTotPagu();       // Pagu resmi dari IKPA (manual input)
+  const tot=getTotPagu();        // Pagu resmi dari IKPA (manual input)
   const kegPagu=getKegTotPagu(); // Akumulasi dari kegiatan
-  const disp=tot>0?tot:kegPagu;  // Gunakan pagu resmi jika sudah diisi, fallback ke keg
+  const disp=tot>0?tot:kegPagu;  // Tampilkan pagu resmi jika tersedia, fallback ke keg
   const dn=getTotReal();
   const pct=disp>0?Math.round(dn/disp*100):0;
   const totP=data.kegiatan.reduce((s,k)=>s+kBulanList(k).length,0);
   const dnP=data.kegiatan.reduce((s,k)=>s+(k.doneBulan||[]).length,0);
   document.getElementById('sTotal').textContent=fmtShort(disp);
+  const sKP=document.getElementById('sKegPagu');
+  if(sKP)sKP.textContent=(tot>0&&kegPagu>0&&kegPagu!==tot)?fmt(kegPagu):'—';
   document.getElementById('sDone').textContent=fmtShort(dn);
   document.getElementById('sSisa').textContent=fmtShort(Math.max(0,disp-dn));
   document.getElementById('sidProg').style.width=pct+'%';
@@ -1407,11 +1410,11 @@ function updSum(){
   const mc=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   mc('mc1',fmt(disp));mc('mc2',fmt(dn));mc('mc3',fmt(Math.max(0,disp-dn)));
   mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
-  // Sub-label mc1: tampilkan akumulasi kegiatan jika berbeda dari pagu resmi
+  // Sub-label mc1: angka detail (tidak dibulatkan)
   const mc1Sub=document.querySelector('#mc1')?.closest('.metric-card')?.querySelector('.metric-sub');
   if(mc1Sub){
     if(tot>0&&kegPagu>0&&kegPagu!==tot)
-      mc1Sub.textContent=`Pagu resmi · Akum. kegiatan: ${fmtShort(kegPagu)}`;
+      mc1Sub.textContent=`Pagu resmi · Akum. kegiatan: ${fmt(kegPagu)}`;
     else if(tot===0&&kegPagu>0)
       mc1Sub.textContent=`Akumulasi kegiatan · Input pagu resmi di IKPA`;
     else
@@ -1420,17 +1423,32 @@ function updSum(){
 }
 // Update metric cards dengan data terfilter (bidang/status)
 function updMetricCards(ks,label){
-  const tot=ks.reduce((s,k)=>s+kT(k),0);
+  const kegTot=ks.reduce((s,k)=>s+kT(k),0);
   const dn=ks.reduce((s,k)=>s+kTDone(k),0);
   const totP=ks.reduce((s,k)=>s+kBulanList(k).length,0);
   const dnP=ks.reduce((s,k)=>s+(k.doneBulan||[]).length,0);
+  const paguResmi=getTotPagu();
+  const kegAll=getKegTotPagu();
   const mc=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  mc('mc1',fmt(tot));mc('mc2',fmt(dn));mc('mc3',fmt(tot-dn));
-  mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
+  const setSub=(id,txt)=>{const el=document.getElementById(id);const s=el?.closest('.metric-card')?.querySelector('.metric-sub');if(s)s.textContent=txt;};
   if(label){
-    const setSub=(id,txt)=>{const el=document.getElementById(id);const s=el?.closest('.metric-card')?.querySelector('.metric-sub');if(s)s.textContent=txt;};
-    setSub('mc1',label);setSub('mc2','Terserap · '+label);setSub('mc3','Belum terlaksana · '+label);
+    // Filter aktif: tampilkan total kegiatan filter di mc1, pagu resmi di sub
+    mc('mc1',fmt(kegTot));mc('mc2',fmt(dn));mc('mc3',fmt(kegTot-dn));
+    mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
+    setSub('mc1',`${label} · Pagu resmi: ${fmt(paguResmi||kegAll)}`);
+    setSub('mc2','Terserap · '+label);setSub('mc3','Belum terlaksana · '+label);
     setSub('mc4','Jadwal · '+label);setSub('mc5','Dari total jadwal · '+label);
+  }else{
+    // Tidak difilter: tampilkan pagu resmi sebagai primer, akum. kegiatan di sub (angka penuh)
+    const disp=paguResmi>0?paguResmi:kegAll;
+    mc('mc1',fmt(disp));mc('mc2',fmt(dn));mc('mc3',fmt(Math.max(0,disp-dn)));
+    mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
+    if(paguResmi>0&&kegAll>0&&kegAll!==paguResmi)
+      setSub('mc1',`Pagu resmi · Akum. kegiatan: ${fmt(kegAll)}`);
+    else if(paguResmi===0&&kegAll>0)
+      setSub('mc1',`Akumulasi kegiatan · Input pagu resmi di IKPA`);
+    else
+      setSub('mc1',`Pagu resmi 51+52+53 · TA ${getTAYear()}`);
   }
 }
 function popFB(){
@@ -1837,23 +1855,7 @@ function renderBulan(){
   });
   cont.innerHTML=html;
   updSum(); // sidebar pakai data global
-  // Update metric cards dengan data terfilter (bidang+status)
-  const tot=filtGrid.reduce((s,k)=>s+kT(k),0);
-  const dn=filtGrid.reduce((s,k)=>s+kTDone(k),0);
-  const totP=filtGrid.reduce((s,k)=>s+kBulanList(k).length,0);
-  const dnP=filtGrid.reduce((s,k)=>s+(k.doneBulan||[]).length,0);
-  const mc=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  mc('mc1',fmt(tot));mc('mc2',fmt(dn));mc('mc3',fmt(tot-dn));
-  mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
-  // Update sub-label jika ada filter bidang
-  if(bidangNama){
-    const sub1=document.querySelector('#mc1')?.closest('.metric-card')?.querySelector('.metric-sub');
-    if(sub1)sub1.textContent=bidangNama;
-    const sub2=document.querySelector('#mc2')?.closest('.metric-card')?.querySelector('.metric-sub');
-    if(sub2)sub2.textContent='Terserap · '+bidangNama;
-    const sub3=document.querySelector('#mc3')?.closest('.metric-card')?.querySelector('.metric-sub');
-    if(sub3)sub3.textContent='Belum terlaksana · '+bidangNama;
-  }
+  updMetricCards(filtGrid,bidangNama||null);
 }
 
 function filtBulan(m){
