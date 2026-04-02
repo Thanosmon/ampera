@@ -1392,19 +1392,31 @@ function sortByJadwal(ks){
   });
 }
 function updSum(){
-  const tot=getTotPagu();
+  const tot=getTotPagu();       // Pagu resmi dari IKPA (manual input)
+  const kegPagu=getKegTotPagu(); // Akumulasi dari kegiatan
+  const disp=tot>0?tot:kegPagu;  // Gunakan pagu resmi jika sudah diisi, fallback ke keg
   const dn=getTotReal();
-  const pct=tot>0?Math.round(dn/tot*100):0;
+  const pct=disp>0?Math.round(dn/disp*100):0;
   const totP=data.kegiatan.reduce((s,k)=>s+kBulanList(k).length,0);
   const dnP=data.kegiatan.reduce((s,k)=>s+(k.doneBulan||[]).length,0);
-  document.getElementById('sTotal').textContent=fmtShort(tot);
+  document.getElementById('sTotal').textContent=fmtShort(disp);
   document.getElementById('sDone').textContent=fmtShort(dn);
-  document.getElementById('sSisa').textContent=fmtShort(tot-dn);
+  document.getElementById('sSisa').textContent=fmtShort(Math.max(0,disp-dn));
   document.getElementById('sidProg').style.width=pct+'%';
   document.getElementById('sidPct').textContent=pct+'%';
   const mc=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  mc('mc1',fmt(tot));mc('mc2',fmt(dn));mc('mc3',fmt(tot-dn));
+  mc('mc1',fmt(disp));mc('mc2',fmt(dn));mc('mc3',fmt(Math.max(0,disp-dn)));
   mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
+  // Sub-label mc1: tampilkan akumulasi kegiatan jika berbeda dari pagu resmi
+  const mc1Sub=document.querySelector('#mc1')?.closest('.metric-card')?.querySelector('.metric-sub');
+  if(mc1Sub){
+    if(tot>0&&kegPagu>0&&kegPagu!==tot)
+      mc1Sub.textContent=`Pagu resmi · Akum. kegiatan: ${fmtShort(kegPagu)}`;
+    else if(tot===0&&kegPagu>0)
+      mc1Sub.textContent=`Akumulasi kegiatan · Input pagu resmi di IKPA`;
+    else
+      mc1Sub.textContent=`Pagu resmi 51+52+53 · TA ${getTAYear()}`;
+  }
 }
 // Update metric cards dengan data terfilter (bidang/status)
 function updMetricCards(ks,label){
@@ -2269,9 +2281,11 @@ function renderDashboard(){
   // ── Hitung semua data tahunan (51 Pegawai + 52 Barang + 53 Modal) ──
   const tot52=getBBPagu();
   const dn52=getBBReal();
-  const totAngg=getTotPagu();
+  const totAngg=getTotPagu();          // Pagu resmi dari IKPA manual input
+  const kegTotPagu=getKegTotPagu();    // Akumulasi dari jadwal kegiatan
+  const dispAngg=totAngg>0?totAngg:kegTotPagu; // Tampilkan pagu resmi jika ada, else keg
   const totDone=getTotReal();
-  const pctReal=totAngg>0?Math.round(totDone/totAngg*100):0;
+  const pctReal=dispAngg>0?Math.round(totDone/dispAngg*100):0;
   const totPelaks=data.kegiatan.reduce((s,k)=>s+kBulanList(k).length,0);
   const donePelaks=data.kegiatan.reduce((s,k)=>s+(k.doneBulan||[]).length,0);
 
@@ -2394,8 +2408,11 @@ function renderDashboard(){
     <div class="dash-kpi-strip">
       <div class="dash-kpi dk-teal">
         <div class="dash-kpi-lbl">Total Anggaran TA 2026</div>
-        <div class="dash-kpi-val">${fmt(totAngg)}</div>
-        <div class="dash-kpi-sub">Belanja Pegawai + Barang + Modal · TA ${getTAYear()}</div>
+        <div class="dash-kpi-val">${fmt(dispAngg)}</div>
+        <div class="dash-kpi-sub" style="display:flex;flex-direction:column;gap:2px;line-height:1.4;">
+          <span>${totAngg>0?'📋 Pagu Resmi (51+52+53)':'⚠️ Akumulasi kegiatan · input pagu resmi di IKPA'}</span>
+          ${totAngg>0&&kegTotPagu>0&&kegTotPagu!==totAngg?`<span style="opacity:0.75;">Akum. kegiatan: ${fmt(kegTotPagu)}</span>`:''}
+        </div>
       </div>
       <div class="dash-kpi dk-green">
         <div class="dash-kpi-lbl">Sudah Terlaksana (kumulatif)</div>
@@ -2415,8 +2432,8 @@ function renderDashboard(){
         <div class="dash-kpi-lbl">Proyeksi Serapan Akhir Tahun</div>
         <div class="dash-kpi-val">${fmt(Math.round(proyEOY))}</div>
         <div class="dash-kpi-sub">Berdasarkan tren realisasi s.d. saat ini</div>
-        <div class="dash-kpi-badge ${proyEOY>=totAngg*0.9?'dkb-green':proyEOY>=totAngg*0.6?'dkb-gold':'dkb-red'}">
-          ${Math.round(proyEOY/totAngg*100)||0}% proyeksi serapan
+        <div class="dash-kpi-badge ${proyEOY>=dispAngg*0.9?'dkb-green':proyEOY>=dispAngg*0.6?'dkb-gold':'dkb-red'}">
+          ${Math.round(proyEOY/dispAngg*100)||0}% proyeksi serapan
         </div>
       </div>
     </div>
@@ -2602,7 +2619,7 @@ function renderDashboard(){
             </div>
             <div class="insight-item ins-info">
               <span class="ins-icon">📐</span>
-              <span class="ins-text">Proyeksi realisasi akhir tahun: <strong>${fmt(Math.round(proyEOY))}</strong> (<strong>${Math.round(proyEOY/totAngg*100)||0}%</strong> dari pagu).</span>
+              <span class="ins-text">Proyeksi realisasi akhir tahun: <strong>${fmt(Math.round(proyEOY))}</strong> (<strong>${Math.round(proyEOY/dispAngg*100)||0}%</strong> dari pagu).</span>
             </div>
           </div>
         </div>
@@ -2692,7 +2709,7 @@ function renderDashboard(){
       responsive:true,maintainAspectRatio:true,cutout:'62%',
       plugins:{
         legend:{position:'bottom',labels:{boxWidth:10,padding:12,font:{size:11}}},
-        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.parsed)} (${Math.round(ctx.parsed/totAngg*100)}%)`}}
+        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.parsed)} (${Math.round(ctx.parsed/dispAngg*100)}%)`}}
       }
     }
   });
@@ -3179,14 +3196,18 @@ function getBP(){
 }
 function getBPKegiatan(){return data.kegiatan.filter(k=>k.akun==='51');}
 function getBBKegiatan(){return data.kegiatan.filter(k=>k.akun!=='51');}
-function getBPPagu(){try{return getBPKegiatan().reduce((s,k)=>s+kT(k),0);}catch(e){return 0;}}
+// Pagu resmi = input manual di IKPA (angka dari pusat, bukan akumulasi kegiatan)
+function getBPPagu(){try{return data.ikpa?.belanja?.['51']?.pagu||0;}catch(e){return 0;}}
 function getBPReal(){try{return getBPKegiatan().reduce((s,k)=>s+kTDone(k),0);}catch(e){return 0;}}
-function getBBPagu(){try{return getBBKegiatan().reduce((s,k)=>s+kT(k),0);}catch(e){return 0;}}
+function getBBPagu(){try{return data.ikpa?.belanja?.['52']?.pagu||0;}catch(e){return 0;}}
 function getBBReal(){try{return getBBKegiatan().reduce((s,k)=>s+kTDone(k),0);}catch(e){return 0;}}
 function getBMPagu(){try{return data.ikpa?.belanja?.['53']?.pagu||0;}catch(e){return 0;}}
 function getBMReal(){try{const tw=getCurrentTW()-1;return data.ikpa?.belanja?.['53']?.realisasi?.[tw]||0;}catch(e){return 0;}}
+// Pagu resmi total (51+52+53 dari IKPA)
 function getTotPagu(){return getBPPagu()+getBBPagu()+getBMPagu();}
 function getTotReal(){return getBPReal()+getBBReal()+getBMReal();}
+// Akumulasi kegiatan = jumlah jadwal anggaran seluruh kegiatan (51+52), mungkin ≠ pagu resmi
+function getKegTotPagu(){try{return data.kegiatan.reduce((s,k)=>s+kT(k),0);}catch(e){return 0;}}
 function canEditBP(){
   if(!currentUser)return false;
   if(currentUser.role==='admin')return true;
@@ -3293,13 +3314,13 @@ function renderIKPA(){
               ${bl&&bl.paguSet&&bl.pagu?new Intl.NumberFormat('id-ID').format(bl.pagu):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`}
             </div>
             <div style="border-top:1px dashed var(--bdr);margin:6px 0;"></div>
-            ${kode==='51'?`<div style="font-size:10px;color:var(--teal);padding:4px 0;">✦ Auto dari ${getBPKegiatan().length} kegiatan Belanja Pegawai</div>`
-              :bpEdit?`<input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
+            ${bpEdit?`<input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
               value="${bl&&bl.paguSet?bl.pagu:''}" placeholder="ketik angka..."
               onchange="setIKPAPagu('${kode}',this.value)"
               onfocus="this.style.borderColor='${conf.color}'"
               onblur="this.style.borderColor='var(--bdr)'">`
               :`<div style="font-size:10px;color:var(--txt3);padding:4px 0;font-style:italic;">🔒 Hanya Admin / Editor Bagian Umum</div>`}
+            ${kode==='51'?`<div style="font-size:10px;color:var(--txt3);padding:2px 0 0;">Akum. kegiatan: ${fmt(getBPKegiatan().reduce((s,k)=>s+kT(k),0))}</div>`:''}
           </div>
           <div style="display:flex;flex-direction:column;">
             <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">${kode==='51'?`Realisasi s.d. TW ${twRom[twIdx]} (Rp)`:`Realisasi TW ${twRom[twIdx]} (Rp)`}</div>
