@@ -277,17 +277,18 @@ td.muted{color:var(--txt3);font-size:12px;}
 .kdl{text-align:center;padding:4px 2px;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--txt3);}
 .kdl:first-child,.kdl:last-child{color:var(--red);opacity:0.65;}
 .kd-days{display:grid;grid-template-columns:repeat(7,1fr);padding:3px;gap:2px;}
-.kd{min-height:28px;border-radius:4px;padding:2px;}
+.kd{min-height:36px;border-radius:4px;padding:2px;position:relative;display:flex;align-items:center;justify-content:center;}
 .kd.ak{background:rgba(0,164,189,0.08);cursor:pointer;border:1px solid rgba(0,164,189,0.2);}
 .kd.ak.ss{background:rgba(0,184,122,0.1);border-color:rgba(0,184,122,0.25);}
 .kd.hi{outline:2px solid var(--gold);outline-offset:-2px;}
 .kd.ks{opacity:0;pointer-events:none;}
 .kd.wknd{background:rgba(224,85,85,0.05);}
-.kd-n{font-size:10px;font-weight:600;color:var(--txt3);}
+.kd-n{font-size:10px;font-weight:600;color:var(--txt3);line-height:1;}
 .kd.ak .kd-n{color:var(--teal);}
 .kd.wknd .kd-n{color:var(--red);opacity:0.7;}
 .kd.ak.wknd .kd-n{color:var(--red);opacity:0.85;}
-.kev-dot{width:5px;height:5px;border-radius:50%;background:var(--teal2);margin:1px auto 0;}
+.kd-dots{position:absolute;bottom:3px;left:0;right:0;display:flex;gap:2px;justify-content:center;}
+.kev-dot{width:5px;height:5px;border-radius:50%;background:var(--teal2);}
 .kev-dot.s{background:var(--green);}
 .kb-evs{padding:7px 10px;border-top:1px solid var(--bdr);display:flex;flex-direction:column;gap:4px;}
 .kev{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:6px;background:rgba(0,164,189,0.07);font-size:11px;cursor:pointer;transition:background 0.15s;border:1px solid transparent;}
@@ -1866,7 +1867,7 @@ function renderKal(){
       const cls=['kd',hasKegOnWeek?'ak':'',hasKegOnWeek&&kgsThisWeek.every(k=>isDB(k,mI))?'ss':'',iT?'hi':'',isWeekend?'wknd':''].filter(Boolean).join(' ');
       const dots=showDot?kgsThisWeek.map(k=>`<div class="kev-dot${isDB(k,mI)?' s':''}"></div>`).join(''):'';
       const wkStyle=hasKegOnWeek&&!kgsThisWeek.every(k=>isDB(k,mI))?'background:rgba(0,164,189,0.16);':(hasKegOnWeek&&kgsThisWeek.every(k=>isDB(k,mI))?'background:rgba(0,184,122,0.18);':'');
-      dH+=`<div class="${cls}" style="${wkStyle}"><div class="kd-n">${d}</div>${dots}</div>`;
+      dH+=`<div class="${cls}" style="${wkStyle}"><div class="kd-n">${d}</div>${dots?`<div class="kd-dots">${dots}</div>`:''}</div>`;
     }
     const evH=mKs.map(k=>{
       const sd=isDB(k,mI);
