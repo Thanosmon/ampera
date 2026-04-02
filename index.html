@@ -988,42 +988,6 @@ body.logged-in [data-admin].show-admin{display:flex;}
           <button class="btn-exp xls" onclick="exportExcel('rincian')">💰 Rincian Biaya</button>
         </div>
       </div>
-      <div style="height:1px;background:var(--bdr);margin:4px 0 16px"></div>
-      <div class="exp-section">
-        <div class="exp-section-lbl">🏛️ Import dari Rencana Kemenkeu (.xlsx)</div>
-        <div style="background:#f0f9fc;border:1px solid #b8dde8;border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:var(--txt2);line-height:1.6">
-          Import langsung dari file <strong>"Rencana Kegiatan"</strong> format Kemenkeu (sheet <code style="font-size:10px;background:#e4edf3;padding:1px 5px;border-radius:3px">Sheet1</code>).<br>
-          Kolom yang dibaca: Bidang, Kegiatan, Sub-Komponen, MAK, Uraian Rincian, Satuan, Anggaran, Jadwal Bulan.<br>
-          <strong style="color:var(--red)">⚠️ Data saat ini akan digantikan.</strong>
-        </div>
-        <div class="export-bar">
-          <button class="btn-exp imp" onclick="document.getElementById('kemenkeuImportInput').click()">🏛️ Pilih File Rencana Kemenkeu</button>
-        </div>
-        <input type="file" id="kemenkeuImportInput" accept=".xlsx,.xls" style="display:none" onchange="importFromKemenkeu(this)">
-      </div>
-      <div style="height:1px;background:var(--bdr);margin:4px 0 16px"></div>
-      <div class="exp-section">
-        <div class="exp-section-lbl">⬆️ Import dari Excel AMPERA (.xlsx)</div>
-        <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:var(--txt2);line-height:1.6">
-          Import file Excel yang sebelumnya diekspor dari AMPERA. Format kolom harus sesuai.<br>
-          <strong style="color:var(--red)">⚠️ Data saat ini akan digantikan.</strong>
-        </div>
-        <div class="export-bar">
-          <button class="btn-exp imp" onclick="document.getElementById('xlsImportInput').click()">📂 Pilih File Excel (.xlsx)</button>
-          <button class="btn-exp imp" onclick="downloadImportTemplate()">⬇️ Download Template</button>
-        </div>
-        <input type="file" id="xlsImportInput" accept=".xlsx,.xls" style="display:none" onchange="importFromExcel(this)">
-      </div>
-      <div style="height:1px;background:var(--bdr);margin:4px 0 16px"></div>
-      <div class="exp-section">
-        <div class="exp-section-lbl">💾 Backup Data (JSON)</div>
-        <div class="export-bar">
-          <button class="btn-exp imp" onclick="exportJSON()">⬇️ Download JSON</button>
-          <button class="btn-exp imp" onclick="document.getElementById('impFile').click()">⬆️ Import JSON</button>
-          <button class="btn-exp imp" onclick="openShareModal()">🔗 Bagikan via Link</button>
-        </div>
-        
-      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-o" onclick="document.getElementById('exportModal').classList.remove('open')">Tutup</button>
@@ -3011,6 +2975,7 @@ function saveLS(){
 // silent=true → hanya update indikator topbar, tanpa toast
 async function pushToServer(silent=false){
   if(!currentUser||isSyncing)return;
+  if(currentUser.role!=='admin'){toast('Hanya Administrator yang dapat menyimpan data ke server','⛔');return;}
   isSyncing=true;setSyncSt('syncing','Menyimpan...');
   try{
     const r=await fetch(VERCEL_API,{
@@ -3443,13 +3408,13 @@ function openSyncModal(){
       ${isVercel?'Data tersinkron otomatis ke Supabase antar semua pengguna.':
         'Buka aplikasi dari URL Vercel untuk sinkronisasi otomatis.'}
     </div>
-    ${isVercel?`<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-      <button class="btn btn-ink" onclick="pullFromServer()">🔄 Muat dari Server</button>
+    ${isVercel&&isAdmin?`<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
       <button class="btn btn-p" onclick="pushToServer()">⬆️ Simpan ke Server</button>
     </div>`:''}
+    ${isVercel&&!isAdmin?`<div style="padding:8px 12px;border-radius:7px;background:rgba(232,160,32,0.1);border:1px solid rgba(232,160,32,0.3);font-size:11px;color:var(--gold);margin-bottom:14px">🔒 Hanya Administrator yang dapat menyimpan data ke server.</div>`:''}
     <div style="font-size:11px;color:var(--txt3);line-height:1.6">
       URL Vercel: <code style="background:var(--surf);padding:2px 6px;border-radius:4px;font-size:10px">ampera-gamma.vercel.app</code><br>
-      Untuk backup manual, gunakan menu <strong>Ekspor &amp; Laporan</strong> di sidebar.
+      Data dimuat dari server secara otomatis saat aplikasi dibuka.
     </div>
   `;
   document.getElementById('syncModal').classList.add('open');
