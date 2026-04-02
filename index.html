@@ -769,6 +769,7 @@ td.muted{color:var(--txt3);font-size:12px;}
 .udd-nm{font-size:13px;font-weight:700;color:white;}
 .udd-badge{display:inline-block;margin-top:3px;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;}
 .udd-badge.admin{background:rgba(232,160,32,.2);color:var(--gold2);}
+.udd-badge.editor{background:rgba(0,184,122,.18);color:#5de6b8;}
 .udd-badge.viewer{background:rgba(0,164,189,.15);color:var(--teal3);}
 .udd-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:rgba(255,255,255,.6);transition:all .15s;}
 .udd-item:hover{background:rgba(255,255,255,.06);color:white;}
@@ -880,7 +881,8 @@ body.logged-in [data-admin].show-admin{display:flex;}
         <div class="fg"><label class="flbl2">Nama Lengkap</label><input class="finput" id="nuNama" placeholder="Nama"></div>
         <div class="fg"><label class="flbl2">Username</label><input class="finput" id="nuUser" placeholder="username"></div>
         <div class="fg"><label class="flbl2">Password</label><input class="finput" id="nuPass" type="password" placeholder="••••••"></div>
-        <div class="fg"><label class="flbl2">Peran</label><select class="finput" id="nuRole"><option value="admin">Admin</option><option value="viewer">Viewer</option></select></div>
+        <div class="fg"><label class="flbl2">Peran</label><select class="finput" id="nuRole" onchange="toggleNuBidang()"><option value="admin">Admin</option><option value="editor">Editor Bidang</option><option value="viewer">Viewer</option></select></div>
+        <div class="fg" id="nuBidangWrap" style="display:none"><label class="flbl2">Bidang</label><select class="finput" id="nuBidang"></select></div>
         <div class="fg" style="display:flex;align-items:flex-end"><button class="btn btn-p" onclick="addUser()" style="width:100%">+ Tambah</button></div>
       </div>
     </div>
@@ -1629,12 +1631,12 @@ function renderKeg(){
           <div class="bid-meta"><div class="bid-meta-lbl">Anggaran</div><div class="bid-meta-val">${fmt(totB)}</div></div>
           <div class="bid-meta"><div class="bid-meta-lbl">Terlaksana</div><div class="bid-meta-val">${fmt(dnB)}</div></div>
           <div class="bid-prog-outer"><div class="bid-prog-track"><div class="bid-prog-bar" style="width:${pct}%"></div></div><div class="bid-prog-pct">${pct}% selesai</div></div>
-          <button onclick="delBidang('${b.id}')" title="Hapus Bidang" style="background:rgba(224,85,85,0.15);border:1px solid rgba(224,85,85,0.35);color:#ff9a9a;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Figtree',sans-serif;transition:all 0.15s;white-space:nowrap;flex-shrink:0" onmouseover="this.style.background='rgba(224,85,85,0.3)'" onmouseout="this.style.background='rgba(224,85,85,0.15)'">🗑 Hapus Bidang</button>
+          ${currentUser&&currentUser.role==='admin'?`<button onclick="delBidang('${b.id}')" title="Hapus Bidang" style="background:rgba(224,85,85,0.15);border:1px solid rgba(224,85,85,0.35);color:#ff9a9a;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Figtree',sans-serif;transition:all 0.15s;white-space:nowrap;flex-shrink:0" onmouseover="this.style.background='rgba(224,85,85,0.3)'" onmouseout="this.style.background='rgba(224,85,85,0.15)'">🗑 Hapus Bidang</button>`:''}
         </div>
       </div>
       <div class="tbl-wrap">`;
     if(!ks.length){
-      html+=`<div class="kosong">Belum ada kegiatan.<br><button class="btn btn-o" style="margin-top:10px" onclick="openAddKegiatan('${b.id}')">+ Tambah Kegiatan</button></div>`;
+      html+=`<div class="kosong">Belum ada kegiatan.${canEdit({bidangId:b.id})?`<br><button class="btn btn-o" style="margin-top:10px" onclick="openAddKegiatan('${b.id}')">+ Tambah Kegiatan</button>`:''}</div>`;
     }else{
       html+=`<table class="keg-tbl">
         <colgroup><col class="col-exp"><col class="col-nm"><col class="col-tmp"><col class="col-jad"><col class="col-tot"><col class="col-dn"><col class="col-aks"></colgroup>
@@ -1658,8 +1660,8 @@ function renderKeg(){
           <td class="r mono">${fmt(tot)}</td>
           <td class="r mono" style="color:var(--green)">${fmt(done)}</td>
           <td class="c"><div class="aksi">
-            <button class="ico-btn" title="Edit" onclick="openEdit('${k.id}')">✎</button>
-            <button class="ico-btn del" title="Hapus" onclick="delKeg('${k.id}')">✕</button>
+            ${canEdit(k)?`<button class="ico-btn" title="Edit" onclick="openEdit('${k.id}')">✎</button>
+            <button class="ico-btn del" title="Hapus" onclick="delKeg('${k.id}')">✕</button>`:''}
           </div></td>
         </tr>
         <tr class="rin-row" id="rr-${k.id}">
@@ -1684,7 +1686,7 @@ function renderKeg(){
       });
       html+=`</tbody></table>`;
     }
-    html+=`</div><div class="tkr"><button class="btn btn-o" onclick="openAddKegiatan('${b.id}')">+ Kegiatan untuk ${escH(b.nama)}</button></div></div>`;
+    html+=`</div>${canEdit({bidangId:b.id})?`<div class="tkr"><button class="btn btn-o" onclick="openAddKegiatan('${b.id}')">+ Kegiatan untuk ${escH(b.nama)}</button></div>`:''}</div>`;
   });
   cont.innerHTML=html||`<div class="kosong" style="padding:60px">Tidak ada data yang sesuai filter.</div>`;
   updSum();
@@ -1762,7 +1764,7 @@ function renderPerBidang(){
     <div class="tbl-wrap">`;
 
   if(!ks.length&&!ksAll.length){
-    html+=`<div class="kosong">Belum ada kegiatan di bidang ini.<br><button class="btn btn-o" style="margin-top:10px" onclick="openAddKegiatan('${b.id}')">+ Tambah Kegiatan</button></div>`;
+    html+=`<div class="kosong">Belum ada kegiatan di bidang ini.${canEdit({bidangId:b.id})?`<br><button class="btn btn-o" style="margin-top:10px" onclick="openAddKegiatan('${b.id}')">+ Tambah Kegiatan</button>`:''}</div>`;
   }else if(!ks.length){
     html+=`<div class="kosong">Tidak ada kegiatan yang sesuai filter.<br><button class="btn btn-o" style="margin-top:10px" onclick="document.getElementById('filterStatus').value='all';document.getElementById('filterBulan').value='all';renderAll()">✕ Reset Filter</button></div>`;
   }else{
@@ -1788,8 +1790,8 @@ function renderPerBidang(){
         <td class="r mono">${fmt(tot)}</td>
         <td class="r mono" style="color:var(--green)">${fmt(done)}</td>
         <td class="c"><div class="aksi">
-          <button class="ico-btn" title="Edit" onclick="openEdit('${k.id}')">✎</button>
-          <button class="ico-btn del" title="Hapus" onclick="delKeg('${k.id}')">✕</button>
+          ${canEdit(k)?`<button class="ico-btn" title="Edit" onclick="openEdit('${k.id}')">✎</button>
+          <button class="ico-btn del" title="Hapus" onclick="delKeg('${k.id}')">✕</button>`:''}
         </div></td>
       </tr>
       <tr class="rin-row" id="rr-${k.id}">
@@ -1815,7 +1817,7 @@ function renderPerBidang(){
     html+=`</tbody></table>`;
   }
   html+=`</div></div>`;
-  html+=`<div class="tkr"><button class="btn btn-o" onclick="openAddKegiatan('${b.id}')">+ Kegiatan untuk ${escH(b.nama)}</button></div>`;
+  if(canEdit({bidangId:b.id}))html+=`<div class="tkr"><button class="btn btn-o" onclick="openAddKegiatan('${b.id}')">+ Kegiatan untuk ${escH(b.nama)}</button></div>`;
   cont.innerHTML=html;
 }
 
@@ -1880,7 +1882,7 @@ function renderBulan(){
         <td>${mkLabel}</td>
         <td class="r mono">${fmt(pb)}</td>
         <td class="c"><span class="badge ${sd?'badge-done':'badge-pend'}"><span class="bdot"></span>${sd?'Terlaksana':'Belum'}</span></td>
-        <td class="c"><button class="ico-btn" onclick="togDB('${k.id}',${idx})" style="${sd?'border-color:var(--green);color:var(--green);background:var(--green-dim)':''}">${sd?'✓':'○'}</button></td>
+        <td class="c">${canTandai(k)?`<button class="ico-btn" onclick="togDB('${k.id}',${idx})" style="${sd?'border-color:var(--green);color:var(--green);background:var(--green-dim)':''}">${sd?'✓':'○'}</button>`:`<span style="font-size:13px;color:${sd?'var(--green)':'var(--txt3)'}">${sd?'✓':'—'}</span>`}</td>
       </tr>`;
     });
     html+=`</tbody></table></div></div>`;
@@ -2008,7 +2010,7 @@ function renderTL(){
         const bc=sd?'sl':iC?'bi':'pl';
         const mk=kMinggu(k,mI);
         const wl=mk.length?'M'+mk.join('·'):'';
-        return`<td ${bg}><div class="tl-bar ${bc}" onclick="togDB('${k.id}',${mI})" title="${MN[mi]}: ${fmt(kTPB(k,mI))}${mk.length?'\nMinggu '+mk.join(', '):''}">
+        return`<td ${bg}><div class="tl-bar ${bc}" ${canTandai(k)?`onclick="togDB('${k.id}',${mI})"`:'style="cursor:default"'} title="${MN[mi]}: ${fmt(kTPB(k,mI))}${mk.length?'\nMinggu '+mk.join(', '):''}">
           <span>${sd?'✓':iC?'▶':''}</span>
           ${wl?`<span class="tl-bar-week">${wl}</span>`:''}
           <span style="font-size:7px;opacity:0.75">${fmtShort(kTPB(k,mI))}</span>
@@ -2076,7 +2078,9 @@ function togDB(id,bulan){
 }
 function delKeg(id){
   const k=data.kegiatan.find(k=>k.id===id);
-  if(k&&confirm(`Hapus kegiatan "${k.nama}"?`)){
+  if(!k)return;
+  if(!canEdit(k)){toast('Anda tidak memiliki akses hapus kegiatan ini','⛔');return;}
+  if(confirm(`Hapus kegiatan "${k.nama}"?`)){
     data.kegiatan=data.kegiatan.filter(k=>k.id!==id);
     saveLS();toast('Kegiatan dihapus','🗑');renderAll();
   }
@@ -2180,7 +2184,11 @@ function renderDok(){
 // ── MODAL OPS ──
 function popBS(sid=''){
   const sel=document.getElementById('fBidang');sel.innerHTML='';
-  data.bidang.forEach(b=>{const o=document.createElement('option');o.value=b.id;o.textContent=b.nama;if(b.id===sid)o.selected=true;sel.appendChild(o);});
+  const isEditor=currentUser&&currentUser.role==='editor';
+  const bids=isEditor?data.bidang.filter(b=>b.id===currentUser.bidangId):data.bidang;
+  bids.forEach(b=>{const o=document.createElement('option');o.value=b.id;o.textContent=b.nama;if(b.id===sid)o.selected=true;sel.appendChild(o);});
+  sel.disabled=isEditor;
+  if(isEditor&&sel.style)sel.style.opacity='0.7';
 }
 function openAddKegiatan(bid=''){
   editId=null;mr=[{uraian:'',jumlah:0,hari:0,satuan:'',biayaSatuan:0}];md=[];mj=[];
@@ -2189,11 +2197,13 @@ function openAddKegiatan(bid=''){
   document.getElementById('fNama').value='';
   document.getElementById('fTempat').value='';
   document.getElementById('fCatatan').value='';
-  popBS(bid);renderRe();renderJadwal();renderDok();
+  const _effBid=currentUser&&currentUser.role==='editor'?currentUser.bidangId:(bid||'');
+  popBS(_effBid);renderRe();renderJadwal();renderDok();
   document.getElementById('modalOverlay').classList.add('open');
 }
 function openEdit(id){
   const k=data.kegiatan.find(k=>k.id===id);if(!k)return;
+  if(!canEdit(k)){toast('Anda tidak memiliki akses edit kegiatan ini','⛔');return;}
   editId=id;
   mr=k.rincian.map(r=>({...r}));
   md=(k.dokumen||[]).map(d=>({...d}));
@@ -2217,7 +2227,7 @@ function saveKegiatan(){
     tipe:d.tipe,nama:d.nama.trim(),url:d.url.trim()
   }));
   const obj={
-    bidangId:document.getElementById('fBidang').value,
+    bidangId:(currentUser&&currentUser.role==='editor')?currentUser.bidangId:document.getElementById('fBidang').value,
     nama,tempat:document.getElementById('fTempat').value,
     rincian,dokumen,jadwal,catatan:document.getElementById('fCatatan').value
   };
@@ -2696,6 +2706,14 @@ const DEFAULT_USERS=[
 ];
 
 let currentUser=null;
+// Cek hak akses edit kegiatan (admin=semua, editor=bidang sendiri, viewer=tidak bisa)
+function canEdit(k){
+  if(!currentUser)return false;
+  if(currentUser.role==='admin')return true;
+  if(currentUser.role==='editor')return !!k&&currentUser.bidangId===k.bidangId;
+  return false;
+}
+function canTandai(k){return canEdit(k);}
 let usersDB=[];
 let syncCfg={mode:'local',spSite:'',spLib:'',spFile:'ampera-data.json',token:''};
 
@@ -2814,15 +2832,19 @@ function updateUserUI(){
   const ini=currentUser.nama.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
   const av=document.getElementById('userAv');if(av){av.textContent=ini;av.style.background=currentUser.color||'var(--teal)';}
   const nm=document.getElementById('userNm');if(nm)nm.textContent=currentUser.nama.split(' ')[0];
-  const rl=document.getElementById('userRl');if(rl)rl.textContent=currentUser.role==='admin'?'Admin':'Viewer';
+  const roleLabel=currentUser.role==='admin'?'Admin':currentUser.role==='editor'?'Editor':'Viewer';
+  const rl=document.getElementById('userRl');if(rl)rl.textContent=roleLabel;
   const un=document.getElementById('uddNm');if(un)un.textContent=currentUser.nama;
   const ub=document.getElementById('uddBadge');
-  if(ub){ub.textContent=currentUser.role==='admin'?'Administrator':'Viewer';ub.className='udd-badge '+(currentUser.role==='admin'?'admin':'viewer');}
-  // Tampilkan/sembunyikan item admin di sidebar
+  const roleBadge=currentUser.role==='admin'?'Administrator':currentUser.role==='editor'?'Editor Bidang':'Viewer';
+  if(ub){ub.textContent=roleBadge;ub.className='udd-badge '+(currentUser.role==='admin'?'admin':currentUser.role==='editor'?'editor':'viewer');}
+  // Tampilkan/sembunyikan item admin di sidebar (admin + editor bisa tambah kegiatan)
+  const _canWrite=currentUser.role==='admin'||currentUser.role==='editor';
   document.querySelectorAll('[data-admin]').forEach(el=>{
-    el.style.display=currentUser.role==='admin'?'flex':'none';
+    el.style.display=_canWrite?'flex':'none';
   });
   document.body.classList.toggle('viewer-mode',currentUser.role==='viewer');
+  document.body.classList.toggle('editor-mode',currentUser.role==='editor');
   applyTAYear();
 }
 
@@ -2859,10 +2881,13 @@ function renderUserList(){
           <div><div style="font-size:10px;color:var(--txt3);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Password Baru <span style="font-weight:400;opacity:.6;">(kosongkan = tidak diubah)</span></div>
             <input id="eu-pass" style="${inp}" type="password" placeholder="••••••"></div>
           <div><div style="font-size:10px;color:var(--txt3);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Peran</div>
-            <select id="eu-role" style="${inp}" ${u.id===currentUser.id?'disabled':''}>
+            <select id="eu-role" style="${inp}" onchange="toggleEuBidang()" ${u.id===currentUser.id?'disabled':''}>
               <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+              <option value="editor" ${u.role==='editor'?'selected':''}>Editor Bidang</option>
               <option value="viewer" ${u.role==='viewer'?'selected':''}>Viewer</option>
             </select></div>
+          <div id="eu-bidang-wrap" style="${u.role==='editor'?'':'display:none'}"><div style="font-size:10px;color:var(--txt3);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Bidang</div>
+            <select id="eu-bidang" style="${inp}">${data.bidang.map(b=>`<option value="${b.id}" ${b.id===u.bidangId?'selected':''}>${escH(b.nama)}</option>`).join('')}</select></div>
         </div>
         <div style="display:flex;gap:8px;justify-content:flex-end;">
           <button class="btn" onclick="_editingUserId=null;renderUserList()" style="font-size:12px;padding:6px 14px;">Batal</button>
@@ -2873,10 +2898,14 @@ function renderUserList(){
     return `<div class="mgr-row">
       <div class="mgr-av" style="background:${u.color||cols[i%cols.length]}">${av}</div>
       <div class="mgr-info"><div class="mgr-nm">${escH(u.nama)}</div><div class="mgr-un">@${escH(u.username)}</div></div>
-      <select class="mgr-sel" onchange="changeRole('${u.id}',this.value)" ${u.id===currentUser.id?'disabled':''}>
-        <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
-        <option value="viewer" ${u.role==='viewer'?'selected':''}>Viewer</option>
-      </select>
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">
+        <select class="mgr-sel" onchange="changeRole('${u.id}',this.value)" ${u.id===currentUser.id?'disabled':''}>
+          <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+          <option value="editor" ${u.role==='editor'?'selected':''}>Editor</option>
+          <option value="viewer" ${u.role==='viewer'?'selected':''}>Viewer</option>
+        </select>
+        ${u.role==='editor'&&u.bidangId?`<span style="font-size:10px;color:var(--green);font-weight:600">${escH(bNm(u.bidangId))}</span>`:''}
+      </div>
       <button class="ico-btn" onclick="_editingUserId='${u.id}';renderUserList()" title="Edit" style="color:var(--teal);border-color:var(--teal2);">✎</button>
       <button class="ico-btn del" onclick="removeUser('${u.id}')" ${u.id===currentUser.id?'disabled':''}>✕</button>
     </div>`;
@@ -2888,9 +2917,11 @@ async function saveEditUser(id){
   const username=(document.getElementById('eu-user')?.value||'').trim().toLowerCase();
   const pass=(document.getElementById('eu-pass')?.value||'');
   const role=document.getElementById('eu-role')?.value||u.role;
+  const bidangId=role==='editor'?(document.getElementById('eu-bidang')?.value||null):null;
   if(!nama||!username){toast('Nama dan username wajib diisi','⚠️');return;}
+  if(role==='editor'&&!bidangId){toast('Pilih bidang untuk Editor','⚠️');return;}
   if(username!==u.username&&usersDB.find(x=>x.username===username&&x.id!==id)){toast('Username sudah dipakai pengguna lain','⚠️');return;}
-  u.nama=nama;u.username=username;u.role=role;
+  u.nama=nama;u.username=username;u.role=role;u.bidangId=bidangId;
   if(pass){u.passwordHash=await hashPw(pass);delete u.password;}
   if(id===currentUser.id){currentUser={...currentUser,...u};updateUserUI();}
   _editingUserId=null;
@@ -2902,11 +2933,13 @@ async function addUser(){
   const username=document.getElementById('nuUser').value.trim().toLowerCase();
   const password=document.getElementById('nuPass').value;
   const role=document.getElementById('nuRole').value;
+  const bidangId=role==='editor'?(document.getElementById('nuBidang')?.value||null):null;
   if(!nama||!username||!password){alert('Semua kolom wajib diisi.');return;}
+  if(role==='editor'&&!bidangId){toast('Pilih bidang untuk Editor','⚠️');return;}
   if(usersDB.find(u=>u.username===username)){alert('Username sudah dipakai.');return;}
   const cols=['#007c91','#00b87a','#e8a020','#7c5cbf','#e05555'];
   const passwordHash=await hashPw(password);
-  usersDB.push({id:'u'+Date.now(),nama,username,passwordHash,role,color:cols[usersDB.length%cols.length]});
+  usersDB.push({id:'u'+Date.now(),nama,username,passwordHash,role,bidangId,color:cols[usersDB.length%cols.length]});
   saveUsersDB();
   document.getElementById('nuNama').value='';document.getElementById('nuUser').value='';document.getElementById('nuPass').value='';
   renderUserList();toast(`Pengguna "${nama}" ditambahkan`,'👤');
@@ -2919,7 +2952,24 @@ function removeUser(id){
 }
 function changeRole(id,role){
   const u=usersDB.find(u=>u.id===id);if(!u)return;
+  if(role!=='editor')u.bidangId=null;
   u.role=role;saveUsersDB();toast(`Peran "${u.nama}" diubah ke ${role}`,'✎');
+  renderUserList();
+}
+function toggleNuBidang(){
+  const role=document.getElementById('nuRole')?.value;
+  const wrap=document.getElementById('nuBidangWrap');
+  if(!wrap)return;
+  wrap.style.display=role==='editor'?'':'none';
+  if(role==='editor'){
+    const sel=document.getElementById('nuBidang');
+    if(sel){sel.innerHTML='';data.bidang.forEach(b=>{const o=document.createElement('option');o.value=b.id;o.textContent=b.nama;sel.appendChild(o);});}
+  }
+}
+function toggleEuBidang(){
+  const role=document.getElementById('eu-role')?.value;
+  const wrap=document.getElementById('eu-bidang-wrap');
+  if(wrap)wrap.style.display=role==='editor'?'':'none';
 }
 
 // ── Sinkronisasi ──
