@@ -1561,11 +1561,12 @@ function weekLabel(minggu){
 }
 
 function jadwalChipsHTML(k){
+  const clickable=canTandai(k);
   return(k.jadwal||[]).map(j=>{
     const sd=isDB(k,j.bulan);
     const wl=weekLabel(j.minggu);
     const title=`${MN[j.bulan-1]}${j.minggu.length?', Minggu '+j.minggu.join(' & '):''}\n${fmt(j.anggaran)}\n${sd?'✓ Terlaksana':'Belum terlaksana'}`;
-    return`<span class="mchip-btn ${sd?'done':''}" onclick="togDB('${k.id}',${j.bulan})" title="${escH(title)}">
+    return`<span class="mchip-btn ${sd?'done':''}" ${clickable?`onclick="togDB('${k.id}',${j.bulan})"`:'style="cursor:default;opacity:0.75;pointer-events:none"'} title="${escH(title)}">
       <span class="mchip-top">${sd?'✓ ':''}<span>${MS[j.bulan-1]}</span></span>
       ${wl?`<span class="mchip-week">${wl}</span>`:''}
       <span class="mchip-amt">${fmtShort(j.anggaran)}</span>
@@ -2065,6 +2066,7 @@ function renderTL(){
 // ── ACTIONS ──
 function togDB(id,bulan){
   const k=data.kegiatan.find(k=>k.id===id);if(!k)return;
+  if(!canTandai(k)){toast('Anda tidak memiliki akses mengubah status kegiatan ini','⛔');return;}
   if(!k.doneBulan)k.doneBulan=[];
   if(k.doneBulan.includes(bulan)){
     k.doneBulan=k.doneBulan.filter(m=>m!==bulan);
