@@ -1400,11 +1400,11 @@ function updSum(){
   const pct=disp>0?Math.round(dn/disp*100):0;
   const totP=data.kegiatan.reduce((s,k)=>s+kBulanList(k).length,0);
   const dnP=data.kegiatan.reduce((s,k)=>s+(k.doneBulan||[]).length,0);
-  document.getElementById('sTotal').textContent=fmtShort(disp);
+  document.getElementById('sTotal').textContent=fmt(disp);
   const sKP=document.getElementById('sKegPagu');
   if(sKP)sKP.textContent=(tot>0&&kegPagu>0&&kegPagu!==tot)?fmt(kegPagu):'—';
-  document.getElementById('sDone').textContent=fmtShort(dn);
-  document.getElementById('sSisa').textContent=fmtShort(Math.max(0,disp-dn));
+  document.getElementById('sDone').textContent=fmt(dn);
+  document.getElementById('sSisa').textContent=fmt(Math.max(0,disp-dn));
   document.getElementById('sidProg').style.width=pct+'%';
   document.getElementById('sidPct').textContent=pct+'%';
   const mc=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
