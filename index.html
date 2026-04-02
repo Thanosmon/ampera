@@ -3072,7 +3072,7 @@ function renderIKPA(){
       <div style="padding:14px 16px;">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt3);margin-bottom:7px;">
           <span>Realisasi: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${pct}%</strong></span>
-          <span>Target TW${twRom[twIdx]}: <strong style="color:${conf.color};">${targetPct}%</strong>${thPct>0?` <span style="color:#e8a020;font-size:10px;">(min ${minPct}%)</span>`:''}</span>
+          <span>Target TW ${twRom[twIdx]}: <strong style="color:${conf.color};">${targetPct}%</strong>${thPct>0?` <span style="color:#e8a020;font-size:10px;">(min ${minPct}%)</span>`:''}</span>
         </div>
         <div style="position:relative;height:11px;background:#e4edf3;border-radius:99px;">
           ${thPct>0?`<div style="position:absolute;left:${minPct}%;width:${thPct}%;height:100%;background:${conf.color}22;border-radius:99px;"></div>`:''}
@@ -3099,7 +3099,7 @@ function renderIKPA(){
               onblur="this.style.borderColor='var(--bdr)'">
           </div>
           <div style="display:flex;flex-direction:column;">
-            <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Realisasi TW${twRom[twIdx]} (Rp)</div>
+            <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Realisasi TW ${twRom[twIdx]} (Rp)</div>
             <div style="min-height:26px;font-size:14px;font-weight:700;font-family:'Fira Code',monospace;color:var(--green);letter-spacing:0.3px;display:flex;align-items:center;">
               ${bl&&bl.realisasi[twIdx]?new Intl.NumberFormat('id-ID').format(bl.realisasi[twIdx]):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`}
             </div>
@@ -3516,7 +3516,7 @@ function generateLaporanKinerja(){
   rowsP.push(['TOTAL',fmt(totPagu),fmt(totReal),pctReal.toFixed(2)+'%','—','—','']);
 
   doc.autoTable({
-    head:[['Jenis Belanja','Pagu','Realisasi TW'+twRom[twIdx],'% Real.','Target','Nilai','Status']],
+    head:[['Jenis Belanja','Pagu','Realisasi TW '+twRom[twIdx],'% Real.','Target','Nilai','Status']],
     body:rowsP,
     startY:43,margin:{left:10,right:10},
     styles:{fontSize:9,cellPadding:3},
