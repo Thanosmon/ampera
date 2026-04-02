@@ -1366,8 +1366,8 @@ function sortByJadwal(ks){
   });
 }
 function updSum(){
-  const tot=data.kegiatan.reduce((s,k)=>s+kT(k),0);
-  const dn=data.kegiatan.reduce((s,k)=>s+kTDone(k),0);
+  const tot=getTotPagu();
+  const dn=getTotReal();
   const pct=tot>0?Math.round(dn/tot*100):0;
   const totP=data.kegiatan.reduce((s,k)=>s+kBulanList(k).length,0);
   const dnP=data.kegiatan.reduce((s,k)=>s+(k.doneBulan||[]).length,0);
@@ -1382,8 +1382,10 @@ function updSum(){
 }
 // Update metric cards dengan data terfilter (bidang/status)
 function updMetricCards(ks,label){
-  const tot=ks.reduce((s,k)=>s+kT(k),0);
-  const dn=ks.reduce((s,k)=>s+kTDone(k),0);
+  const tot52=ks.reduce((s,k)=>s+kT(k),0);
+  const dn52=ks.reduce((s,k)=>s+kTDone(k),0);
+  const tot=label?tot52:getTotPagu();
+  const dn=label?dn52:getTotReal();
   const totP=ks.reduce((s,k)=>s+kBulanList(k).length,0);
   const dnP=ks.reduce((s,k)=>s+(k.doneBulan||[]).length,0);
   const mc=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
@@ -2198,9 +2200,15 @@ function renderDashboard(){
   const bln=dashSelectedBulan;
   const blnNm=MN[bln-1];
 
-  // ── Hitung semua data tahunan ──
-  const totAngg=data.kegiatan.reduce((s,k)=>s+kT(k),0);
-  const totDone=data.kegiatan.reduce((s,k)=>s+kTDone(k),0);
+  // ── IKPA / TW aktif ──
+  const twIdxDash=getCurrentTW()-1;
+  const twRomDash=['I','II','III','IV'];
+
+  // ── Hitung semua data tahunan (51 Pegawai + 52 Barang + 53 Modal) ──
+  const tot52=data.kegiatan.reduce((s,k)=>s+kT(k),0);
+  const dn52=data.kegiatan.reduce((s,k)=>s+kTDone(k),0);
+  const totAngg=getTotPagu();
+  const totDone=getTotReal();
   const pctReal=totAngg>0?Math.round(totDone/totAngg*100):0;
   const totPelaks=data.kegiatan.reduce((s,k)=>s+kBulanList(k).length,0);
   const donePelaks=data.kegiatan.reduce((s,k)=>s+(k.doneBulan||[]).length,0);
@@ -2245,7 +2253,7 @@ function renderDashboard(){
     return s+kBulanList(k).filter(m=>m<=CM).reduce((ss,m)=>ss+kTPB(k,m),0);
   },0);
   const absorp=anggUpToNow>0?(doneUpToNow/anggUpToNow*100):0;
-  const proyEOY=anggUpToNow>0?(doneUpToNow/anggUpToNow)*totAngg:0;
+  const proyEOY=(anggUpToNow>0?(doneUpToNow/anggUpToNow)*tot52:0)+getBPReal()+getBMReal();
 
   // ── Generate insights ──
   const insights=[];
@@ -2261,6 +2269,42 @@ function renderDashboard(){
 
   // ── Build selector options ──
   const selOpts=MN.map((m,i)=>`<option value="${i+1}" ${i+1===bln?'selected':''}>${m} 2026</option>`).join('');
+
+  // ── Build IKPA overview cards untuk dashboard ──
+  const _ikpaD=[{kode:'51',pagu:getBPPagu(),real:getBPReal()},{kode:'52',pagu:tot52,real:dn52},{kode:'53',pagu:getBMPagu(),real:getBMReal()}];
+  const ikpaDashCards=_ikpaD.map(({kode,pagu,real})=>{
+    const conf=IKPA_CONF[kode];
+    const pct=pagu>0?(real/pagu*100):0;
+    const target=conf.target[twIdxDash],threshold=conf.threshold[twIdxDash],minPct=target-threshold;
+    let sc,sl;
+    if(!pagu){sc='#7a9aac';sl='Belum Diisi';}
+    else if(pct>=target){sc='#00b87a';sl='Aman';}
+    else if(threshold>0&&pct>=minPct){sc='#007c91';sl='Toleransi';}
+    else if(pct>0&&pct>=minPct*0.7){sc='#e8a020';sl='Perlu Perhatian';}
+    else if(pct>0){sc='#e05555';sl='Kritis';}
+    else{sc='#7a9aac';sl='Belum Ada Data';}
+    return `<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <div>
+          <div style="font-size:10px;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px;">Akun ${kode}</div>
+          <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);">${conf.icon} ${conf.nama}</div>
+        </div>
+        <div style="padding:3px 9px;border-radius:20px;font-size:9px;font-weight:600;white-space:nowrap;background:${sc}18;color:${sc};border:1px solid ${sc}40;">${sl}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div><div style="font-size:10px;color:var(--txt3);margin-bottom:2px;">Pagu</div><div style="font-family:'Fira Code',monospace;font-weight:700;color:var(--ink);font-size:12px;">${fmt(pagu)}</div></div>
+        <div><div style="font-size:10px;color:var(--txt3);margin-bottom:2px;">Realisasi</div><div style="font-family:'Fira Code',monospace;font-weight:700;color:${sc};font-size:12px;">${fmt(real)}</div></div>
+      </div>
+      <div style="height:7px;background:#e4edf3;border-radius:99px;position:relative;margin-bottom:6px;">
+        <div style="position:absolute;left:0;width:${Math.min(100,pct).toFixed(1)}%;height:100%;background:${sc};border-radius:99px;transition:width .4s;"></div>
+        ${target>0?`<div style="position:absolute;left:${Math.min(98,target)}%;top:-3px;width:2px;height:13px;background:${conf.color};border-radius:1px;" title="Target TW ${twRomDash[twIdxDash]}: ${target}%"></div>`:''}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--txt3);">
+        <span>Serapan: <strong style="color:${sc};">${pct.toFixed(1)}%</strong></span>
+        <span>Target TW ${twRomDash[twIdxDash]}: <strong style="color:${conf.color};">${target}%</strong></span>
+      </div>
+    </div>`;
+  }).join('');
 
   // ── HTML ──
   cont.innerHTML=`
@@ -2288,7 +2332,7 @@ function renderDashboard(){
       <div class="dash-kpi dk-teal">
         <div class="dash-kpi-lbl">Total Anggaran TA 2026</div>
         <div class="dash-kpi-val">${fmt(totAngg)}</div>
-        <div class="dash-kpi-sub">${data.kegiatan.length} kegiatan · ${data.bidang.length} bidang</div>
+        <div class="dash-kpi-sub">Belanja Pegawai + Barang + Modal · TA ${getTAYear()}</div>
       </div>
       <div class="dash-kpi dk-green">
         <div class="dash-kpi-lbl">Sudah Terlaksana (kumulatif)</div>
@@ -2497,6 +2541,19 @@ function renderDashboard(){
               <span class="ins-icon">📐</span>
               <span class="ins-text">Proyeksi realisasi akhir tahun: <strong>${fmt(Math.round(proyEOY))}</strong> (<strong>${Math.round(proyEOY/totAngg*100)||0}%</strong> dari pagu).</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 5: IKPA Penyerapan per Jenis Belanja -->
+      <div style="margin-bottom:0;">
+        <div class="chart-card">
+          <div class="chart-card-head">
+            <h4>🎯 IKPA — Penyerapan per Jenis Belanja · TW ${twRomDash[twIdxDash]}</h4>
+            <button onclick="switchView('ikpa',document.querySelector('[data-view=ikpa]'))" style="background:none;border:1.5px solid var(--bdr);border-radius:8px;padding:4px 12px;font-size:11px;color:var(--txt2);cursor:pointer;font-family:'Figtree',sans-serif;">📝 Edit & Detail →</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:0 16px 16px;">
+            ${ikpaDashCards}
           </div>
         </div>
       </div>
@@ -3015,13 +3072,31 @@ function ikpaNilai(kode,twIdx){
   return{pct,target,minPct,threshold,nilai,status};
 }
 function setIKPAPagu(kode,val){
+  if(!canEditBP()){toast('Hanya Admin/Editor Bagian Umum yang dapat mengubah data ini','⛔');return;}
   const bl=getIKPAData().belanja[kode];
   bl.pagu=parseFloat(val)||0;
   bl.paguSet=true;
-  renderIKPA();
+  updSum();renderIKPA();
 }
-function setIKPAReal(kode,tw,val){getIKPAData().belanja[kode].realisasi[tw]=parseFloat(val)||0;renderIKPA();}
+function setIKPAReal(kode,tw,val){
+  if(!canEditBP()){toast('Hanya Admin/Editor Bagian Umum yang dapat mengubah data ini','⛔');return;}
+  getIKPAData().belanja[kode].realisasi[tw]=parseFloat(val)||0;updSum();renderIKPA();
+}
 function saveIKPA(){saveLS();toast('Data IKPA tersimpan','✅');}
+
+// ── Helpers: total belanja per jenis (51=Pegawai, 52=Barang dari kegiatan, 53=Modal) ──
+function getBPPagu(){try{return data.ikpa?.belanja?.['51']?.pagu||0;}catch(e){return 0;}}
+function getBPReal(){try{return(getRPD()['51'].realisasi).reduce((s,v)=>s+(v||0),0);}catch(e){return 0;}}
+function getBMPagu(){try{return data.ikpa?.belanja?.['53']?.pagu||0;}catch(e){return 0;}}
+function getBMReal(){try{const tw=getCurrentTW()-1;return data.ikpa?.belanja?.['53']?.realisasi?.[tw]||0;}catch(e){return 0;}}
+function getTotPagu(){return getBPPagu()+data.kegiatan.reduce((s,k)=>s+kT(k),0)+getBMPagu();}
+function getTotReal(){return getBPReal()+data.kegiatan.reduce((s,k)=>s+kTDone(k),0)+getBMReal();}
+function canEditBP(){
+  if(!currentUser)return false;
+  if(currentUser.role==='admin')return true;
+  if(currentUser.role==='editor'&&currentUser.bidangId==='bagian-umum')return true;
+  return false;
+}
 
 // ─── RPD helpers ─────────────────────────────────────
 function getRPD(){
@@ -3032,8 +3107,14 @@ function getRPD(){
   return data.rpd;
 }
 let _rpdToast=null;
-function setRPDRencana(mi,val){getRPD()['51'].rencana[mi]=parseFloat(val)||0;saveLS();updateRPDTotals();clearTimeout(_rpdToast);_rpdToast=setTimeout(()=>toast('RPD tersimpan','💾'),700);}
-function setRPDRealisasi(mi,val){getRPD()['51'].realisasi[mi]=parseFloat(val)||0;saveLS();updateRPDTotals();clearTimeout(_rpdToast);_rpdToast=setTimeout(()=>toast('RPD tersimpan','💾'),700);}
+function setRPDRencana(mi,val){
+  if(!canEditBP()){toast('Hanya Admin/Editor Bagian Umum yang dapat mengubah data ini','⛔');return;}
+  getRPD()['51'].rencana[mi]=parseFloat(val)||0;saveLS();updateRPDTotals();updSum();clearTimeout(_rpdToast);_rpdToast=setTimeout(()=>toast('RPD tersimpan','💾'),700);
+}
+function setRPDRealisasi(mi,val){
+  if(!canEditBP()){toast('Hanya Admin/Editor Bagian Umum yang dapat mengubah data ini','⛔');return;}
+  getRPD()['51'].realisasi[mi]=parseFloat(val)||0;saveLS();updateRPDTotals();updSum();clearTimeout(_rpdToast);_rpdToast=setTimeout(()=>toast('RPD tersimpan','💾'),700);
+}
 function updateRPDTotals(){
   const tw=getCurrentTW()-1;
   const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
@@ -3060,6 +3141,7 @@ function renderIKPA(){
   const avgN=cntN>0?Math.round(totN/cntN):null;
   const avgColor=avgN===null?'#7a9aac':avgN>=90?'#00b87a':avgN>=75?'#007c91':avgN>=60?'#e8a020':'#e05555';
 
+  const bpEdit=canEditBP();
   const cardsHtml=codes.map(kode=>{
     const conf=IKPA_CONF[kode],bl=ikpa.belanja[kode];
     const n=bl&&bl.paguSet?ikpaNilai(kode,twIdx):null;
@@ -3099,11 +3181,12 @@ function renderIKPA(){
               ${bl&&bl.paguSet&&bl.pagu?new Intl.NumberFormat('id-ID').format(bl.pagu):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`}
             </div>
             <div style="border-top:1px dashed var(--bdr);margin:6px 0;"></div>
-            <input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
+            ${bpEdit?`<input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
               value="${bl&&bl.paguSet?bl.pagu:''}" placeholder="ketik angka..."
               onchange="setIKPAPagu('${kode}',this.value)"
               onfocus="this.style.borderColor='${conf.color}'"
-              onblur="this.style.borderColor='var(--bdr)'">
+              onblur="this.style.borderColor='var(--bdr)'">`
+              :`<div style="font-size:10px;color:var(--txt3);padding:4px 0;font-style:italic;">🔒 Hanya Admin / Editor Bagian Umum</div>`}
           </div>
           <div style="display:flex;flex-direction:column;">
             <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Realisasi TW ${twRom[twIdx]} (Rp)</div>
@@ -3111,11 +3194,12 @@ function renderIKPA(){
               ${bl&&bl.realisasi[twIdx]?new Intl.NumberFormat('id-ID').format(bl.realisasi[twIdx]):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`}
             </div>
             <div style="border-top:1px dashed var(--bdr);margin:6px 0;"></div>
-            <input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
+            ${bpEdit?`<input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
               value="${bl&&bl.realisasi[twIdx]?bl.realisasi[twIdx]:''}" placeholder="ketik angka..."
               onchange="setIKPAReal('${kode}',${twIdx},this.value)"
               onfocus="this.style.borderColor='${conf.color}'"
-              onblur="this.style.borderColor='var(--bdr)'">
+              onblur="this.style.borderColor='var(--bdr)'">`
+              :`<div style="font-size:10px;color:var(--txt3);padding:4px 0;font-style:italic;">🔒 Hanya Admin / Editor Bagian Umum</div>`}
           </div>
         </div>
       </div>
@@ -3234,6 +3318,7 @@ function renderRPDSection(){
   const twRom=['I','II','III','IV'];
   const fmtN=n=>n?new Intl.NumberFormat('id-ID').format(n):'—';
   const inpStyle='width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:5px 8px;font-size:11px;font-family:\'Fira Code\',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;text-align:right;';
+  const bpEditable=canEditBP();
 
   // ── Baris Belanja Pegawai (manual input) ──
   const cols51=bulanTW.map(m=>{
@@ -3247,19 +3332,21 @@ function renderRPDSection(){
         <div style="font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;">Rencana (Rp)</div>
         <div style="min-height:22px;font-size:13px;font-weight:700;font-family:'Fira Code',monospace;text-align:right;${renc?'color:var(--ink)':'color:var(--txt3);font-size:11px;font-weight:400;'}">${fmtN(renc)}</div>
         <div style="border-top:1px dashed var(--bdr);margin:5px 0;"></div>
-        <input type="number" step="1" style="${inpStyle}"
+        ${bpEditable?`<input type="number" step="1" style="${inpStyle}"
           value="${renc||''}" placeholder="0"
           onchange="setRPDRencana(${mi},this.value)"
-          onfocus="this.style.borderColor='#007c91'" onblur="this.style.borderColor='var(--bdr)'">
+          onfocus="this.style.borderColor='#007c91'" onblur="this.style.borderColor='var(--bdr)'">`
+          :`<div style="font-size:10px;color:var(--txt3);padding:4px 0;font-style:italic;">🔒 Hanya Admin / Editor Bagian Umum</div>`}
       </div>
       <div>
         <div style="font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;">Realisasi (Rp)</div>
         <div style="min-height:22px;font-size:13px;font-weight:700;font-family:'Fira Code',monospace;text-align:right;${real?'color:#00b87a':'color:var(--txt3);font-size:11px;font-weight:400;'}">${fmtN(real)}</div>
         <div style="border-top:1px dashed var(--bdr);margin:5px 0;"></div>
-        <input type="number" step="1" style="${inpStyle}"
+        ${bpEditable?`<input type="number" step="1" style="${inpStyle}"
           value="${real||''}" placeholder="0"
           onchange="setRPDRealisasi(${mi},this.value)"
-          onfocus="this.style.borderColor='#00b87a'" onblur="this.style.borderColor='var(--bdr)'">
+          onfocus="this.style.borderColor='#00b87a'" onblur="this.style.borderColor='var(--bdr)'">`
+          :`<div style="font-size:10px;color:var(--txt3);padding:4px 0;font-style:italic;">🔒 Hanya Admin / Editor Bagian Umum</div>`}
       </div>
       ${renc>0?`<div style="margin-top:8px;font-size:13px;font-weight:700;color:${clr};text-align:center;">${pct}%</div><div style="height:3px;border-radius:99px;background:#e4edf3;margin-top:3px;"><div style="height:100%;width:${Math.min(100,pct)}%;background:${clr};border-radius:99px;"></div></div>`:''}
     </td>`;
