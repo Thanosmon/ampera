@@ -275,14 +275,18 @@ td.muted{color:var(--txt3);font-size:12px;}
 .kb-tot{font-family:'Fira Code',monospace;font-size:10.5px;color:var(--gold2);}
 .kd-lbl{display:grid;grid-template-columns:repeat(7,1fr);background:#f0f7fa;}
 .kdl{text-align:center;padding:4px 2px;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--txt3);}
+.kdl:first-child,.kdl:last-child{color:var(--red);opacity:0.65;}
 .kd-days{display:grid;grid-template-columns:repeat(7,1fr);padding:3px;gap:2px;}
 .kd{min-height:28px;border-radius:4px;padding:2px;}
 .kd.ak{background:rgba(0,164,189,0.08);cursor:pointer;border:1px solid rgba(0,164,189,0.2);}
 .kd.ak.ss{background:rgba(0,184,122,0.1);border-color:rgba(0,184,122,0.25);}
 .kd.hi{outline:2px solid var(--gold);outline-offset:-2px;}
 .kd.ks{opacity:0;pointer-events:none;}
+.kd.wknd{background:rgba(224,85,85,0.05);}
 .kd-n{font-size:10px;font-weight:600;color:var(--txt3);}
 .kd.ak .kd-n{color:var(--teal);}
+.kd.wknd .kd-n{color:var(--red);opacity:0.7;}
+.kd.ak.wknd .kd-n{color:var(--red);opacity:0.85;}
 .kev-dot{width:5px;height:5px;border-radius:50%;background:var(--teal2);margin:1px auto 0;}
 .kev-dot.s{background:var(--green);}
 .kb-evs{padding:7px 10px;border-top:1px solid var(--bdr);display:flex;flex-direction:column;gap:4px;}
@@ -1836,6 +1840,7 @@ function renderKal(){
     <div class="leg-i"><div class="leg-d" style="background:rgba(0,164,189,.15);border:1px solid rgba(0,164,189,.3)"></div>Ada Kegiatan</div>
     <div class="leg-i"><div class="leg-d" style="background:rgba(0,184,122,.12);border:1px solid rgba(0,184,122,.3)"></div>Semua Terlaksana</div>
     <div class="leg-i"><div class="leg-d" style="outline:2px solid var(--gold);border-radius:2px"></div>Hari Ini</div>
+    <div class="leg-i"><div class="leg-d" style="background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.2)"></div><span style="color:var(--red);opacity:0.75">Sabtu/Minggu</span></div>
     <span style="margin-left:auto;font-size:11px;color:var(--txt3)">Klik kegiatan untuk buka detail · Tandai di tab Per Kegiatan atau Per Bulan</span>
   </div><div class="kal-grid">`;
   MN.forEach((mNm,mi)=>{
@@ -1856,8 +1861,9 @@ function renderKal(){
       // Tampilkan dot hanya di hari Senin (dayOfWeek===1) dari minggu pelaksanaan
       const dayOfWeek=(d+fd-1)%7; // 0=Min,1=Sen,...,6=Sab
       const isMondayOfWeek=dayOfWeek===1;
+      const isWeekend=dayOfWeek===0||dayOfWeek===6;
       const showDot=hasKegOnWeek&&isMondayOfWeek;
-      const cls=['kd',hasKegOnWeek?'ak':'',hasKegOnWeek&&kgsThisWeek.every(k=>isDB(k,mI))?'ss':'',iT?'hi':''].filter(Boolean).join(' ');
+      const cls=['kd',hasKegOnWeek?'ak':'',hasKegOnWeek&&kgsThisWeek.every(k=>isDB(k,mI))?'ss':'',iT?'hi':'',isWeekend?'wknd':''].filter(Boolean).join(' ');
       const dots=showDot?kgsThisWeek.map(k=>`<div class="kev-dot${isDB(k,mI)?' s':''}"></div>`).join(''):'';
       const wkStyle=hasKegOnWeek&&!kgsThisWeek.every(k=>isDB(k,mI))?'background:rgba(0,164,189,0.16);':(hasKegOnWeek&&kgsThisWeek.every(k=>isDB(k,mI))?'background:rgba(0,184,122,0.18);':'');
       dH+=`<div class="${cls}" style="${wkStyle}"><div class="kd-n">${d}</div>${dots}</div>`;
