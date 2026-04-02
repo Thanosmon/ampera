@@ -44,8 +44,6 @@ body:not(.logged-in) .shell{display:none!important;}
 .storage-ind{display:flex;align-items:center;gap:5px;font-size:10px;color:rgba(255,255,255,0.35);padding:3px 9px;border-radius:5px;border:1px solid rgba(255,255,255,0.08);white-space:nowrap;}
 .storage-ind.saved{color:var(--green);border-color:rgba(0,184,122,0.25);}
 .storage-ind .si-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
-.btn-share{display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:6px;border:1px solid rgba(0,164,189,0.35);background:var(--teal-dim);color:var(--teal3);font-size:11px;font-weight:600;cursor:pointer;font-family:'Figtree',sans-serif;transition:all 0.18s;white-space:nowrap;}
-.btn-share:hover{background:rgba(0,164,189,0.22);border-color:var(--teal3);}
 
 /* LAYOUT */
 .shell{display:flex;flex:1;overflow:hidden;}
@@ -366,17 +364,7 @@ td.muted{color:var(--txt3);font-size:12px;}
 .re-foot .lbl{font-family:'Figtree',sans-serif;font-size:11px;color:var(--txt3);font-weight:600;}
 .re-foot .tot{text-align:right;font-size:13px;}
 
-/* SHARE MODAL */
-.share-modal{width:540px;}
-.share-section{background:var(--surf);border:1.5px solid var(--bdr);border-radius:10px;padding:16px;}
-.share-section+.share-section{margin-top:12px;}
-.share-sec-title{font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;display:flex;align-items:center;gap:8px;}
-.share-sec-desc{font-size:11px;color:var(--txt3);margin-bottom:12px;}
-.share-link-row{display:flex;gap:8px;align-items:center;}
-.share-link-input{flex:1;border:1.5px solid var(--bdr2);border-radius:7px;padding:8px 11px;font-size:10.5px;font-family:'Fira Code',monospace;color:var(--txt3);background:var(--card);outline:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.share-note{font-size:11px;color:var(--txt3);background:var(--gold-dim);border:1px solid rgba(232,160,32,0.3);border-radius:7px;padding:10px 12px;line-height:1.6;}
-.file-drop{border:2px dashed var(--bdr2);border-radius:8px;padding:18px;text-align:center;cursor:pointer;transition:all 0.2s;color:var(--txt3);font-size:12px;}
-.file-drop:hover{border-color:var(--teal2);color:var(--teal);background:var(--teal-dim);}
+
 
 /* Misc */
 .kosong{text-align:center;padding:40px;color:var(--txt3);font-size:13px;}
@@ -402,7 +390,7 @@ td.muted{color:var(--txt3);font-size:12px;}
 
   /* ── Topbar ── */
   .topbar{position:sticky;top:0;z-index:500;padding:0 10px;overflow:hidden;}
-  .topbar-center,.storage-ind,.btn-share{display:none;}
+  .topbar-center,.storage-ind{display:none;}
   .topbar-brand{width:auto;flex-shrink:1;min-width:0;}
   .brand-name{font-size:13px;}
   .topbar-right{gap:6px;flex-shrink:0;}
@@ -1014,7 +1002,6 @@ body.logged-in [data-admin].show-admin{display:flex;}
       <div class="sid-item" onclick="openAddBidang()" data-admin><span class="sid-icon">🏢</span> Tambah Bidang</div>
       <div class="sid-item" onclick="openExportModal()"><span class="sid-icon">📤</span> Ekspor & Laporan</div>
       <div class="sid-item" onclick="openSyncModal()"><span class="sid-icon">☁️</span> Sinkronisasi</div>
-      <div class="sid-item" onclick="openShareModal()"><span class="sid-icon">🔗</span> Bagikan</div>
     </div>
     <div class="sid-stats">
       <div class="sid-section-lbl" style="font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Ringkasan</div>
@@ -1062,7 +1049,6 @@ body.logged-in [data-admin].show-admin{display:flex;}
   <div class="mob-dd-item" onclick="switchView('ikpa',this);closeMobMore()" data-view="ikpa">🎯 IKPA</div>
   <div class="mob-dd-item" onclick="openExportModal();closeMobMore()">📤 Ekspor &amp; Laporan</div>
   <div class="mob-dd-item" onclick="openSyncModal();closeMobMore()">☁️ Sinkronisasi</div>
-  <div class="mob-dd-item" onclick="openShareModal();closeMobMore()">🔗 Bagikan</div>
   <div class="mob-dd-item" onclick="doLogout();closeMobMore()">🚪 Keluar</div>
 </div>
 <nav class="mob-nav">
@@ -1183,38 +1169,6 @@ body.logged-in [data-admin].show-admin{display:flex;}
 </div>
 
 <!-- MODAL SHARE -->
-<div class="modal-overlay" id="shareModal" onclick="closeShareModal(event)">
-  <div class="modal share-modal">
-    <div class="modal-head">
-      <div><h3>🔗 Bagikan Dashboard</h3><p>Bagikan ke rekan kerja atau sinkronkan data antar perangkat</p></div>
-      <span class="modal-x" onclick="closeShareModalDirect()">✕</span>
-    </div>
-    <div class="modal-body">
-      <div class="share-section">
-        <div class="share-sec-title">🔗 Bagikan via Link</div>
-        <div class="share-sec-desc">Kirimkan link ini ke rekan kerja. Saat dibuka, data terkini akan langsung termuat.</div>
-        <div class="share-link-row">
-          <input class="share-link-input" id="shareLinkInput" readonly placeholder="Klik tombol untuk membuat link…">
-          <button class="btn btn-p" onclick="genAndCopyLink()" id="btnCopyLink">📋 Salin Link</button>
-        </div>
-        <div style="margin-top:8px;font-size:11px;color:var(--txt3)">⚠️ Setiap klik "Salin Link" menghasilkan snapshot data saat ini.</div>
-      </div>
-      <div class="share-section">
-        <div class="share-sec-title">⬇️ Export Data (JSON)</div>
-        <div class="share-sec-desc">Unduh semua data kegiatan sebagai file JSON untuk backup atau dikirim manual.</div>
-        <button class="btn btn-ink" onclick="exportJSON()">⬇️ Download ampera-data.json</button>
-      </div>
-      <div class="share-section">
-        <div class="share-sec-title">⬆️ Import Data (JSON)</div>
-        <div class="share-sec-desc">Muat data dari file JSON yang diterima dari rekan kerja. <strong style="color:var(--red)">Data saat ini akan digantikan.</strong></div>
-        <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImport(this)">
-        <div class="file-drop" onclick="document.getElementById('importFileInput').click()">📂 Klik untuk pilih file JSON — atau drag &amp; drop di sini</div>
-      </div>
-      <div class="share-note">💡 <strong>Cara kolaborasi:</strong> Gunakan <em>Share via Link</em> untuk berbagi snapshot data. Rekan yang menerima link dapat membuka, mengupdate, lalu mengirimkan link baru kembali.</div>
-    </div>
-    <div class="modal-foot"><button class="btn btn-o" onclick="closeShareModalDirect()">Tutup</button></div>
-  </div>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -1350,20 +1304,6 @@ function loadData(){
 }
 
 // ── SHARE ──
-function openShareModal(){document.getElementById('shareLinkInput').value='';document.getElementById('shareModal').classList.add('open');}
-function closeShareModal(e){if(e.target===document.getElementById('shareModal'))closeShareModalDirect();}
-function closeShareModalDirect(){document.getElementById('shareModal').classList.remove('open');}
-function genAndCopyLink(){
-  const encoded=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-  const url=window.location.href.split('#')[0]+'#data='+encoded;
-  document.getElementById('shareLinkInput').value=url;
-  navigator.clipboard.writeText(url).then(()=>{
-    const btn=document.getElementById('btnCopyLink');
-    btn.textContent='✓ Tersalin!';btn.style.background='var(--green)';
-    setTimeout(()=>{btn.textContent='📋 Salin Link';btn.style.background='';},2500);
-    toast('Link berhasil disalin ke clipboard','🔗');
-  }).catch(()=>{document.getElementById('shareLinkInput').select();toast('Seleksi URL lalu Ctrl+C','📋');});
-}
 function exportJSON(){
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
