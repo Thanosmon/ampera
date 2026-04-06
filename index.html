@@ -2665,7 +2665,10 @@ function renderDashboard(){
       <div class="dash-kpi dk-teal">
         <div class="dash-kpi-lbl">Kegiatan Terlaksana</div>
         <div class="dash-kpi-val">${donePelaks} <span style="font-size:13px;font-weight:400;color:var(--txt3)">/ ${totPelaks}</span></div>
-        <div class="dash-kpi-sub">pelaksanaan s.d. ${MN[CM-1]} ${getTAYear()}</div>
+        <div class="dash-kpi-sub" style="display:flex;flex-direction:column;gap:2px;">
+          <span>kumulatif TA ${getTAYear()}</span>
+          <span style="font-size:10px;color:var(--txt3);">Dijadwalkan s.d. ${MN[evalM-1]}: <strong style="color:var(--ink);">${data.kegiatan.reduce((s,k)=>s+kBulanList(k).filter(m=>m<=evalM).length,0)}</strong> kegiatan</span>
+        </div>
         <div class="dash-kpi-badge ${donePelaks===totPelaks&&totPelaks>0?'dkb-green':donePelaks>0?'dkb-teal':'dkb-gold'}">
           ${totPelaks>0?Math.round(donePelaks/totPelaks*100):0}% dari total jadwal
         </div>
@@ -2673,9 +2676,12 @@ function renderDashboard(){
       <div class="dash-kpi dk-green">
         <div class="dash-kpi-lbl">Realisasi Kumulatif</div>
         <div class="dash-kpi-val">${fmt(totDone)}</div>
-        <div class="dash-kpi-sub">${pctReal}% dari Total Pagu</div>
-        <div class="dash-kpi-badge ${pctReal>=70?'dkb-green':pctReal>=40?'dkb-gold':'dkb-red'}">
-          ${pctReal>=70?'▲':'▼'} ${pctReal}% serapan
+        <div class="dash-kpi-sub" style="display:flex;flex-direction:column;gap:2px;">
+          <span>${pctReal}% dari Total Pagu TA ${getTAYear()}</span>
+          <span style="font-size:10px;color:var(--txt3);">Kegiatan terlaksana: <strong style="color:var(--ink);">${donePelaks}</strong> dari <strong>${totPelaks}</strong> jadwal</span>
+        </div>
+        <div class="dash-kpi-badge ${proyRate>=0.9?'dkb-green':proyRate>=0.7?'dkb-gold':'dkb-red'}" style="margin-top:6px;">
+          ${proyRate>=0.9?'✓':proyRate>=0.7?'~':'!'} ${Math.round(proyRate*100)}% jadwal s.d. ${MN[evalM-1]} terlaksana
         </div>
       </div>
       <div class="dash-kpi dk-gold">
