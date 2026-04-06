@@ -1192,6 +1192,43 @@ body.logged-in [data-admin].show-admin{display:flex;}
   </div>
 </div>
 
+<!-- MODAL TANDAI TERLAKSANA -->
+<div class="modal-overlay" id="tandaiModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="width:420px">
+    <div class="modal-head">
+      <div><h3>✅ Tandai Terlaksana</h3><p id="tmBulan" style="color:var(--teal);font-weight:600;"></p></div>
+      <span class="modal-x" onclick="document.getElementById('tandaiModal').classList.remove('open')">✕</span>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:14px;padding:8px 12px;background:var(--surf);border-radius:8px;border-left:3px solid var(--teal);">
+        <strong id="tmNama"></strong>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Rencana (RPD)</div>
+          <div style="font-size:15px;font-weight:700;font-family:'Fira Code',monospace;color:var(--ink);" id="tmRencana">—</div>
+          <div style="font-size:10px;color:var(--txt3);margin-top:3px;">Dari jadwal kegiatan</div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Realisasi Aktual (Rp)</div>
+          <input id="tmReal" type="number" min="0" step="1"
+            style="width:100%;border:2px solid var(--teal);border-radius:7px;padding:7px 10px;font-size:13px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--card);outline:none;box-sizing:border-box;"
+            placeholder="0"
+            onkeydown="if(event.key==='Enter')konfirmasiTandai()">
+          <div style="font-size:10px;color:var(--txt3);margin-top:3px;">Edit jika berbeda dari rencana</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--txt3);padding:8px 10px;background:var(--surf);border-radius:7px;">
+        💡 Deviasi (selisih rencana vs realisasi) akan otomatis tercatat di RPD dan dihitung untuk IKPA.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-o" onclick="document.getElementById('tandaiModal').classList.remove('open')">Batal</button>
+      <button class="btn btn-p" onclick="konfirmasiTandai()">✅ Tandai Terlaksana</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL SHARE -->
 
 <div class="toast" id="toast"></div>
@@ -1265,8 +1302,10 @@ const rT=r=>(+r.jumlah||0)*(+r.hari||0)*(+r.biayaSatuan||0);
 const kBulanList=k=>(k.jadwal||[]).map(j=>j.bulan);
 const kT=k=>(k.jadwal||[]).reduce((s,j)=>s+(j.anggaran||0),0);
 const kTPB=(k,bulan)=>{const j=(k.jadwal||[]).find(j=>j.bulan===bulan);return j?(j.anggaran||0):0;};
+// Realisasi aktual per bulan: gunakan nilai yang diinput saat tandai, fallback ke rencana
+const kTPBReal=(k,m)=>{const v=k.realisasiBulan?.[m];return(v!==undefined&&v!==null)?v:kTPB(k,m);};
 const kMinggu=(k,bulan)=>{const j=(k.jadwal||[]).find(j=>j.bulan===bulan);return j?(j.minggu||[]):[];};
-const kTDone=k=>(k.doneBulan||[]).reduce((s,m)=>s+kTPB(k,m),0);
+const kTDone=k=>(k.doneBulan||[]).reduce((s,m)=>s+kTPBReal(k,m),0);
 const isDB=(k,m)=>(k.doneBulan||[]).includes(m);
 const allDone=k=>{const bl=kBulanList(k);return bl.length>0&&bl.every(m=>(k.doneBulan||[]).includes(m));};
 const bNm=id=>{const b=data.bidang.find(b=>b.id===id);return b?b.nama:'-';};
@@ -1282,6 +1321,7 @@ function migrateKegiatan(k){
   }
   if(!k.dokumen)k.dokumen=[];
   if(!k.doneBulan)k.doneBulan=[];
+  if(!k.realisasiBulan)k.realisasiBulan={};
   if(!k.akun)k.akun='52';
   if(k.subAkun===undefined)k.subAkun='';
   return k;
@@ -2020,13 +2060,43 @@ function togDB(id,bulan){
   if(!canTandai(k)){toast('Anda tidak memiliki akses mengubah status kegiatan ini','⛔');return;}
   if(!k.doneBulan)k.doneBulan=[];
   if(k.doneBulan.includes(bulan)){
+    // Batalkan: hapus dari done + hapus realisasi aktual
     k.doneBulan=k.doneBulan.filter(m=>m!==bulan);
+    if(k.realisasiBulan)delete k.realisasiBulan[bulan];
     toast(`"${k.nama}" — ${MN[bulan-1]} dibatalkan`,'↩');
+    saveLS();renderAll();
   }else{
-    k.doneBulan.push(bulan);k.doneBulan.sort((a,b)=>a-b);
-    const angg=kTPB(k,bulan);
-    toast(`"${k.nama}" — ${MN[bulan-1]} terlaksana · ${fmt(angg)} terserap`,'✓');
+    // Tandai: tampilkan popup input realisasi aktual
+    openTandaiModal(id,bulan);
   }
+}
+function openTandaiModal(id,bulan){
+  const k=data.kegiatan.find(k=>k.id===id);if(!k)return;
+  const rencana=kTPB(k,bulan);
+  const m=document.getElementById('tandaiModal');
+  m._id=id;m._bulan=bulan;
+  document.getElementById('tmNama').textContent=k.nama;
+  document.getElementById('tmBulan').textContent=MN[bulan-1];
+  document.getElementById('tmRencana').textContent=fmt(rencana);
+  const inp=document.getElementById('tmReal');
+  inp.value=rencana||'';
+  m.classList.add('open');
+  setTimeout(()=>{inp.focus();inp.select();},120);
+}
+function konfirmasiTandai(){
+  const m=document.getElementById('tandaiModal');
+  const id=m._id,bulan=m._bulan;
+  const realVal=parseFloat(document.getElementById('tmReal').value)||0;
+  const k=data.kegiatan.find(k=>k.id===id);if(!k)return;
+  if(!k.doneBulan)k.doneBulan=[];
+  if(!k.realisasiBulan)k.realisasiBulan={};
+  k.doneBulan.push(bulan);k.doneBulan.sort((a,b)=>a-b);
+  k.realisasiBulan[bulan]=realVal;
+  m.classList.remove('open');
+  const renc=kTPB(k,bulan);
+  const dev=realVal-renc;
+  const devStr=dev!==0?` · Deviasi ${dev>0?'+':''}${fmt(dev)}`:'';
+  toast(`"${k.nama}" — ${MN[bulan-1]} terlaksana · ${fmt(realVal)} terserap${devStr}`,'✓');
   saveLS();renderAll();
 }
 function delKeg(id){
@@ -3457,111 +3527,122 @@ function renderRPDSection(){
   const twRom=['I','II','III','IV'];
   const fmtN=n=>n?new Intl.NumberFormat('id-ID').format(n):'—';
 
-  // ── Baris Belanja Pegawai (auto dari kegiatan akun=51) ──
+  // ── Deadline reminder ──
+  const RPD_DL=[new Date(2026,1,19),new Date(2026,3,15),new Date(2026,6,14),new Date(2026,9,14)];
+  const dl=RPD_DL[twIdx];
+  const today=new Date();today.setHours(0,0,0,0);
+  const diffDays=Math.round((dl-today)/(864e5));
+  const dlStr=`${dl.getDate()} ${MN[dl.getMonth()]} ${dl.getFullYear()}`;
+  let dlBanner='';
+  if(diffDays>7){
+    dlBanner=`<div style="padding:8px 16px;background:#f0fbf6;border-bottom:1px solid #9de0c2;font-size:11px;color:#008a55;display:flex;align-items:center;gap:8px;">
+      📅 <span>Batas waktu pemutakhiran RPD Halaman III DIPA TW ${twRom[twIdx]}: <strong>${dlStr}</strong> · ${diffDays} hari lagi</span></div>`;
+  }else if(diffDays>=0){
+    dlBanner=`<div style="padding:8px 16px;background:#fffbf0;border-bottom:1px solid #f0d080;font-size:11px;color:#a07010;display:flex;align-items:center;gap:8px;">
+      ⚠️ <span>Segera! Batas pemutakhiran RPD TW ${twRom[twIdx]}: <strong>${dlStr}</strong> · <strong>${diffDays===0?'Hari ini!':diffDays+' hari lagi'}</strong></span></div>`;
+  }else{
+    dlBanner=`<div style="padding:8px 16px;background:#fff5f5;border-bottom:1px solid #f5c6c6;font-size:11px;color:#c0392b;display:flex;align-items:center;gap:8px;">
+      🔒 <span>Batas pemutakhiran RPD TW ${twRom[twIdx]} (<strong>${dlStr}</strong>) telah lewat. Data RPD dikunci untuk penilaian IKPA.</span></div>`;
+  }
+
+  // ── Helper: build satu baris tabel RPD ──
+  function buildCols(kegList){
+    return bulanTW.map(m=>{
+      const renc=kegList.reduce((s,k)=>s+kTPB(k,m),0);
+      const real=kegList.filter(k=>isDB(k,m)).reduce((s,k)=>s+kTPBReal(k,m),0);
+      const doneKeg=kegList.filter(k=>isDB(k,m)).length;
+      const totKeg=kegList.filter(k=>kBulanList(k).includes(m)).length;
+      const pct=renc>0?Math.round(real/renc*100):0;
+      const clr=pct>=100?'#00b87a':pct>=70?'#007c91':pct>0?'#e8a020':'var(--txt3)';
+      const dev=real-renc;
+      const devPct=renc>0?(dev/renc*100):0;
+      const devClr=dev>0?'#00b87a':dev<0?'#e05555':'var(--txt3)';
+      const devSign=dev>0?'+':'';
+      const hasReal=real>0;
+      return `<td style="padding:10px 8px;text-align:right;border-right:1px solid var(--bdr);min-width:160px;vertical-align:top;">
+        <div style="margin-bottom:8px;">
+          <div style="font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;text-align:left;">Rencana (Rp)</div>
+          <div style="font-size:12px;font-weight:700;font-family:'Fira Code',monospace;${renc?'color:var(--ink)':'color:var(--txt3);font-size:11px;font-weight:400;'}">${fmtN(renc)}</div>
+          <div style="font-size:10px;color:var(--txt3);margin-top:2px;">${totKeg} kegiatan dijadwalkan</div>
+        </div>
+        <div style="border-top:1px dashed var(--bdr);margin:5px 0;"></div>
+        <div style="margin-bottom:8px;">
+          <div style="font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;text-align:left;">Realisasi (Rp)</div>
+          <div style="font-size:12px;font-weight:700;font-family:'Fira Code',monospace;${hasReal?'color:#00b87a':'color:var(--txt3);font-size:11px;font-weight:400;'}">${fmtN(real)}</div>
+          <div style="font-size:10px;color:#00b87a;margin-top:2px;">${doneKeg}/${totKeg} terlaksana</div>
+        </div>
+        ${renc>0&&hasReal?`<div style="border-top:1px dashed var(--bdr);margin:5px 0;"></div>
+        <div>
+          <div style="font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;text-align:left;">Deviasi</div>
+          <div style="font-size:12px;font-weight:700;font-family:'Fira Code',monospace;color:${devClr};">${devSign}${fmtN(Math.abs(dev))}</div>
+          <div style="font-size:10px;color:${devClr};margin-top:2px;">${devSign}${devPct.toFixed(1)}%</div>
+        </div>`:''}
+        ${renc>0?`<div style="margin-top:7px;font-size:12px;font-weight:700;color:${clr};text-align:center;">${pct}%</div>
+          <div style="height:3px;border-radius:99px;background:#e4edf3;margin-top:3px;">
+            <div style="height:100%;width:${Math.min(100,pct)}%;background:${clr};border-radius:99px;"></div>
+          </div>`:'<div style="margin-top:8px;font-size:10px;color:var(--txt3);text-align:center;">Belum ada kegiatan</div>'}
+      </td>`;
+    }).join('');
+  }
+
   const bpKeg=getBPKegiatan();
   const totRencBP=bulanTW.reduce((s,m)=>s+bpKeg.reduce((ss,k)=>ss+kTPB(k,m),0),0);
-  const totRealBP=bulanTW.reduce((s,m)=>s+bpKeg.filter(k=>isDB(k,m)).reduce((ss,k)=>ss+kTPB(k,m),0),0);
+  const totRealBP=bulanTW.reduce((s,m)=>s+bpKeg.filter(k=>isDB(k,m)).reduce((ss,k)=>ss+kTPBReal(k,m),0),0);
+  const totDevBP=totRealBP-totRencBP;
   const totPctBP=totRencBP>0?Math.round(totRealBP/totRencBP*100):0;
   const totClrBP=totPctBP>=100?'#00b87a':totPctBP>=70?'#007c91':totPctBP>0?'#e8a020':'var(--txt3)';
-  const cols51=bulanTW.map(m=>{
-    const renc=bpKeg.reduce((s,k)=>s+kTPB(k,m),0);
-    const real=bpKeg.filter(k=>isDB(k,m)).reduce((s,k)=>s+kTPB(k,m),0);
-    const pct=renc>0?Math.round(real/renc*100):0;
-    const clr=pct>=100?'#00b87a':pct>=70?'#007c91':pct>0?'#e8a020':'var(--txt3)';
-    const doneKeg=bpKeg.filter(k=>isDB(k,m)).length;
-    const totKeg=bpKeg.filter(k=>kBulanList(k).includes(m)).length;
-    return `<td style="padding:10px 8px;text-align:center;border-right:1px solid var(--bdr);min-width:155px;vertical-align:top;">
-      <div style="margin-bottom:9px;">
-        <div style="font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Rencana (Rp)</div>
-        <div style="min-height:20px;font-size:12px;font-weight:700;font-family:'Fira Code',monospace;text-align:right;${renc?'color:var(--ink)':'color:var(--txt3);font-size:11px;font-weight:400;'}">${fmtN(renc)}</div>
-        <div style="border-top:1px dashed var(--bdr);margin:4px 0;"></div>
-        <div style="font-size:10px;color:var(--txt3);text-align:right;padding:3px 0;">${totKeg} kegiatan dijadwalkan</div>
-      </div>
-      <div>
-        <div style="font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Realisasi (Rp)</div>
-        <div style="min-height:20px;font-size:12px;font-weight:700;font-family:'Fira Code',monospace;text-align:right;${real?'color:#00b87a':'color:var(--txt3);font-size:11px;font-weight:400;'}">${fmtN(real)}</div>
-        <div style="border-top:1px dashed var(--bdr);margin:4px 0;"></div>
-        <div style="font-size:10px;color:#00b87a;text-align:right;padding:3px 0;">${doneKeg}/${totKeg} terlaksana</div>
-      </div>
-      ${renc>0?`<div style="margin-top:6px;font-size:12px;font-weight:700;color:${clr};text-align:center;">${pct}%</div>
-        <div style="height:3px;border-radius:99px;background:#e4edf3;margin-top:3px;">
-          <div style="height:100%;width:${Math.min(100,pct)}%;background:${clr};border-radius:99px;"></div>
-        </div>`:'<div style="margin-top:7px;font-size:10px;color:var(--txt3);text-align:center;">Belum ada kegiatan</div>'}
-    </td>`;
-  }).join('');
 
-  // ── Baris Belanja Barang (auto dari kegiatan akun=52) ──
   const bbKeg=getBBKegiatan();
   const totRenc52=bulanTW.reduce((s,m)=>s+bbKeg.reduce((ss,k)=>ss+kTPB(k,m),0),0);
-  const totReal52=bulanTW.reduce((s,m)=>s+bbKeg.filter(k=>isDB(k,m)).reduce((ss,k)=>ss+kTPB(k,m),0),0);
+  const totReal52=bulanTW.reduce((s,m)=>s+bbKeg.filter(k=>isDB(k,m)).reduce((ss,k)=>ss+kTPBReal(k,m),0),0);
+  const totDev52=totReal52-totRenc52;
   const totPct52=totRenc52>0?Math.round(totReal52/totRenc52*100):0;
   const totClr52=totPct52>=100?'#00b87a':totPct52>=70?'#007c91':totPct52>0?'#e8a020':'var(--txt3)';
-  const cols52=bulanTW.map(m=>{
-    const renc52=bbKeg.reduce((s,k)=>s+kTPB(k,m),0);
-    const real52=bbKeg.filter(k=>isDB(k,m)).reduce((s,k)=>s+kTPB(k,m),0);
-    const pct52=renc52>0?Math.round(real52/renc52*100):0;
-    const clr52=pct52>=100?'#00b87a':pct52>=70?'#007c91':pct52>0?'#e8a020':'var(--txt3)';
-    const doneKeg=bbKeg.filter(k=>isDB(k,m)).length;
-    const totKeg=bbKeg.filter(k=>kBulanList(k).includes(m)).length;
-    return `<td style="padding:10px 8px;text-align:center;border-right:1px solid var(--bdr);min-width:155px;vertical-align:top;">
-      <div style="margin-bottom:9px;">
-        <div style="font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Rencana (Rp)</div>
-        <div style="min-height:20px;font-size:12px;font-weight:700;font-family:'Fira Code',monospace;text-align:right;${renc52?'color:var(--ink)':'color:var(--txt3);font-size:11px;font-weight:400;'}">${fmtN(renc52)}</div>
-        <div style="border-top:1px dashed var(--bdr);margin:4px 0;"></div>
-        <div style="font-size:10px;color:var(--txt3);text-align:right;padding:3px 0;">${totKeg} kegiatan dijadwalkan</div>
-      </div>
-      <div>
-        <div style="font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Realisasi (Rp)</div>
-        <div style="min-height:20px;font-size:12px;font-weight:700;font-family:'Fira Code',monospace;text-align:right;${real52?'color:#00b87a':'color:var(--txt3);font-size:11px;font-weight:400;'}">${fmtN(real52)}</div>
-        <div style="border-top:1px dashed var(--bdr);margin:4px 0;"></div>
-        <div style="font-size:10px;color:#00b87a;text-align:right;padding:3px 0;">${doneKeg}/${totKeg} terlaksana</div>
-      </div>
-      ${renc52>0?`<div style="margin-top:6px;font-size:12px;font-weight:700;color:${clr52};text-align:center;">${pct52}%</div>
-        <div style="height:3px;border-radius:99px;background:#e4edf3;margin-top:3px;">
-          <div style="height:100%;width:${Math.min(100,pct52)}%;background:${clr52};border-radius:99px;"></div>
-        </div>`:'<div style="margin-top:7px;font-size:10px;color:var(--txt3);text-align:center;">Belum ada kegiatan</div>'}
-    </td>`;
-  }).join('');
+
+  const fmtDev=(d,r)=>r>0&&d!==0?` <span style="color:${d>0?'#00b87a':'#e05555'};font-size:10px;">(${d>0?'+':''}${fmt(d)}, ${d>0?'+':''}${(d/r*100).toFixed(1)}%)</span>`:'';
 
   return `<div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:20px;">
     <div style="padding:13px 16px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
       <div>
         <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);">📊 RPD — Rencana Penarikan Dana per Bulan</div>
-        <div style="font-size:11px;color:var(--txt3);margin-top:2px;">Triwulan ${twRom[twIdx]} aktif · Data otomatis dari kegiatan terlaksana</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:2px;">Triwulan ${twRom[twIdx]} aktif · Realisasi aktual dari input saat tandai terlaksana</div>
       </div>
     </div>
+    ${dlBanner}
     <div style="overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;font-size:12px;">
         <thead>
           <tr style="background:var(--surf);">
-            <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);min-width:200px;">KOMPONEN</th>
+            <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);min-width:210px;">KOMPONEN</th>
             ${bulanTW.map(m=>`<th style="padding:10px 6px;text-align:center;font-size:10px;font-weight:600;color:var(--teal);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">${MN[m-1].toUpperCase()}</th>`).join('')}
           </tr>
         </thead>
         <tbody>
           <tr style="border-bottom:2px solid var(--bdr);">
-            <td style="padding:10px 14px;border-right:1px solid var(--bdr);vertical-align:middle;">
+            <td style="padding:10px 14px;border-right:1px solid var(--bdr);vertical-align:top;">
               <div style="font-weight:700;color:var(--ink);font-size:12px;margin-bottom:2px;">👤 Belanja Pegawai <span style="font-weight:400;font-size:10px;color:var(--txt3);">Akun 51</span></div>
-              <div style="font-size:10px;color:var(--teal);margin-bottom:6px;">✦ Otomatis dari ${bpKeg.length} kegiatan Belanja Pegawai</div>
+              <div style="font-size:10px;color:var(--teal);margin-bottom:6px;">✦ Otomatis dari ${bpKeg.length} kegiatan</div>
               <div style="font-size:11px;color:var(--txt3);">Rencana TW: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmt(totRencBP)}</strong></div>
               <div style="font-size:11px;color:var(--txt3);">Realisasi: <strong style="color:${totClrBP};font-family:'Fira Code',monospace;">${fmt(totRealBP)}</strong>${totRencBP>0?` <span style="color:${totClrBP};font-weight:700;">(${totPctBP}%)</span>`:''}</div>
+              ${totRealBP>0&&totRencBP>0?`<div style="font-size:11px;color:var(--txt3);">Deviasi: <strong style="font-family:'Fira Code',monospace;color:${totDevBP>=0?'#00b87a':'#e05555'};">${totDevBP>=0?'+':''}${fmt(totDevBP)}</strong>${fmtDev(totDevBP,totRencBP)}</div>`:''}
             </td>
-            ${cols51}
+            ${buildCols(bpKeg)}
           </tr>
           <tr>
-            <td style="padding:10px 14px;border-right:1px solid var(--bdr);vertical-align:middle;">
+            <td style="padding:10px 14px;border-right:1px solid var(--bdr);vertical-align:top;">
               <div style="font-weight:700;color:var(--ink);font-size:12px;margin-bottom:2px;">📦 Belanja Barang <span style="font-weight:400;font-size:10px;color:var(--txt3);">Akun 52</span></div>
-              <div style="font-size:10px;color:#00b87a;margin-bottom:6px;">✦ Otomatis dari ${bbKeg.length} kegiatan terlaksana</div>
+              <div style="font-size:10px;color:var(--teal);margin-bottom:6px;">✦ Otomatis dari ${bbKeg.length} kegiatan</div>
               <div style="font-size:11px;color:var(--txt3);">Rencana TW: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmt(totRenc52)}</strong></div>
               <div style="font-size:11px;color:var(--txt3);">Realisasi: <strong style="color:${totClr52};font-family:'Fira Code',monospace;">${fmt(totReal52)}</strong>${totRenc52>0?` <span style="color:${totClr52};font-weight:700;">(${totPct52}%)</span>`:''}</div>
+              ${totReal52>0&&totRenc52>0?`<div style="font-size:11px;color:var(--txt3);">Deviasi: <strong style="font-family:'Fira Code',monospace;color:${totDev52>=0?'#00b87a':'#e05555'};">${totDev52>=0?'+':''}${fmt(totDev52)}</strong>${fmtDev(totDev52,totRenc52)}</div>`:''}
             </td>
-            ${cols52}
+            ${buildCols(bbKeg)}
           </tr>
         </tbody>
       </table>
     </div>
     <div style="padding:10px 16px;border-top:1px solid var(--bdr);font-size:10px;color:var(--txt3);">
-      💡 Data RPD dihitung otomatis dari status kegiatan. Tandai kegiatan sebagai terlaksana untuk memperbarui realisasi.
+      💡 Klik jadwal kegiatan → input realisasi aktual (bisa berbeda dari rencana). Deviasi = selisih realisasi vs rencana RPD.
     </div>
   </div>`;
 }
