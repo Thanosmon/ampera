@@ -1002,7 +1002,7 @@ body.logged-in [data-admin].show-admin{display:flex;}
       <div class="user-dd" id="userDD">
         <div class="udd-head"><div class="udd-nm" id="uddNm">—</div><span class="udd-badge" id="uddBadge">—</span></div>
         <div class="udd-item" onclick="openMgrModal();event.stopPropagation()">👥 Kelola Pengguna</div>
-        <div class="udd-item" onclick="openSyncModal();event.stopPropagation()">☁️ Sinkronisasi</div>
+        <div class="udd-item" onclick="openSyncModal();event.stopPropagation()" data-admin>☁️ Sinkronisasi</div>
         <div class="udd-item danger" onclick="doLogout();event.stopPropagation()">🚪 Keluar</div>
       </div>
     </div>
@@ -1109,7 +1109,7 @@ body.logged-in [data-admin].show-admin{display:flex;}
       <div class="sid-item" onclick="openAddKegiatan()" data-admin><span class="sid-icon">＋</span> Tambah Kegiatan</div>
       <div class="sid-item" onclick="openAddBidang()" data-admin><span class="sid-icon">🏢</span> Tambah Bidang</div>
       <div class="sid-item" onclick="openExportModal()"><span class="sid-icon">📤</span> Ekspor & Laporan</div>
-      <div class="sid-item" onclick="openSyncModal()"><span class="sid-icon">☁️</span> Sinkronisasi</div>
+      <div class="sid-item" onclick="openSyncModal()" data-admin><span class="sid-icon">☁️</span> Sinkronisasi</div>
     </div>
     <!-- Hidden elements untuk backward compat js (tidak ditampilkan) -->
     <span id="sDone" style="display:none"></span>
@@ -1155,7 +1155,7 @@ body.logged-in [data-admin].show-admin{display:flex;}
   <div class="mob-dd-item" onclick="switchView('bidang',this);closeMobMore()" data-view="bidang">🏢 Per Bidang</div>
   <div class="mob-dd-item" onclick="switchView('ikpa',this);closeMobMore()" data-view="ikpa">🎯 IKPA</div>
   <div class="mob-dd-item" onclick="openExportModal();closeMobMore()">📤 Ekspor &amp; Laporan</div>
-  <div class="mob-dd-item" onclick="openSyncModal();closeMobMore()">☁️ Sinkronisasi</div>
+  <div class="mob-dd-item" onclick="openSyncModal();closeMobMore()" data-admin>☁️ Sinkronisasi</div>
   <div class="mob-dd-item" onclick="doLogout();closeMobMore()">🚪 Keluar</div>
 </div>
 <nav class="mob-nav">
