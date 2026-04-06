@@ -809,25 +809,30 @@ td.muted{color:var(--txt3);font-size:12px;}
   .chart-card { break-inside: avoid; }
 }
 /* ═══ LOGIN SCREEN ═══ */
-#loginScreen{position:fixed;inset:0;z-index:9000;background:linear-gradient(135deg,#0a1a2e 0%,#0d2d45 40%,#0a3d5c 70%,#062233 100%);display:flex;align-items:center;justify-content:center;}
+#loginScreen{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(circle at 1px 1px,rgba(255,255,255,.045) 1px,transparent 0),
+    linear-gradient(145deg,#001030 0%,#002060 35%,#003080 65%,#001848 100%);
+  background-size:36px 36px,100% 100%;}
 #loginScreen.hidden{display:none;}
-.login-bg{position:absolute;bottom:0;left:0;right:0;opacity:.07;pointer-events:none;}
-.login-box{background:rgba(255,255,255,.04);border:1px solid rgba(0,196,224,.2);border-radius:16px;padding:40px 36px 32px;width:400px;max-width:94vw;backdrop-filter:blur(12px);box-shadow:0 24px 80px rgba(0,0,0,.5);position:relative;z-index:1;animation:lbIn .4s ease;}
+.login-bg{position:absolute;bottom:0;left:0;right:0;opacity:.09;pointer-events:none;}
+.login-box{background:rgba(0,32,80,.45);border:1px solid rgba(0,136,200,.28);border-radius:16px;padding:40px 36px 32px;width:400px;max-width:94vw;backdrop-filter:blur(18px);box-shadow:0 24px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);position:relative;z-index:1;animation:lbIn .4s ease;}
 @keyframes lbIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .login-logo{display:flex;align-items:center;gap:12px;margin-bottom:24px;justify-content:center;}
 .login-brand{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:26px;font-weight:800;color:white;letter-spacing:2px;}
-.login-brand span{color:#00c4e0;}
-.login-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:3px;line-height:1.5;text-align:center;}
-.login-div{height:1px;background:rgba(255,255,255,.08);margin:18px 0;}
-.login-lbl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:rgba(255,255,255,.4);margin-bottom:5px;}
-.login-inp{width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.12);border-radius:8px;padding:10px 14px;color:white;font-family:'Figtree',sans-serif;font-size:14px;outline:none;transition:border-color .2s;margin-bottom:12px;}
-.login-inp:focus{border-color:rgba(0,196,224,.5);background:rgba(0,196,224,.06);}
-.login-inp::placeholder{color:rgba(255,255,255,.25);}
-.login-btn{width:100%;margin-top:6px;background:linear-gradient(90deg,#007c91,#00a3bd);border:none;border-radius:9px;padding:12px;color:white;font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .2s;box-shadow:0 4px 18px rgba(0,164,189,.3);}
-.login-btn:hover{background:linear-gradient(90deg,#00a3bd,#00c4e0);}
+.login-brand span{color:#0099d8;}
+.login-sub{font-size:11px;color:rgba(255,255,255,.42);margin-top:3px;line-height:1.5;text-align:center;}
+.login-div{height:1px;background:rgba(255,255,255,.09);margin:18px 0;}
+.login-lbl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:rgba(255,255,255,.38);margin-bottom:5px;}
+.login-inp{width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.13);border-radius:8px;padding:10px 14px;color:white;font-family:'Figtree',sans-serif;font-size:14px;outline:none;transition:all .2s;margin-bottom:12px;}
+.login-inp:focus{border-color:rgba(0,136,200,.65);background:rgba(0,100,180,.1);box-shadow:0 0 0 3px rgba(0,119,200,.15);}
+.login-inp::placeholder{color:rgba(255,255,255,.22);}
+.login-btn{width:100%;margin-top:6px;background:linear-gradient(90deg,#0055a0,#0077C8);border:none;border-radius:9px;padding:12px;color:white;font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .2s;box-shadow:0 4px 20px rgba(0,100,180,.4);}
+.login-btn:hover{background:linear-gradient(90deg,#0066b8,#0099d8);box-shadow:0 6px 24px rgba(0,120,200,.5);transform:translateY(-1px);}
+.login-btn:active{transform:translateY(0);}
 .login-err{background:rgba(224,85,85,.15);border:1px solid rgba(224,85,85,.3);color:#ff9a9a;border-radius:7px;padding:8px 12px;font-size:12px;margin-top:8px;display:none;}
 .login-err.show{display:block;}
-.login-foot{text-align:center;font-size:10px;color:rgba(255,255,255,.2);margin-top:18px;line-height:1.6;}
+.login-foot{text-align:center;font-size:10px;color:rgba(255,255,255,.22);margin-top:18px;line-height:1.6;}
 /* User chip */
 .user-chip{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:3px 10px 3px 4px;cursor:pointer;transition:all .18s;position:relative;}
 .user-chip:hover{background:rgba(255,255,255,.1);}
@@ -907,23 +912,23 @@ body.logged-in [data-admin].show-admin{display:flex;}
   <div class="login-box">
     <div class="login-logo">
       <svg viewBox="0 0 60 38" width="60" height="38" fill="none">
-        <rect x="0" y="30" width="60" height="8" fill="#003d6b"/>
+        <rect x="0" y="30" width="60" height="8" fill="#001848"/>
         <path d="M0 31 Q7.5 29 15 31 Q22.5 33 30 31 Q37.5 29 45 31 Q52.5 33 60 31" stroke="rgba(255,255,255,.2)" stroke-width=".8" fill="none"/>
-        <rect x="2" y="24" width="56" height="4" rx="1" fill="#007c91"/>
-        <rect x="10" y="13" width="4" height="13" rx=".8" fill="#00a3bd"/>
-        <rect x="46" y="13" width="4" height="13" rx=".8" fill="#00a3bd"/>
-        <rect x="11" y="2" width="2" height="13" rx=".6" fill="#00c4e0"/>
-        <rect x="47" y="2" width="2" height="13" rx=".6" fill="#00c4e0"/>
-        <rect x="8" y="6" width="8" height="1.6" rx=".6" fill="#00a3bd"/>
-        <rect x="44" y="6" width="8" height="1.6" rx=".6" fill="#00a3bd"/>
+        <rect x="2" y="24" width="56" height="4" rx="1" fill="#0058a5"/>
+        <rect x="10" y="13" width="4" height="13" rx=".8" fill="#0077C8"/>
+        <rect x="46" y="13" width="4" height="13" rx=".8" fill="#0077C8"/>
+        <rect x="11" y="2" width="2" height="13" rx=".6" fill="#0099d8"/>
+        <rect x="47" y="2" width="2" height="13" rx=".6" fill="#0099d8"/>
+        <rect x="8" y="6" width="8" height="1.6" rx=".6" fill="#0077C8"/>
+        <rect x="44" y="6" width="8" height="1.6" rx=".6" fill="#0077C8"/>
         <line x1="12" y1="3" x2="3" y2="24" stroke="#f5bc4a" stroke-width="1" opacity=".9"/>
         <line x1="12" y1="3" x2="21" y2="24" stroke="#f5bc4a" stroke-width="1" opacity=".9"/>
         <line x1="12" y1="3" x2="30" y2="24" stroke="#f5bc4a" stroke-width=".7" opacity=".5"/>
         <line x1="48" y1="3" x2="57" y2="24" stroke="#f5bc4a" stroke-width="1" opacity=".9"/>
         <line x1="48" y1="3" x2="39" y2="24" stroke="#f5bc4a" stroke-width="1" opacity=".9"/>
         <line x1="48" y1="3" x2="30" y2="24" stroke="#f5bc4a" stroke-width=".7" opacity=".5"/>
-        <circle cx="12" cy="3" r="1.6" fill="#00c4e0"/>
-        <circle cx="48" cy="3" r="1.6" fill="#00c4e0"/>
+        <circle cx="12" cy="3" r="1.6" fill="#0099d8"/>
+        <circle cx="48" cy="3" r="1.6" fill="#0099d8"/>
       </svg>
       <div>
         <div class="login-brand">AM<span>PE</span>RA</div>
