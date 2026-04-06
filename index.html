@@ -3142,17 +3142,20 @@ let _activeTW=null;
 function getCurrentTW(){return _activeTW||Math.ceil((new Date().getMonth()+1)/3);}
 function switchTW(tw){_activeTW=tw;renderIKPA();}
 function ikpaNilai(kode,twIdx){
-  if(kode==='51'){
-    // Auto-calculate from BP kegiatan (akun='51')
-    const pagu=getBPPagu();
-    if(pagu===0)return null;
-    const TWMON51=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
-    const monthsUpTo=TWMON51.slice(0,twIdx+1).flat();
-    const realisasi=getBPKegiatan().reduce((s,k)=>{
+  const conf=IKPA_CONF[kode];
+  // Akun 51 & 52: realisasi auto dari kegiatan terlaksana (kumulatif s.d. TW)
+  if(kode==='51'||kode==='52'){
+    const bl=getIKPAData().belanja[kode];
+    if(!bl||!bl.paguSet)return null;
+    const pagu=bl.pagu;
+    if(pagu===0)return{pct:0,target:conf.target[twIdx],minPct:conf.target[twIdx]-conf.threshold[twIdx],threshold:conf.threshold[twIdx],nilai:null,status:'na'};
+    const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
+    const monthsUpTo=TWMON.slice(0,twIdx+1).flat();
+    const kegiatan=kode==='51'?getBPKegiatan():getBBKegiatan();
+    const realisasi=kegiatan.reduce((s,k)=>{
       return s+(k.doneBulan||[]).filter(m=>monthsUpTo.includes(m)).reduce((ss,m)=>ss+kTPB(k,m),0);
     },0);
     const pct=(realisasi/pagu)*100;
-    const conf=IKPA_CONF['51'];
     const target=conf.target[twIdx],threshold=conf.threshold[twIdx],minPct=target-threshold;
     let nilai,status;
     if(pct>=target){nilai=100;status='aman';}
@@ -3160,7 +3163,8 @@ function ikpaNilai(kode,twIdx){
     else{nilai=minPct>0?Math.min(100,Math.round((pct/minPct)*100)):0;status=pct<minPct*0.7?'kritis':'perhatian';}
     return{pct,target,minPct,threshold,nilai,status};
   }
-  const conf=IKPA_CONF[kode],bl=getIKPAData().belanja[kode];
+  // Akun 53 & lainnya: realisasi input manual per TW
+  const bl=getIKPAData().belanja[kode];
   if(!bl||!bl.paguSet)return null;
   if(bl.pagu===0)return{pct:0,target:conf.target[twIdx],minPct:conf.target[twIdx]-conf.threshold[twIdx],threshold:conf.threshold[twIdx],nilai:null,status:'na'};
   const pct=(bl.realisasi[twIdx]/bl.pagu)*100;
@@ -3327,10 +3331,10 @@ function renderIKPA(){
           <div style="display:flex;flex-direction:column;">
             <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">${kode==='51'?`Realisasi s.d. TW ${twRom[twIdx]} (Rp)`:`Realisasi TW ${twRom[twIdx]} (Rp)`}</div>
             <div style="min-height:26px;font-size:14px;font-weight:700;font-family:'Fira Code',monospace;color:var(--green);letter-spacing:0.3px;display:flex;align-items:center;">
-              ${kode==='51'?(()=>{const TWMON51=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];const mUp=TWMON51.slice(0,twIdx+1).flat();const r=getBPKegiatan().reduce((s,k)=>(k.doneBulan||[]).filter(m=>mUp.includes(m)).reduce((ss,m)=>ss+kTPB(k,m),s),0);return r?new Intl.NumberFormat('id-ID').format(r):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`;})():(bl&&bl.realisasi[twIdx]?new Intl.NumberFormat('id-ID').format(bl.realisasi[twIdx]):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`)}
+              ${(kode==='51'||kode==='52')?(()=>{const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];const mUp=TWMON.slice(0,twIdx+1).flat();const keg=kode==='51'?getBPKegiatan():getBBKegiatan();const r=keg.reduce((s,k)=>(k.doneBulan||[]).filter(m=>mUp.includes(m)).reduce((ss,m)=>ss+kTPB(k,m),s),0);return r?new Intl.NumberFormat('id-ID').format(r):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`;})():(bl&&bl.realisasi[twIdx]?new Intl.NumberFormat('id-ID').format(bl.realisasi[twIdx]):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`)}
             </div>
             <div style="border-top:1px dashed var(--bdr);margin:6px 0;"></div>
-            ${kode==='51'?`<div style="font-size:10px;color:var(--teal);padding:4px 0;">✦ Auto dari kegiatan terlaksana</div>`
+            ${(kode==='51'||kode==='52')?`<div style="font-size:10px;color:var(--teal);padding:4px 0;">✦ Auto dari kegiatan terlaksana</div>`
               :bpEdit?`<input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
               value="${bl&&bl.realisasi[twIdx]?bl.realisasi[twIdx]:''}" placeholder="ketik angka..."
               onchange="setIKPAReal('${kode}',${twIdx},this.value)"
@@ -3367,10 +3371,9 @@ function renderIKPA(){
         const active=i===twIdx;
         const isFuture=i>twIdx;
         const isPast=i<twIdx;
-        const real=bl?bl.realisasi[i]:0;
         const n=bl&&bl.paguSet&&!isFuture?ikpaNilai(kode,i):null;
         const sc=n?statusColor[n.status]:'#7a9aac';
-        const pct=n&&n.status!=='na'&&bl&&bl.pagu>0?(real/bl.pagu*100):0;
+        const pct=n&&n.status!=='na'?n.pct:0;
         return `<td style="padding:3px 14px 10px;text-align:center;background:${active?'rgba(0,124,145,.05)':''};border-bottom:1px solid var(--bdr)30;">
           ${isFuture?`<div style="font-size:10px;color:var(--bdr);font-style:italic;">—</div>`:
             n&&n.status==='na'?`<div style="font-size:10px;color:var(--txt3);">N/A</div>`:
