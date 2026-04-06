@@ -26,7 +26,7 @@ body:not(.logged-in) .sticky-summary,
 body:not(.logged-in) .shell{display:none!important;}
 
 /* TOPBAR */
-.topbar{background:linear-gradient(135deg,#0e2d44 0%,#0b3a56 100%);height:42px;display:flex;align-items:center;padding:0 20px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.1);z-index:200;}
+.topbar{background:linear-gradient(135deg,#002d62 0%,#003d84 100%);height:42px;display:flex;align-items:center;padding:0 20px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.1);z-index:200;}
 .topbar-brand{display:flex;align-items:center;gap:10px;width:var(--sid-w);flex-shrink:0;}
 .logo-mark{width:46px;height:28px;flex-shrink:0;}
 .brand-name{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:15px;font-weight:800;letter-spacing:1.5px;color:var(--white);}
@@ -50,7 +50,7 @@ body:not(.logged-in) .shell{display:none!important;}
 .shell{display:flex;flex:1;overflow:hidden;}
 
 /* SIDEBAR */
-.sidebar{width:var(--sid-w);background:linear-gradient(180deg,#163c58 0%,#102f47 100%);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;border-right:1px solid rgba(255,255,255,0.08);}
+.sidebar{width:var(--sid-w);background:linear-gradient(180deg,#002d62 0%,#002050 100%);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;border-right:1px solid rgba(255,255,255,0.08);}
 .sid-section{padding:20px 16px 8px;}
 .sid-section-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.25);margin-bottom:6px;padding-left:4px;}
 .sid-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.5);cursor:pointer;transition:all 0.18s;margin-bottom:2px;border:1px solid transparent;}
@@ -96,7 +96,7 @@ select:focus{border-color:var(--teal2);}
 
 /* BIDANG */
 .bid-block{margin-bottom:20px;}
-.bid-head{background:linear-gradient(135deg,#1a6690 0%,#0e5278 100%);border-radius:10px 10px 0 0;padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.bid-head{background:linear-gradient(135deg,#006c9e 0%,#0088b8 100%);border-radius:10px 10px 0 0;padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .bid-head-left{display:flex;align-items:center;gap:10px;}
 .bid-head-accent{width:3px;height:18px;background:var(--teal3);border-radius:2px;flex-shrink:0;}
 .bid-head h2{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--white);letter-spacing:0.3px;}
@@ -304,9 +304,9 @@ td.muted{color:var(--txt3);font-size:12px;}
 
 /* TIMELINE */
 .tl-card{background:var(--card);border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;}
-.tl-head{background:var(--ink2);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;}
+.tl-head{background:linear-gradient(135deg,#006fa3 0%,#0096b5 100%);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;border-radius:12px 12px 0 0;}
 .tl-head h3{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--white);}
-.tl-head span{font-size:11px;color:rgba(255,255,255,0.35);}
+.tl-head span{font-size:11px;color:rgba(255,255,255,0.6);}
 .tl-ov{overflow-x:auto;}
 .tl-tbl{width:100%;border-collapse:collapse;min-width:800px;table-layout:fixed;}
 .tl-tbl th{background:#f0f7fa;padding:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--txt3);border-bottom:1.5px solid var(--bdr);border-right:1px solid var(--bdr);white-space:nowrap;}
@@ -492,7 +492,7 @@ td.muted{color:var(--txt3);font-size:12px;}
    DASHBOARD PIMPINAN
 ═══════════════════════════════════ */
 .dash-header {
-  background: linear-gradient(135deg, #0f6cbf 0%, #0891b2 55%, #0e7490 100%);
+  background: linear-gradient(135deg, #006fa3 0%, #0096b5 55%, #00acc8 100%);
   padding: 20px 28px 16px;
   border-bottom: 1px solid rgba(255,255,255,0.12);
   display: flex;
@@ -620,7 +620,7 @@ td.muted{color:var(--txt3);font-size:12px;}
 
 /* ═══ STICKY SUMMARY BAR (ala MyIntress) ═══ */
 .sticky-summary {
-  background: linear-gradient(135deg, #0f6cbf 0%, #0891b2 55%, #0e7490 100%);
+  background: linear-gradient(135deg, #006fa3 0%, #0096b5 55%, #00acc8 100%);
   padding: 0 28px;
   height: 52px;
   display: flex;
@@ -1112,13 +1112,14 @@ body.logged-in [data-admin].show-admin{display:flex;}
       <div class="sid-item" onclick="openSyncModal()"><span class="sid-icon">☁️</span> Sinkronisasi</div>
     </div>
     <div class="sid-stats">
-      <div class="sid-section-lbl" style="font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Ringkasan</div>
-      <div class="sid-stat-row"><span class="sid-stat-lbl">Total Anggaran</span><span class="sid-stat-val gold" id="sTotal">—</span></div>
-      <div class="sid-stat-row" style="margin-top:-3px;"><span class="sid-stat-lbl" style="font-size:9px;opacity:.6;">Akum. kegiatan</span><span style="font-size:9px;color:rgba(255,255,255,.45);font-family:'Fira Code',monospace;" id="sKegPagu">—</span></div>
-      <div class="sid-stat-row"><span class="sid-stat-lbl">Terlaksana</span><span class="sid-stat-val green" id="sDone">—</span></div>
-      <div class="sid-stat-row"><span class="sid-stat-lbl">Sisa</span><span class="sid-stat-val teal" id="sSisa">—</span></div>
+      <div class="sid-section-lbl" style="font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Serapan Anggaran</div>
+      <div class="sid-stat-row"><span class="sid-stat-lbl">Realisasi</span><span class="sid-stat-val green" id="sDone">—</span></div>
+      <div class="sid-stat-row"><span class="sid-stat-lbl" style="font-size:9px;opacity:.7;">dari</span><span style="font-size:9px;color:rgba(255,255,255,.55);font-family:'Fira Code',monospace;" id="sTotal">—</span></div>
       <div class="sid-prog-wrap"><div class="sid-prog-fill" id="sidProg" style="width:0%"></div></div>
-      <div class="sid-prog-lbl"><span>Realisasi</span><span id="sidPct">0%</span></div>
+      <div class="sid-prog-lbl"><span>Serapan</span><span id="sidPct">0%</span></div>
+      <!-- Hidden elements untuk backward compat js -->
+      <span id="sSisa" style="display:none"></span>
+      <span id="sKegPagu" style="display:none"></span>
     </div>
   </nav>
 
@@ -1672,11 +1673,11 @@ function closeMobMore(){
 // ── HTML HELPERS ──
 function metricsHTML(){
   return`<div class="metrics-row">
-    <div class="metric-card mc-teal"><div class="metric-lbl">Total Anggaran</div><div class="metric-val teal" id="mc1">—</div><div class="metric-sub">Seluruh kegiatan TA 2026</div></div>
-    <div class="metric-card mc-green"><div class="metric-lbl">Sudah Terlaksana</div><div class="metric-val green" id="mc2">—</div><div class="metric-sub">Nilai terserap s.d. sekarang</div></div>
-    <div class="metric-card mc-gold"><div class="metric-lbl">Sisa Anggaran</div><div class="metric-val gold" id="mc3">—</div><div class="metric-sub">Belum terlaksana</div></div>
-    <div class="metric-card mc-ink"><div class="metric-lbl">Total Pelaksanaan</div><div class="metric-val" id="mc4">—</div><div class="metric-sub">Jadwal sepanjang tahun</div></div>
-    <div class="metric-card mc-red"><div class="metric-lbl">Sudah Terlaksana</div><div class="metric-val" id="mc5">—</div><div class="metric-sub">Dari total jadwal</div></div>
+    <div class="metric-card mc-teal"><div class="metric-lbl">Total Pagu</div><div class="metric-val teal" id="mc1">—</div><div class="metric-sub">Pagu resmi 51+52+53 · TA 2026</div></div>
+    <div class="metric-card mc-green"><div class="metric-lbl">Realisasi</div><div class="metric-val green" id="mc2">—</div><div class="metric-sub">Kumulatif s.d. sekarang</div></div>
+    <div class="metric-card mc-gold"><div class="metric-lbl">Sisa Pagu</div><div class="metric-val gold" id="mc3">—</div><div class="metric-sub">Belum terlaksana</div></div>
+    <div class="metric-card mc-ink"><div class="metric-lbl">Total Jadwal</div><div class="metric-val" id="mc4">—</div><div class="metric-sub">Pelaksanaan sepanjang tahun</div></div>
+    <div class="metric-card mc-red"><div class="metric-lbl">Terlaksana</div><div class="metric-val" id="mc5">—</div><div class="metric-sub">Dari total jadwal pelaksanaan</div></div>
   </div>`;
 }
 
@@ -1769,7 +1770,7 @@ function renderKeg(){
         <thead><tr>
           <th></th><th>Nama Kegiatan</th><th>Tempat</th>
           <th>Jadwal</th>
-          <th class="r">Total Anggaran</th><th class="r">Terlaksana</th><th class="c">Aksi</th>
+          <th class="r">Pagu</th><th class="r">Realisasi</th><th class="c">Aksi</th>
         </tr></thead><tbody>`;
       ks.forEach((k,ki)=>{
         const tot=kT(k),done=kTDone(k),isAll=allDone(k);
@@ -1881,8 +1882,8 @@ function renderPerBidang(){
     <div class="bid-head">
       <div class="bid-head-left"><div class="bid-head-accent"></div><h2>${escH(b.nama)}</h2></div>
       <div class="bid-metas">
-        <div class="bid-meta"><div class="bid-meta-lbl">Total Anggaran</div><div class="bid-meta-val">${fmt(totB)}</div></div>
-        <div class="bid-meta"><div class="bid-meta-lbl">Terlaksana</div><div class="bid-meta-val">${fmt(dnB)}</div></div>
+        <div class="bid-meta"><div class="bid-meta-lbl">Pagu</div><div class="bid-meta-val">${fmt(totB)}</div></div>
+        <div class="bid-meta"><div class="bid-meta-lbl">Realisasi</div><div class="bid-meta-val">${fmt(dnB)}</div></div>
         <div class="bid-meta"><div class="bid-meta-lbl">Kegiatan Selesai</div><div class="bid-meta-val">${ksDoneAll} / ${ksAll.length}</div></div>
         <div class="bid-prog-outer"><div class="bid-prog-track"><div class="bid-prog-bar" style="width:${pct}%"></div></div><div class="bid-prog-pct">${pct}% selesai</div></div>
       </div>
@@ -1899,7 +1900,7 @@ function renderPerBidang(){
       <thead><tr>
         <th></th><th>Nama Kegiatan</th><th>Tempat</th>
         <th>Jadwal</th>
-        <th class="r">Total Anggaran</th><th class="r">Terlaksana</th><th class="c">Aksi</th>
+        <th class="r">Pagu</th><th class="r">Realisasi</th><th class="c">Aksi</th>
       </tr></thead><tbody>`;
     ks.forEach((k,ki)=>{
       const tot=kT(k),done=kTDone(k),isAll=allDone(k);
@@ -2556,8 +2557,8 @@ function renderDashboard(){
 
   // ── Generate insights ──
   const insights=[];
-  if(pctReal<50&&CM>=6) insights.push({t:'alert',icon:'🚨',msg:`<strong>Realisasi rendah:</strong> Serapan anggaran baru ${pctReal}% padahal sudah bulan ${MN[CM-1]}. Perlu akselerasi pelaksanaan.`});
-  else if(pctReal>=80) insights.push({t:'ok',icon:'✅',msg:`<strong>Serapan sangat baik:</strong> Realisasi sudah mencapai ${pctReal}% dari total anggaran TA 2026.`});
+  if(pctReal<50&&CM>=6) insights.push({t:'alert',icon:'🚨',msg:`<strong>Serapan rendah:</strong> Penyerapan pagu baru ${pctReal}% padahal sudah bulan ${MN[CM-1]}. Perlu akselerasi pelaksanaan.`});
+  else if(pctReal>=80) insights.push({t:'ok',icon:'✅',msg:`<strong>Serapan sangat baik:</strong> Realisasi sudah mencapai ${pctReal}% dari Total Pagu TA 2026.`});
   if(kBulanIni.length>0&&doneCnt<kBulanIni.length) insights.push({t:'warn',icon:'⚠️',msg:`<strong>${kBulanIni.length-doneCnt} kegiatan di ${blnNm}</strong> belum ditandai terlaksana. Segera perbarui status setelah pelaksanaan.`});
   if(kBulanIni.length===0) insights.push({t:'info',icon:'ℹ️',msg:`Tidak ada kegiatan terjadwal di <strong>${blnNm}</strong>.`});
   else if(doneCnt===kBulanIni.length) insights.push({t:'ok',icon:'🎉',msg:`Semua <strong>${kBulanIni.length} kegiatan</strong> di ${blnNm} sudah terlaksana!`});
@@ -2629,23 +2630,23 @@ function renderDashboard(){
     <!-- KPI STRIP -->
     <div class="dash-kpi-strip">
       <div class="dash-kpi dk-teal">
-        <div class="dash-kpi-lbl">Total Anggaran TA 2026</div>
-        <div class="dash-kpi-val">${fmt(dispAngg)}</div>
-        <div class="dash-kpi-sub" style="display:flex;flex-direction:column;gap:2px;line-height:1.4;">
-          <span>${totAngg>0?'📋 Pagu Resmi (51+52+53)':'⚠️ Akumulasi kegiatan · input pagu resmi di IKPA'}</span>
-          ${totAngg>0&&kegTotPagu>0&&kegTotPagu!==totAngg?`<span style="opacity:0.75;">Akum. kegiatan: ${fmt(kegTotPagu)}</span>`:''}
+        <div class="dash-kpi-lbl">Kegiatan Terlaksana</div>
+        <div class="dash-kpi-val">${donePelaks} <span style="font-size:13px;font-weight:400;color:var(--txt3)">/ ${totPelaks}</span></div>
+        <div class="dash-kpi-sub">pelaksanaan s.d. ${MN[CM-1]} ${getTAYear()}</div>
+        <div class="dash-kpi-badge ${donePelaks===totPelaks&&totPelaks>0?'dkb-green':donePelaks>0?'dkb-teal':'dkb-gold'}">
+          ${totPelaks>0?Math.round(donePelaks/totPelaks*100):0}% dari total jadwal
         </div>
       </div>
       <div class="dash-kpi dk-green">
-        <div class="dash-kpi-lbl">Sudah Terlaksana (kumulatif)</div>
+        <div class="dash-kpi-lbl">Realisasi Kumulatif</div>
         <div class="dash-kpi-val">${fmt(totDone)}</div>
-        <div class="dash-kpi-sub">${donePelaks} dari ${totPelaks} pelaksanaan</div>
+        <div class="dash-kpi-sub">${pctReal}% dari Total Pagu</div>
         <div class="dash-kpi-badge ${pctReal>=70?'dkb-green':pctReal>=40?'dkb-gold':'dkb-red'}">
-          ${pctReal>=70?'▲':'▼'} ${pctReal}% realisasi
+          ${pctReal>=70?'▲':'▼'} ${pctReal}% serapan
         </div>
       </div>
       <div class="dash-kpi dk-gold">
-        <div class="dash-kpi-lbl">Anggaran ${blnNm}</div>
+        <div class="dash-kpi-lbl">Pagu ${blnNm}</div>
         <div class="dash-kpi-val">${fmt(angBln)}</div>
         <div class="dash-kpi-sub">${kBulanIni.length} kegiatan terjadwal</div>
         <div class="dash-kpi-badge ${pctBln===100?'dkb-green':pctBln>0?'dkb-gold':'dkb-teal'}">${pctBln}% terlaksana bulan ini</div>
@@ -2653,7 +2654,7 @@ function renderDashboard(){
       <div class="dash-kpi dk-red">
         <div class="dash-kpi-lbl">Proyeksi Serapan Akhir Tahun</div>
         <div class="dash-kpi-val">${fmt(Math.round(proyEOY))}</div>
-        <div class="dash-kpi-sub">Berdasarkan tren realisasi s.d. saat ini</div>
+        <div class="dash-kpi-sub">Tren realisasi s.d. ${MN[CM-1]}</div>
         <div class="dash-kpi-badge ${proyEOY>=dispAngg*0.9?'dkb-green':proyEOY>=dispAngg*0.6?'dkb-gold':'dkb-red'}">
           ${Math.round(proyEOY/dispAngg*100)||0}% proyeksi serapan
         </div>
@@ -2723,7 +2724,7 @@ function renderDashboard(){
               <div style="width:1px;background:var(--bdr);"></div>
               <div style="text-align:center;">
                 <div style="font-family:'Fira Code',monospace;font-size:18px;font-weight:500;color:var(--teal)">${fmt(angBln)}</div>
-                <div style="font-size:10px;color:var(--txt3)">Total Anggaran</div>
+                <div style="font-size:10px;color:var(--txt3)">Pagu Bulan Ini</div>
               </div>
             </div>
           </div>
@@ -3617,7 +3618,7 @@ function renderIKPA(){
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:${avgN!==null?'160px 1fr':'1fr'};background:linear-gradient(135deg,#0d2d3f 0%,#0a1f2e 100%);border-radius:0 0 14px 14px;overflow:hidden;margin:0 0 20px;border:1px solid rgba(0,196,224,0.12);border-top:none;">
+  <div style="display:grid;grid-template-columns:${avgN!==null?'160px 1fr':'1fr'};background:linear-gradient(135deg,#0c4a6e 0%,#075985 100%);border-radius:0 0 14px 14px;overflow:hidden;margin:0 0 20px;border:1px solid rgba(0,150,181,0.25);border-top:none;">
     ${avgN!==null?`<div style="padding:22px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.15);">
       <div style="font-family:'Sora',sans-serif;font-size:40px;font-weight:800;color:${avgColor};line-height:1;">${avgN}</div>
       <div style="font-size:10px;color:rgba(255,255,255,.4);text-align:center;margin-top:5px;line-height:1.5;">Estimasi Nilai<br>TW ${twRom[twIdx]}</div>
@@ -4240,7 +4241,7 @@ function exportPDF(mode){
   function addDashboard(){
     let y=header('Dashboard & Ringkasan Anggaran');
     y=kpiRow(doc,y,[
-      ['Total Anggaran',fmt(total_ang),teal],
+      ['Total Pagu',fmt(total_ang),teal],
       ['Terlaksana',fmt(total_don),green],
       ['Sisa',fmt(total_ang-total_don),gold],
       ['% Realisasi',pct,ink]
@@ -4248,7 +4249,7 @@ function exportPDF(mode){
     y=sectionHdr(doc,y,'Realisasi Per Bidang');
     doc.autoTable({
       startY:y,margin:{left:M,right:M},
-      head:[['Bidang','Total Anggaran','Terlaksana','Sisa','% Real.']],
+      head:[['Bidang','Pagu','Realisasi','Sisa Pagu','% Serapan']],
       body:data.bidang.map(b=>{
         const kb=data.kegiatan.filter(k=>k.bidangId===b.id);
         const ta=kb.reduce((s,k)=>s+k.jadwal.reduce((a,j)=>a+j.anggaran,0),0);
@@ -4459,7 +4460,7 @@ function exportExcel(mode){
   function kTD(k){return k.jadwal.filter(j=>k.doneBulan.includes(j.bulan)).reduce((a,j)=>a+j.anggaran,0);}
 
   if(mode==='semua'||mode==='kegiatan'){
-    const rows=[['No','Nama Kegiatan','Bidang','Tempat','Total Anggaran','Terlaksana','% Realisasi','Bulan Pelaksanaan','Bulan Terlaksana','Catatan']];
+    const rows=[['No','Nama Kegiatan','Bidang','Tempat','Pagu','Realisasi','% Serapan','Bulan Pelaksanaan','Bulan Terlaksana','Catatan']];
     data.kegiatan.forEach((k,i)=>{
       const ta=kT(k),td=kTD(k);
       rows.push([i+1,k.nama,getBidangNama(k.bidangId),k.tempat,ta,td,ta?(td/ta*100).toFixed(1)+'%':'-',
@@ -4524,7 +4525,7 @@ function exportExcel(mode){
       ['Kanwil DJPb Prov. Sumatera Selatan'],
       ['Dicetak',now.toLocaleDateString('id-ID')],
       [],
-      ['Bidang','Jml Kegiatan','Total Anggaran','Terlaksana','Sisa','% Realisasi']
+      ['Bidang','Jml Kegiatan','Pagu','Realisasi','Sisa Pagu','% Serapan']
     ];
     data.bidang.forEach(b=>{
       const kb=data.kegiatan.filter(k=>k.bidangId===b.id);
@@ -4669,7 +4670,7 @@ function importFromExcel(input){
       if(rows.length<2)throw new Error('Data kosong');
 
       // Baca header row (row 0)
-      // Kolom: No, Nama Kegiatan, Bidang, Tempat, Total Anggaran, Terlaksana, % Realisasi, Bulan Pelaksanaan, Bulan Terlaksana, Catatan
+      // Kolom: No, Nama Kegiatan, Bidang, Tempat, Pagu, Realisasi, % Serapan, Bulan Pelaksanaan, Bulan Terlaksana, Catatan
       const BNAMES=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
       const newKeg=[];
       const bidangMap={};
@@ -4739,7 +4740,7 @@ function downloadImportTemplate(){
   // Buat template Excel kosong dengan format yang benar
   const wb=XLSX.utils.book_new();
   const rows=[
-    ['No','Nama Kegiatan','Bidang','Tempat','Total Anggaran','Terlaksana','% Realisasi','Bulan Pelaksanaan','Bulan Terlaksana','Catatan'],
+    ['No','Nama Kegiatan','Bidang','Tempat','Pagu','Realisasi','% Serapan','Bulan Pelaksanaan','Bulan Terlaksana','Catatan'],
     [1,'Contoh Kegiatan','Bidang PPA I','Palembang',5000000,2500000,'50%','Maret, Juni','Maret','Contoh catatan'],
     [2,'Kegiatan Lain','Bidang PPA II','Baturaja',3000000,0,'0%','April, Oktober','',''],
   ];
