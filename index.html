@@ -22,10 +22,11 @@ html,body{height:100%;overflow:hidden;}
 body{font-family:'Figtree','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--surf);color:var(--txt);display:flex;flex-direction:column;font-size:14px;line-height:1.5;}
 /* Sembunyikan app sebelum login */
 body:not(.logged-in) .topbar,
+body:not(.logged-in) .sticky-summary,
 body:not(.logged-in) .shell{display:none!important;}
 
 /* TOPBAR */
-.topbar{background:var(--ink);height:42px;display:flex;align-items:center;padding:0 20px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.06);z-index:200;}
+.topbar{background:linear-gradient(135deg,#0e2d44 0%,#0b3a56 100%);height:42px;display:flex;align-items:center;padding:0 20px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.1);z-index:200;}
 .topbar-brand{display:flex;align-items:center;gap:10px;width:var(--sid-w);flex-shrink:0;}
 .logo-mark{width:46px;height:28px;flex-shrink:0;}
 .brand-name{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:15px;font-weight:800;letter-spacing:1.5px;color:var(--white);}
@@ -49,7 +50,7 @@ body:not(.logged-in) .shell{display:none!important;}
 .shell{display:flex;flex:1;overflow:hidden;}
 
 /* SIDEBAR */
-.sidebar{width:var(--sid-w);background:var(--ink2);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;border-right:1px solid rgba(255,255,255,0.06);}
+.sidebar{width:var(--sid-w);background:linear-gradient(180deg,#163c58 0%,#102f47 100%);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;border-right:1px solid rgba(255,255,255,0.08);}
 .sid-section{padding:20px 16px 8px;}
 .sid-section-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.25);margin-bottom:6px;padding-left:4px;}
 .sid-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.5);cursor:pointer;transition:all 0.18s;margin-bottom:2px;border:1px solid transparent;}
@@ -95,7 +96,7 @@ select:focus{border-color:var(--teal2);}
 
 /* BIDANG */
 .bid-block{margin-bottom:20px;}
-.bid-head{background:var(--ink2);border-radius:10px 10px 0 0;padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.bid-head{background:linear-gradient(135deg,#1a6690 0%,#0e5278 100%);border-radius:10px 10px 0 0;padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .bid-head-left{display:flex;align-items:center;gap:10px;}
 .bid-head-accent{width:3px;height:18px;background:var(--teal3);border-radius:2px;flex-shrink:0;}
 .bid-head h2{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--white);letter-spacing:0.3px;}
@@ -491,9 +492,9 @@ td.muted{color:var(--txt3);font-size:12px;}
    DASHBOARD PIMPINAN
 ═══════════════════════════════════ */
 .dash-header {
-  background: linear-gradient(135deg, var(--ink) 0%, #0a2d45 60%, #003d55 100%);
-  padding: 22px 28px 18px;
-  border-bottom: 1px solid rgba(0,196,224,0.15);
+  background: linear-gradient(135deg, #0f6cbf 0%, #0891b2 55%, #0e7490 100%);
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -557,14 +558,15 @@ td.muted{color:var(--txt3);font-size:12px;}
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0;
-  background: var(--ink2);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: #ffffff;
+  border-bottom: 1.5px solid var(--bdr);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
   flex-shrink: 0;
 }
 @media(max-width:900px){ .dash-kpi-strip { grid-template-columns: repeat(2,1fr); } }
 .dash-kpi {
-  padding: 14px 20px;
-  border-right: 1px solid rgba(255,255,255,0.06);
+  padding: 16px 22px;
+  border-right: 1px solid var(--bdr);
   position: relative;
   overflow: hidden;
 }
@@ -573,34 +575,109 @@ td.muted{color:var(--txt3);font-size:12px;}
   content: '';
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  height: 2px;
+  height: 3px;
 }
 .dk-teal::after   { background: linear-gradient(90deg,var(--teal),var(--teal3)); }
 .dk-green::after  { background: linear-gradient(90deg,var(--green),#5de6b8); }
 .dk-gold::after   { background: linear-gradient(90deg,var(--gold),var(--gold2)); }
 .dk-red::after    { background: linear-gradient(90deg,#c44,#ff9a9a); }
+.dash-kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 3px;
+}
+.dk-teal::before  { background: linear-gradient(180deg,var(--teal),var(--teal3)); }
+.dk-green::before { background: linear-gradient(180deg,var(--green),#5de6b8); }
+.dk-gold::before  { background: linear-gradient(180deg,var(--gold),var(--gold2)); }
+.dk-red::before   { background: linear-gradient(180deg,#c44,#ff9a9a); }
 .dash-kpi-lbl {
   font-size: 9px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 1px;
-  color: rgba(255,255,255,0.4); margin-bottom: 5px;
+  color: var(--txt3); margin-bottom: 5px;
 }
 .dash-kpi-val {
   font-family: 'Fira Code', monospace;
-  font-size: 18px; font-weight: 500; color: white; line-height: 1.2;
+  font-size: 18px; font-weight: 600; color: var(--txt); line-height: 1.2;
 }
+.dk-teal .dash-kpi-val  { color: var(--teal); }
+.dk-green .dash-kpi-val { color: var(--green); }
+.dk-gold .dash-kpi-val  { color: var(--gold); }
+.dk-red .dash-kpi-val   { color: #c44; }
 .dash-kpi-sub {
-  font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 3px;
+  font-size: 10px; color: var(--txt3); margin-top: 3px;
 }
 .dash-kpi-badge {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 2px 7px; border-radius: 4px;
   font-size: 10px; font-weight: 700;
-  margin-top: 4px;
+  margin-top: 6px;
 }
-.dkb-green { background: rgba(0,184,122,0.2); color: var(--green); }
-.dkb-red   { background: rgba(224,85,85,0.18); color: #ff9a9a; }
-.dkb-gold  { background: rgba(232,160,32,0.2); color: var(--gold2); }
-.dkb-teal  { background: rgba(0,164,189,0.2); color: var(--teal3); }
+.dkb-green { background: rgba(0,184,122,0.12); color: var(--green); }
+.dkb-red   { background: rgba(204,68,68,0.1); color: #c44; }
+.dkb-gold  { background: rgba(232,160,32,0.15); color: var(--gold); }
+.dkb-teal  { background: rgba(0,124,145,0.1); color: var(--teal); }
+
+/* ═══ STICKY SUMMARY BAR (ala MyIntress) ═══ */
+.sticky-summary {
+  background: linear-gradient(135deg, #0f6cbf 0%, #0891b2 55%, #0e7490 100%);
+  padding: 0 28px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(14,116,144,0.3);
+  z-index: 98;
+}
+.ss-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 20px;
+  min-width: 0;
+}
+.ss-item:first-child { padding-left: 4px; }
+.ss-lbl {
+  font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: rgba(255,255,255,0.6);
+  white-space: nowrap;
+}
+.ss-val {
+  font-family: 'Fira Code', monospace;
+  font-size: 15px; font-weight: 500;
+  color: #ffffff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ss-val.ss-green { color: #a3f0d3; }
+.ss-val.ss-gold  { color: #fde68a; }
+.ss-val.ss-pct   { color: #bae6fd; font-size: 17px; font-weight: 700; }
+.ss-divider {
+  width: 1px; height: 32px;
+  background: rgba(255,255,255,0.2);
+  flex-shrink: 0;
+}
+.ss-progress-wrap {
+  flex: 2; padding: 0 20px; min-width: 0;
+}
+.ss-prog-track {
+  height: 6px; background: rgba(255,255,255,0.2);
+  border-radius: 4px; overflow: hidden; margin-top: 4px;
+}
+.ss-prog-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg,#a3f0d3,#34d399);
+  transition: width 0.5s ease;
+}
+@media(max-width:768px){
+  .sticky-summary { height:auto; padding:8px 12px; flex-wrap:wrap; gap:6px; }
+  .ss-item { flex:none; min-width:calc(50% - 12px); }
+  .ss-divider { display:none; }
+  .ss-progress-wrap { flex:none; width:100%; padding:0; }
+}
 
 /* Chart Grid */
 .dash-body { flex: 1; overflow-y: auto; padding: 20px 24px 40px; }
@@ -985,6 +1062,32 @@ body.logged-in [data-admin].show-admin{display:flex;}
     <div class="modal-foot">
       <button class="btn btn-o" onclick="document.getElementById('exportModal').classList.remove('open')">Tutup</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══ STICKY SUMMARY BAR ═══ -->
+<div class="sticky-summary" id="stickySummary">
+  <div class="ss-item">
+    <div class="ss-lbl">Total Pagu TA 2026</div>
+    <div class="ss-val" id="ssPagu">—</div>
+  </div>
+  <div class="ss-divider"></div>
+  <div class="ss-item">
+    <div class="ss-lbl">Realisasi Belanja</div>
+    <div class="ss-val ss-green" id="ssReal">—</div>
+  </div>
+  <div class="ss-divider"></div>
+  <div class="ss-item">
+    <div class="ss-lbl">Sisa Pagu</div>
+    <div class="ss-val ss-gold" id="ssSisa">—</div>
+  </div>
+  <div class="ss-divider"></div>
+  <div class="ss-progress-wrap">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;">
+      <div class="ss-lbl">Serapan</div>
+      <div class="ss-val ss-pct" id="ssPct">0%</div>
+    </div>
+    <div class="ss-prog-track"><div class="ss-prog-fill" id="ssProgFill" style="width:0%"></div></div>
   </div>
 </div>
 
@@ -1456,6 +1559,14 @@ function updSum(){
   document.getElementById('sSisa').textContent=fmt(Math.max(0,disp-dn));
   document.getElementById('sidProg').style.width=pct+'%';
   document.getElementById('sidPct').textContent=pct+'%';
+  // Update sticky summary bar
+  const _ss=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  _ss('ssPagu',fmt(disp));
+  _ss('ssReal',fmt(dn));
+  _ss('ssSisa',fmt(Math.max(0,disp-dn)));
+  _ss('ssPct',pct+'%');
+  const ssF=document.getElementById('ssProgFill');
+  if(ssF)ssF.style.width=Math.min(100,pct)+'%';
   const mc=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   mc('mc1',fmt(disp));mc('mc2',fmt(dn));mc('mc3',fmt(Math.max(0,disp-dn)));
   mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
