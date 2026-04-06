@@ -33,7 +33,7 @@ body:not(.logged-in) .shell{display:none!important;}
 .brand-name{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:15px;font-weight:800;letter-spacing:1.5px;color:var(--white);}
 .brand-name span{color:var(--teal3);}
 .topbar-center{flex:1;font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.5px;padding-left:20px;}
-.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.topbar-right{display:flex;align-items:center;gap:14px;margin-left:16px;padding-left:16px;border-left:1px solid rgba(255,255,255,.08);}
 .topbar-badge{background:var(--teal-dim);border:1px solid rgba(0,164,189,0.3);color:var(--teal3);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;transition:all .18s;user-select:none;}
 .topbar-badge:hover{background:rgba(0,164,189,0.22);border-color:var(--teal3);}
 .ta-edit-popup{position:absolute;top:calc(100% + 8px);right:0;background:var(--ink2);border:1px solid rgba(0,196,224,0.25);border-radius:10px;padding:14px 16px;min-width:220px;box-shadow:0 12px 36px rgba(0,0,0,.4);z-index:600;display:none;}
@@ -882,7 +882,7 @@ body.logged-in [data-admin].show-admin{display:flex;}
 @media print{#loginScreen{display:none!important;}}
 
 /* ═══ GLOBAL SEARCH ═══ */
-.gsearch-wrap{position:relative;display:flex;align-items:center;}
+.gsearch-wrap{position:relative;display:flex;align-items:center;margin-left:auto;}
 .gsearch-btn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:4px 10px 4px 9px;cursor:pointer;font-size:11px;color:rgba(255,255,255,.5);transition:all .18s;white-space:nowrap;user-select:none;}
 .gsearch-btn:hover{background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);border-color:rgba(255,255,255,.25);}
 .gsearch-btn .gs-kbd{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:4px;padding:1px 5px;font-size:9px;font-family:'Fira Code',monospace;letter-spacing:.5px;}
