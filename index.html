@@ -881,6 +881,42 @@ body.logged-in [data-admin].show-admin{display:flex;}
 /* Print fix */
 @media print{#loginScreen{display:none!important;}}
 
+/* ═══ GLOBAL SEARCH ═══ */
+.gsearch-wrap{position:relative;display:flex;align-items:center;}
+.gsearch-btn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:4px 10px 4px 9px;cursor:pointer;font-size:11px;color:rgba(255,255,255,.5);transition:all .18s;white-space:nowrap;user-select:none;}
+.gsearch-btn:hover{background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);border-color:rgba(255,255,255,.25);}
+.gsearch-btn .gs-kbd{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:4px;padding:1px 5px;font-size:9px;font-family:'Fira Code',monospace;letter-spacing:.5px;}
+.gsearch-inp-wrap{display:none;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1.5px solid rgba(0,136,200,.5);border-radius:20px;padding:3px 10px;width:220px;}
+.gsearch-inp-wrap.open{display:flex;}
+.gsearch-inp-wrap input{background:none;border:none;outline:none;color:white;font-family:'Figtree',sans-serif;font-size:12px;flex:1;min-width:0;}
+.gsearch-inp-wrap input::placeholder{color:rgba(255,255,255,.3);}
+.gsearch-close{color:rgba(255,255,255,.4);font-size:13px;cursor:pointer;background:none;border:none;padding:0;line-height:1;flex-shrink:0;}
+.gsearch-close:hover{color:rgba(255,255,255,.8);}
+.gsearch-dd{position:absolute;top:calc(100% + 10px);right:0;background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.16);min-width:340px;max-height:420px;overflow-y:auto;z-index:9100;animation:lbIn .15s ease;}
+.gs-section{padding:10px 14px 3px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt3);border-top:1px solid var(--bdr);}
+.gs-section:first-child{border-top:none;}
+.gs-item{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;transition:background .1s;border-radius:0;}
+.gs-item:hover,.gs-item.gs-active{background:var(--surf);}
+.gs-item-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.gs-item-txt{flex:1;min-width:0;}
+.gs-item-nm{font-size:12px;font-weight:500;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gs-item-sub{font-size:10px;color:var(--txt3);margin-top:1px;}
+.gs-empty{padding:24px;text-align:center;color:var(--txt3);font-size:12px;}
+mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;padding:0 1px;font-style:normal;}
+.hl-row td{animation:hlFade 2s ease-out;}
+@keyframes hlFade{0%{background:rgba(0,119,200,.12);}100%{background:transparent;}}
+
+/* ═══ LOCAL SEARCH (Per Kegiatan) ═══ */
+.keg-srch-wrap{position:relative;display:flex;align-items:center;}
+.keg-srch-ico{position:absolute;left:9px;color:var(--txt3);font-size:11px;pointer-events:none;line-height:1;}
+.keg-srch-inp{padding:6px 28px 6px 27px;border:1.5px solid var(--bdr2);border-radius:7px;font-family:'Figtree',sans-serif;font-size:12px;color:var(--txt);background:var(--card);outline:none;width:180px;transition:all .2s;}
+.keg-srch-inp:focus{border-color:var(--teal2);width:220px;box-shadow:0 0 0 3px var(--teal-dim);}
+.keg-srch-inp::placeholder{color:var(--txt3);}
+.keg-srch-clr{position:absolute;right:8px;color:var(--txt3);font-size:12px;cursor:pointer;background:none;border:none;padding:0;line-height:1;display:none;}
+.keg-srch-clr.show{display:block;}
+.keg-srch-clr:hover{color:var(--txt);}
+.keg-srch-count{font-size:10px;color:var(--teal);font-weight:600;white-space:nowrap;}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1000,6 +1036,21 @@ body.logged-in [data-admin].show-admin{display:flex;}
     <div class="brand-name">AM<span>PE</span>RA</div>
   </div>
   <div class="topbar-center">Akselerasi Monitoring, Pelaksanaan, Evaluasi Rencana Kerja &amp; Anggaran · Kanwil DJPb Prov. Sumatera Selatan</div>
+  <!-- Global Search -->
+  <div class="gsearch-wrap" id="gsearchWrap">
+    <div class="gsearch-btn" id="gsearchBtn" onclick="openGSearch()" title="Cari kegiatan, bidang, menu (Ctrl+K)">
+      🔍 <span>Cari</span> <span class="gs-kbd">Ctrl K</span>
+    </div>
+    <div class="gsearch-inp-wrap" id="gsearchInpWrap">
+      <span style="font-size:12px;opacity:.5;">🔍</span>
+      <input type="text" id="gsearchInp" placeholder="Cari kegiatan, bidang, menu..."
+             oninput="onGSearch(this.value)"
+             onkeydown="handleGSearchKey(event)">
+      <button class="gsearch-close" onclick="closeGSearch()" title="Tutup (Esc)">✕</button>
+    </div>
+    <div class="gsearch-dd" id="gsearchDD" style="display:none;"></div>
+  </div>
+
   <div class="topbar-right">
     <div class="sync-ind synced" id="syncInd" onclick="openSyncModal()"><span class="sdot"></span><span id="syncLbl">Lokal</span></div>
     <div class="user-chip" id="userChip" onclick="toggleUDD()">
@@ -1133,6 +1184,13 @@ body.logged-in [data-admin].show-admin{display:flex;}
         <div class="page-title-sub" id="pageSubtitle">Kanwil DJPb Prov. Sumatera Selatan — Tahun Anggaran 2026</div>
       </div>
       <div class="page-actions">
+        <div class="keg-srch-wrap">
+          <span class="keg-srch-ico">🔍</span>
+          <input class="keg-srch-inp" id="kegSrchInp" type="text" placeholder="Cari kegiatan..."
+                 oninput="kegSearchQ=this.value.toLowerCase().trim();document.getElementById('kegSrchClr').classList.toggle('show',!!this.value);renderKeg();"
+                 onkeydown="if(event.key==='Escape')clearKegSearch();">
+          <button class="keg-srch-clr" id="kegSrchClr" onclick="clearKegSearch()" title="Hapus pencarian">✕</button>
+        </div>
         <select id="filterBidang" onchange="renderAll()"><option value="all">Semua Bidang</option></select>
         <select id="filterStatus" onchange="renderAll()">
           <option value="all">Semua Status</option>
@@ -1526,6 +1584,11 @@ function getFilt(){
     if(fs==='done'&&!allDone(k))return false;
     if(fs==='pending'&&allDone(k))return false;
     if(fm!=='all'&&!kBulanList(k).includes(+fm))return false;
+    if(kegSearchQ&&!(
+      k.nama.toLowerCase().includes(kegSearchQ)||
+      (k.tempat||'').toLowerCase().includes(kegSearchQ)||
+      (k.catatan||'').toLowerCase().includes(kegSearchQ)
+    ))return false;
     return true;
   });
 }
@@ -1649,6 +1712,8 @@ function renderAll(){
 }
 function switchView(v,el){
   cv=v;
+  // Reset local kegiatan search saat pindah menu
+  if(v!=='kegiatan'){kegSearchQ='';const i=document.getElementById('kegSrchInp');if(i)i.value='';const c=document.getElementById('kegSrchClr');if(c)c.classList.remove('show');}
   document.querySelectorAll('.sid-item,.mob-nav-item').forEach(i=>i.classList.remove('active'));
   document.querySelectorAll('[data-view="'+v+'"]').forEach(i=>i.classList.add('active'));
   if(window.innerWidth<=768)window.scrollTo({top:0,behavior:'smooth'});
@@ -1818,6 +1883,13 @@ function renderKeg(){
     }
     html+=`</div>${canEdit({bidangId:b.id})?`<div class="tkr"><button class="btn btn-o" onclick="openAddKegiatan('${b.id}')">+ Kegiatan untuk ${escH(b.nama)}</button></div>`:''}</div>`;
   });
+  if(kegSearchQ){
+    const n=getFilt().length;
+    html=`<div style="padding:8px 4px 0;display:flex;align-items:center;gap:8px;margin-bottom:-4px;">
+      <span class="keg-srch-count">🔍 ${n} kegiatan ditemukan untuk "<strong>${escH(kegSearchQ)}</strong>"</span>
+      <button onclick="clearKegSearch()" style="font-size:10px;color:var(--txt3);background:none;border:1px solid var(--bdr);border-radius:4px;padding:1px 7px;cursor:pointer;">✕ Hapus</button>
+    </div>`+html;
+  }
   cont.innerHTML=html||`<div class="kosong" style="padding:60px">Tidak ada data yang sesuai filter.</div>`;
   updSum();
   const _fb=document.getElementById('filterBidang').value;
@@ -4786,6 +4858,125 @@ function downloadImportTemplate(){
   XLSX.utils.book_append_sheet(wb,ws,'Per Kegiatan');
   XLSX.writeFile(wb,'AMPERA_Template_Import.xlsx');
   toast('Template berhasil didownload','📋');
+}
+
+// ════════════════════════════════════
+// ── GLOBAL SEARCH ──
+// ════════════════════════════════════
+let _gsOpen=false, _gsIdx=-1;
+
+function openGSearch(){
+  _gsOpen=true;
+  document.getElementById('gsearchBtn').style.display='none';
+  document.getElementById('gsearchInpWrap').classList.add('open');
+  setTimeout(()=>document.getElementById('gsearchInp').focus(),50);
+}
+function closeGSearch(){
+  _gsOpen=false;
+  document.getElementById('gsearchBtn').style.display='';
+  document.getElementById('gsearchInpWrap').classList.remove('open');
+  const dd=document.getElementById('gsearchDD');
+  dd.style.display='none'; dd.innerHTML='';
+  document.getElementById('gsearchInp').value='';
+  _gsIdx=-1;
+}
+function _gsHl(str,q){
+  if(!q)return escH(str);
+  const i=str.toLowerCase().indexOf(q.toLowerCase());
+  if(i<0)return escH(str);
+  return escH(str.slice(0,i))+'<mark class="ghl">'+escH(str.slice(i,i+q.length))+'</mark>'+escH(str.slice(i+q.length));
+}
+function onGSearch(q){
+  const dd=document.getElementById('gsearchDD');
+  if(!q.trim()){dd.style.display='none';return;}
+  const ql=q.toLowerCase();
+  let html='';
+  // Kegiatan
+  const kM=data.kegiatan.filter(k=>k.nama.toLowerCase().includes(ql)||(k.tempat||'').toLowerCase().includes(ql)||(k.catatan||'').toLowerCase().includes(ql)).slice(0,6);
+  if(kM.length){
+    html+=`<div class="gs-section">📋 Kegiatan</div>`;
+    kM.forEach(k=>{
+      const b=data.bidang.find(b=>b.id===k.bidangId);
+      const done=allDone(k);
+      html+=`<div class="gs-item" onclick="gotoKeg('${k.id}')">
+        <div class="gs-item-icon" style="background:${done?'var(--green-dim)':'var(--surf)'}">${done?'✅':'📌'}</div>
+        <div class="gs-item-txt">
+          <div class="gs-item-nm">${_gsHl(k.nama,q)}</div>
+          <div class="gs-item-sub">${b?escH(b.nama):'—'} · ${fmt(kT(k))}</div>
+        </div>
+      </div>`;
+    });
+  }
+  // Bidang
+  const bM=data.bidang.filter(b=>b.nama.toLowerCase().includes(ql)).slice(0,3);
+  if(bM.length){
+    html+=`<div class="gs-section">🏢 Bidang</div>`;
+    bM.forEach(b=>{
+      const nk=data.kegiatan.filter(k=>k.bidangId===b.id).length;
+      html+=`<div class="gs-item" onclick="gotoBidangSrch('${b.id}')">
+        <div class="gs-item-icon" style="background:var(--teal-dim)">🏢</div>
+        <div class="gs-item-txt">
+          <div class="gs-item-nm">${_gsHl(b.nama,q)}</div>
+          <div class="gs-item-sub">${nk} kegiatan</div>
+        </div>
+      </div>`;
+    });
+  }
+  // Menu
+  const MENUS=[{v:'dashboard',ic:'📈',nm:'Dashboard'},{v:'kegiatan',ic:'📋',nm:'Per Kegiatan'},{v:'bidang',ic:'🏢',nm:'Per Bidang'},{v:'bulan',ic:'📅',nm:'Per Bulan'},{v:'kalender',ic:'🗓️',nm:'Kalender'},{v:'timeline',ic:'📊',nm:'Timeline'},{v:'ikpa',ic:'🎯',nm:'IKPA'}];
+  const mM=MENUS.filter(m=>m.nm.toLowerCase().includes(ql));
+  if(mM.length){
+    html+=`<div class="gs-section">🧭 Menu</div>`;
+    mM.forEach(m=>{ html+=`<div class="gs-item" onclick="gotoMenuSrch('${m.v}')"><div class="gs-item-icon" style="background:var(--surf)">${m.ic}</div><div class="gs-item-txt"><div class="gs-item-nm">${_gsHl(m.nm,q)}</div><div class="gs-item-sub">Halaman</div></div></div>`; });
+  }
+  if(!html)html=`<div class="gs-empty">Tidak ada hasil untuk "<strong>${escH(q)}</strong>"</div>`;
+  dd.innerHTML=html; dd.style.display='block'; _gsIdx=-1;
+}
+function handleGSearchKey(e){
+  const items=document.querySelectorAll('#gsearchDD .gs-item');
+  if(e.key==='Escape'){closeGSearch();return;}
+  if(e.key==='ArrowDown'){e.preventDefault();_gsIdx=Math.min(_gsIdx+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('gs-active',i===_gsIdx));}
+  else if(e.key==='ArrowUp'){e.preventDefault();_gsIdx=Math.max(_gsIdx-1,0);items.forEach((el,i)=>el.classList.toggle('gs-active',i===_gsIdx));}
+  else if(e.key==='Enter'&&_gsIdx>=0)items[_gsIdx]?.click();
+}
+function gotoKeg(id){
+  closeGSearch();
+  kegSearchQ='';
+  switchView('kegiatan',document.querySelector('[data-view=kegiatan]'));
+  setTimeout(()=>{
+    const row=document.getElementById('rr-'+id);
+    if(row){
+      row.previousElementSibling?.scrollIntoView({behavior:'smooth',block:'center'});
+      if(!row.classList.contains('open'))row.classList.add('open');
+      row.previousElementSibling?.classList.add('hl-row');
+      setTimeout(()=>row.previousElementSibling?.classList.remove('hl-row'),2200);
+    }
+  },250);
+}
+function gotoBidangSrch(id){
+  closeGSearch();
+  document.getElementById('filterBidang').value=id;
+  switchView('kegiatan',document.querySelector('[data-view=kegiatan]'));
+}
+function gotoMenuSrch(v){closeGSearch();switchView(v,document.querySelector('[data-view='+v+']'));}
+
+// Keyboard shortcut Ctrl+K
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();_gsOpen?closeGSearch():openGSearch();}
+  if(e.key==='Escape'&&_gsOpen)closeGSearch();
+});
+// Close on click outside
+document.addEventListener('click',e=>{
+  if(_gsOpen&&!document.getElementById('gsearchWrap')?.contains(e.target))closeGSearch();
+});
+
+// ── LOCAL SEARCH (Per Kegiatan) ──
+let kegSearchQ='';
+function clearKegSearch(){
+  kegSearchQ='';
+  const i=document.getElementById('kegSrchInp');if(i)i.value='';
+  const c=document.getElementById('kegSrchClr');if(c)c.classList.remove('show');
+  if(cv==='kegiatan')renderKeg();
 }
 
 // ── INIT ──
