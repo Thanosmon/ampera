@@ -1138,9 +1138,18 @@ body.logged-in [data-admin].show-admin{display:flex;}
             <div class="jf-tot" id="jadwalTotal">Rp 0</div>
             <div></div>
           </div>
-          <div class="jad-actions">
+          <div style="margin-top:10px;padding:10px 12px;background:rgba(0,124,145,0.05);border:1.5px dashed var(--bdr);border-radius:8px;">
+            <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Total Anggaran Resmi dari Pusat (Rp) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--txt3)">— opsional</span></div>
+            <input class="finput" id="fTotalResmi" type="number" min="0" step="1"
+              placeholder="Isi jika total resmi berbeda dari hasil perhitungan rincian"
+              style="font-family:'Fira Code',monospace;"
+              oninput="updTotalResmiHint()">
+            <div id="totalResmiHint" style="font-size:10px;color:var(--teal);margin-top:5px;display:none;"></div>
+            <div style="font-size:10px;color:var(--txt3);margin-top:4px;">Jika diisi, tombol "Bagi rata" dan distribusi otomatis akan menggunakan angka ini sebagai referensi — bukan total rincian.</div>
+          </div>
+          <div class="jad-actions" style="margin-top:8px;">
             <button class="jad-add" onclick="addJadwal()">＋ Tambah Bulan Pelaksanaan</button>
-            <button class="jad-rata" onclick="distribusiRata()" title="Isi anggaran per bulan secara merata dari total rincian biaya">⚖️ Bagi rata dari Rincian</button>
+            <button class="jad-rata" onclick="distribusiRata()" title="Bagi rata anggaran ke semua bulan (prioritas: Total Resmi → Rincian)">⚖️ Bagi rata</button>
           </div>
           <div id="bpAutoHint" style="display:none;margin-top:6px;padding:6px 10px;background:rgba(0,124,145,0.08);border-left:3px solid var(--primary);border-radius:0 6px 6px 0;font-size:11px;color:var(--primary)">
             💡 <strong>Mode Belanja Pegawai:</strong> Saat anggaran bulan diisi, bulan-bulan sesudahnya otomatis menyesuaikan sisa anggaran secara merata.
@@ -2147,10 +2156,11 @@ function remJadwal(i){mj.splice(i,1);renderJadwal();}
 function syncJadwal(i,f,v){
   if(f==='bulan'){mj[i].bulan=+v;updJadwalFoot();}
   else if(f==='anggaran'){
-    // Tangkap total referensi SEBELUM update (rincian prioritas, fallback ke sum mj saat ini)
+    // Tangkap total referensi SEBELUM update (prioritas: Total Resmi → Rincian → sum mj saat ini)
+    const resmiVal=parseFloat(document.getElementById('fTotalResmi')?.value)||0;
     const rincianTot=mr.reduce((s,r)=>s+rT(r),0);
     const prevMjTot=mj.reduce((s,j)=>s+(j.anggaran||0),0);
-    const totalRef=rincianTot||prevMjTot;
+    const totalRef=resmiVal||rincianTot||prevMjTot;
     // Update nilai bulan ini
     mj[i].anggaran=parseFloat(v)||0;
     // Auto-distribusi khusus Belanja Pegawai (akun='51')
@@ -2204,12 +2214,26 @@ function renderJadwal(){
 }
 function distribusiRata(){
   if(!mj.length){toast('Tambahkan jadwal bulan terlebih dahulu','⚠️');return;}
+  const resmi=parseFloat(document.getElementById('fTotalResmi')?.value)||0;
   const totRincian=mr.reduce((s,r)=>s+rT(r),0);
-  if(!totRincian){toast('Isi rincian biaya terlebih dahulu','⚠️');return;}
-  const per=Math.round(totRincian/mj.length);
+  const totalRef=resmi||totRincian;
+  if(!totalRef){toast('Isi Total Resmi atau Rincian Biaya terlebih dahulu','⚠️');return;}
+  const per=Math.round(totalRef/mj.length);
   mj.forEach(j=>j.anggaran=per);
   renderJadwal();
-  toast(`${fmt(totRincian)} dibagi rata ke ${mj.length} bulan = ${fmt(per)}/bulan`,'⚖️');
+  const src=resmi?'Total Resmi':'Rincian';
+  toast(`${fmt(totalRef)} (${src}) dibagi rata ke ${mj.length} bulan = ${fmt(per)}/bulan`,'⚖️');
+}
+function updTotalResmiHint(){
+  const v=parseFloat(document.getElementById('fTotalResmi')?.value)||0;
+  const hint=document.getElementById('totalResmiHint');
+  if(!hint)return;
+  if(v>0){
+    const totR=mr.reduce((s,r)=>s+rT(r),0);
+    const selisih=v-totR;
+    hint.style.display='';
+    hint.textContent=totR>0?`Total resmi: ${fmt(v)} · Rincian: ${fmt(totR)} · Selisih: ${selisih>=0?'+':''}${fmt(selisih)}`:`Total resmi: ${fmt(v)}`;
+  }else{hint.style.display='none';}
 }
 
 // ── DOKUMEN EDITOR ──
@@ -2249,6 +2273,7 @@ function openAddKegiatan(bid=''){
   document.getElementById('fNama').value='';
   document.getElementById('fTempat').value='';
   document.getElementById('fCatatan').value='';
+  const _trEl=document.getElementById('fTotalResmi');if(_trEl){_trEl.value='';updTotalResmiHint();}
   const akunEl=document.getElementById('fAkun');if(akunEl)akunEl.value='52';
   const subEl=document.getElementById('fSubAkun');if(subEl)subEl.value='uangMakan';
   toggleAkun();
@@ -2268,6 +2293,7 @@ function openEdit(id){
   document.getElementById('fNama').value=k.nama;
   document.getElementById('fTempat').value=k.tempat;
   document.getElementById('fCatatan').value=k.catatan||'';
+  const _trEl2=document.getElementById('fTotalResmi');if(_trEl2){_trEl2.value=k.totalResmi||'';updTotalResmiHint();}
   const _akunEl=document.getElementById('fAkun');if(_akunEl)_akunEl.value=k.akun||'52';
   const _subEl=document.getElementById('fSubAkun');if(_subEl&&k.subAkun)_subEl.value=k.subAkun;
   toggleAkun();
@@ -2290,7 +2316,8 @@ function saveKegiatan(){
     bidangId:(currentUser&&currentUser.role==='editor')?currentUser.bidangId:document.getElementById('fBidang').value,
     nama,tempat:document.getElementById('fTempat').value,
     akun:_akun,subAkun:_subAkun,
-    rincian,dokumen,jadwal,catatan:document.getElementById('fCatatan').value
+    rincian,dokumen,jadwal,catatan:document.getElementById('fCatatan').value,
+    totalResmi:parseFloat(document.getElementById('fTotalResmi')?.value)||0
   };
   if(editId){
     const idx=data.kegiatan.findIndex(k=>k.id===editId);
