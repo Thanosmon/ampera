@@ -2170,9 +2170,14 @@ function syncJadwal(i,f,v){
       const afterRows=mj.filter(j=>j.bulan>bulanIni);
       if(afterRows.length>0){
         const sumUpTo=mj.filter(j=>j.bulan<=bulanIni).reduce((s,j)=>s+(j.anggaran||0),0);
-        const sisa=totalRef-sumUpTo;
-        const perBulan=Math.round(sisa/afterRows.length);
-        afterRows.forEach(j=>j.anggaran=Math.max(0,perBulan));
+        const sisa=Math.max(0,totalRef-sumUpTo);
+        const n=afterRows.length;
+        const perBulan=Math.round(sisa/n);
+        let assigned=0;
+        afterRows.forEach((j,ai)=>{
+          if(ai<n-1){j.anggaran=perBulan;assigned+=perBulan;}
+          else{j.anggaran=Math.max(0,sisa-assigned);}
+        });
         // Update DOM langsung (tanpa renderJadwal) agar fokus input tidak hilang
         const inputs=document.querySelectorAll('#jadwalRows .jad-angg-cell input');
         mj.forEach((j,idx)=>{if(idx!==i&&inputs[idx])inputs[idx].value=j.anggaran||'';});
@@ -2218,11 +2223,18 @@ function distribusiRata(){
   const totRincian=mr.reduce((s,r)=>s+rT(r),0);
   const totalRef=resmi||totRincian;
   if(!totalRef){toast('Isi Total Resmi atau Rincian Biaya terlebih dahulu','⚠️');return;}
-  const per=Math.round(totalRef/mj.length);
-  mj.forEach(j=>j.anggaran=per);
+  const n=mj.length;
+  const per=Math.round(totalRef/n);
+  let assigned=0;
+  mj.forEach((j,i)=>{
+    if(i<n-1){j.anggaran=per;assigned+=per;}
+    else{j.anggaran=Math.max(0,totalRef-assigned);}
+  });
   renderJadwal();
   const src=resmi?'Total Resmi':'Rincian';
-  toast(`${fmt(totalRef)} (${src}) dibagi rata ke ${mj.length} bulan = ${fmt(per)}/bulan`,'⚖️');
+  const lastAmt=mj[n-1].anggaran;
+  const lastNote=lastAmt!==per?` (bulan terakhir ${fmt(lastAmt)} — menyerap selisih pembulatan)`:'';
+  toast(`${fmt(totalRef)} (${src}) dibagi rata ke ${n} bulan = ${fmt(per)}/bulan${lastNote}`,'⚖️');
 }
 function updTotalResmiHint(){
   const v=parseFloat(document.getElementById('fTotalResmi')?.value)||0;
