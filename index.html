@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AMPERA &mdash; Akselerasi Monitoring, Pelaksanaan, Evaluasi Rencana Kerja &amp; Anggaran</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23002d62'/%3E%3Crect x='5' y='20' width='4' height='7' rx='1.5' fill='%230088C8'/%3E%3Crect x='11' y='14' width='4' height='13' rx='1.5' fill='%230088C8'/%3E%3Crect x='17' y='9' width='4' height='18' rx='1.5' fill='%2300C4E0'/%3E%3Crect x='23' y='5' width='4' height='22' rx='1.5' fill='%2300C4E0'/%3E%3Cpolyline points='7,19 13,12 19,8 27,4' stroke='%23FFD700' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -1095,8 +1096,8 @@ body.logged-in [data-admin].show-admin{display:flex;}
   <nav class="sidebar">
     <div class="sid-section">
       <div class="sid-section-lbl">Menu Utama</div>
-      <div class="sid-item" onclick="switchView('dashboard',this)" data-view="dashboard"><span class="sid-icon">📈</span> Dashboard</div>
-      <div class="sid-item active" onclick="switchView('kegiatan',this)" data-view="kegiatan"><span class="sid-icon">📋</span> Per Kegiatan</div>
+      <div class="sid-item active" onclick="switchView('dashboard',this)" data-view="dashboard"><span class="sid-icon">📈</span> Dashboard</div>
+      <div class="sid-item" onclick="switchView('kegiatan',this)" data-view="kegiatan"><span class="sid-icon">📋</span> Per Kegiatan</div>
       <div class="sid-item" onclick="switchView('bidang',this)" data-view="bidang"><span class="sid-icon">🏢</span> Per Bidang</div>
       <div class="sid-item" onclick="switchView('bulan',this)" data-view="bulan"><span class="sid-icon">📅</span> Per Bulan</div>
       <div class="sid-item" onclick="switchView('kalender',this)" data-view="kalender"><span class="sid-icon">🗓️</span> Kalender</div>
@@ -1159,7 +1160,7 @@ body.logged-in [data-admin].show-admin{display:flex;}
   <div class="mob-dd-item" onclick="doLogout();closeMobMore()">🚪 Keluar</div>
 </div>
 <nav class="mob-nav">
-  <div class="mob-nav-item active" onclick="switchView('dashboard',this)" data-view="dashboard"><span class="mn-ico">📈</span>Dashboard</div>
+  <div class="mob-nav-item active" data-view="dashboard" onclick="switchView('dashboard',this)"><span class="mn-ico">📈</span>Dashboard</div>
   <div class="mob-nav-item" onclick="switchView('kegiatan',this)" data-view="kegiatan"><span class="mn-ico">📋</span>Kegiatan</div>
   <div class="mob-nav-item" onclick="switchView('bidang',this)" data-view="bidang"><span class="mn-ico">🏢</span>Per Bidang</div>
   <div class="mob-nav-item" onclick="switchView('bulan',this)" data-view="bulan"><span class="mn-ico">📅</span>Bulan</div>
@@ -1355,7 +1356,7 @@ const IKPA_CONF={
 const DOK_TYPES=['KAK','RAB','SK','Undangan','Laporan','Foto','Lainnya'];
 const DOK_COLORS={KAK:'#007c91',RAB:'#e8a020',SK:'#7c5cbf',Undangan:'#2980b9',Laporan:'#00b87a',Foto:'#e67e22',Lainnya:'#7a9aac'};
 
-let editId=null, cv='kegiatan', mr=[], md=[], mj=[];
+let editId=null, cv='dashboard', mr=[], md=[], mj=[];
 
 // ── SAMPLE DATA (jadwal dengan anggaran berbeda per bulan) ──
 let data={
@@ -3650,7 +3651,7 @@ function renderIKPA(){
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-bottom:22px;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;margin-bottom:22px;">
     ${cardsHtml}
   </div>
 
