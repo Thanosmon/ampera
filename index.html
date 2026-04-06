@@ -1111,16 +1111,13 @@ body.logged-in [data-admin].show-admin{display:flex;}
       <div class="sid-item" onclick="openExportModal()"><span class="sid-icon">📤</span> Ekspor & Laporan</div>
       <div class="sid-item" onclick="openSyncModal()"><span class="sid-icon">☁️</span> Sinkronisasi</div>
     </div>
-    <div class="sid-stats">
-      <div class="sid-section-lbl" style="font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Serapan Anggaran</div>
-      <div class="sid-stat-row"><span class="sid-stat-lbl">Realisasi</span><span class="sid-stat-val green" id="sDone">—</span></div>
-      <div class="sid-stat-row"><span class="sid-stat-lbl" style="font-size:9px;opacity:.7;">dari</span><span style="font-size:9px;color:rgba(255,255,255,.55);font-family:'Fira Code',monospace;" id="sTotal">—</span></div>
-      <div class="sid-prog-wrap"><div class="sid-prog-fill" id="sidProg" style="width:0%"></div></div>
-      <div class="sid-prog-lbl"><span>Serapan</span><span id="sidPct">0%</span></div>
-      <!-- Hidden elements untuk backward compat js -->
-      <span id="sSisa" style="display:none"></span>
-      <span id="sKegPagu" style="display:none"></span>
-    </div>
+    <!-- Hidden elements untuk backward compat js (tidak ditampilkan) -->
+    <span id="sDone" style="display:none"></span>
+    <span id="sTotal" style="display:none"></span>
+    <span id="sidProg" style="display:none"></span>
+    <span id="sidPct" style="display:none"></span>
+    <span id="sSisa" style="display:none"></span>
+    <span id="sKegPagu" style="display:none"></span>
   </nav>
 
   <div class="main-area">
