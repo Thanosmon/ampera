@@ -2546,17 +2546,20 @@ function renderDashboard(){
   const pctBln=angBln>0?Math.round(doneBln/angBln*100):0;
   const doneCnt=kBulanIni.filter(k=>isDB(k,bln)).length;
 
-  // ── Proyeksi (linear dari realisasi s.d. sekarang) ──
+  // ── Proyeksi (linear dari realisasi s.d. bulan terakhir lengkap) ──
+  // Gunakan CM-1 agar bulan berjalan (yang belum selesai) tidak membiaskan rasio.
   const TODAY=new Date(), CM=TODAY.getMonth()+1;
+  const evalM=Math.max(1,CM-1); // bulan terakhir yang sudah bisa dinilai utuh
   const doneUpToNow=data.kegiatan.reduce((s,k)=>{
-    return s+(k.doneBulan||[]).filter(m=>m<=CM).reduce((ss,m)=>ss+kTPB(k,m),0);
+    return s+(k.doneBulan||[]).filter(m=>m<=evalM).reduce((ss,m)=>ss+kTPB(k,m),0);
   },0);
   const anggUpToNow=data.kegiatan.reduce((s,k)=>{
-    return s+kBulanList(k).filter(m=>m<=CM).reduce((ss,m)=>ss+kTPB(k,m),0);
+    return s+kBulanList(k).filter(m=>m<=evalM).reduce((ss,m)=>ss+kTPB(k,m),0);
   },0);
   const absorp=anggUpToNow>0?(doneUpToNow/anggUpToNow*100):0;
   const _allKegPagu=data.kegiatan.reduce((s,k)=>s+kT(k),0);
-  const proyEOY=(anggUpToNow>0?(doneUpToNow/anggUpToNow)*_allKegPagu:0)+getBMReal();
+  const proyRate=anggUpToNow>0?(doneUpToNow/anggUpToNow):0;
+  const proyEOY=(proyRate*_allKegPagu)+getBMReal();
 
   // ── Generate insights ──
   const insights=[];
@@ -2681,12 +2684,20 @@ function renderDashboard(){
         <div class="dash-kpi-sub">${kBulanIni.length} kegiatan terjadwal</div>
         <div class="dash-kpi-badge ${pctBln===100?'dkb-green':pctBln>0?'dkb-gold':'dkb-teal'}">${pctBln}% terlaksana bulan ini</div>
       </div>
-      <div class="dash-kpi dk-red">
+      <div class="dash-kpi ${proyEOY>=dispAngg*0.9?'dk-green':proyEOY>=dispAngg*0.75?'dk-gold':proyEOY>=dispAngg*0.6?'dk-teal':'dk-red'}">
         <div class="dash-kpi-lbl">Proyeksi Serapan Akhir Tahun</div>
         <div class="dash-kpi-val">${fmt(Math.round(proyEOY))}</div>
-        <div class="dash-kpi-sub">Tren realisasi s.d. ${MN[CM-1]}</div>
-        <div class="dash-kpi-badge ${proyEOY>=dispAngg*0.9?'dkb-green':proyEOY>=dispAngg*0.6?'dkb-gold':'dkb-red'}">
-          ${Math.round(proyEOY/dispAngg*100)||0}% proyeksi serapan
+        <div class="dash-kpi-sub" style="display:flex;flex-direction:column;gap:2px;">
+          <span>Asumsi: tren Jan–${MN[evalM-1]} berlanjut</span>
+          <span style="color:var(--txt3);font-size:10px;">Tingkat realisasi s.d. ${MN[evalM-1]}: <strong style="color:${proyRate>=0.9?'var(--green)':proyRate>=0.6?'var(--gold)':'var(--red)'}">${Math.round(proyRate*100)}%</strong></span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+          <div class="dash-kpi-badge ${proyEOY>=dispAngg*0.9?'dkb-green':proyEOY>=dispAngg*0.75?'dkb-gold':'dkb-red'}">
+            ${Math.round(proyEOY/dispAngg*100)||0}% dari pagu
+          </div>
+          <div class="dash-kpi-badge ${proyRate>=0.9?'dkb-green':proyRate>=0.75?'dkb-gold':'dkb-red'}" style="font-size:9px;">
+            ${proyRate>=0.95?'🟢 Sangat Baik':proyRate>=0.8?'🟡 Baik':proyRate>=0.6?'🟠 Cukup':'🔴 Perlu Perhatian'}
+          </div>
         </div>
       </div>
     </div>
@@ -2871,11 +2882,11 @@ function renderDashboard(){
               </div>`).join('')}
             <div class="insight-item ins-info" style="margin-top:4px">
               <span class="ins-icon">🎯</span>
-              <span class="ins-text">Serapan rata-rata efektif: <strong>${Math.round(absorp)}%</strong> dari anggaran yang seharusnya sudah terlaksana s.d. bulan ${MN[CM-1]}.</span>
+              <span class="ins-text">Tingkat realisasi s.d. ${MN[evalM-1]}: <strong>${Math.round(proyRate*100)}%</strong> dari anggaran yang dijadwalkan — digunakan sebagai dasar proyeksi.</span>
             </div>
-            <div class="insight-item ins-info">
+            <div class="insight-item ${proyEOY>=dispAngg*0.9?'ins-ok':proyEOY>=dispAngg*0.75?'ins-warn':'ins-alert'}">
               <span class="ins-icon">📐</span>
-              <span class="ins-text">Proyeksi realisasi akhir tahun: <strong>${fmt(Math.round(proyEOY))}</strong> (<strong>${Math.round(proyEOY/dispAngg*100)||0}%</strong> dari pagu).</span>
+              <span class="ins-text">Proyeksi realisasi akhir tahun: <strong>${fmt(Math.round(proyEOY))}</strong> (<strong>${Math.round(proyEOY/dispAngg*100)||0}%</strong> dari pagu). ${proyEOY>=dispAngg*0.9?'✅ Pada jalur yang baik.':proyEOY>=dispAngg*0.75?'⚠️ Perlu akselerasi agar optimal.':'🔴 Perlu perhatian serius.'}</span>
             </div>
           </div>
         </div>
