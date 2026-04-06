@@ -3599,7 +3599,7 @@ function renderRPDSection(){
   const totPct52=totRenc52>0?Math.round(totReal52/totRenc52*100):0;
   const totClr52=totPct52>=100?'#00b87a':totPct52>=70?'#007c91':totPct52>0?'#e8a020':'var(--txt3)';
 
-  const fmtDev=(d,r)=>r>0&&d!==0?` <span style="color:${d>0?'#00b87a':'#e05555'};font-size:10px;">(${d>0?'+':''}${fmt(d)}, ${d>0?'+':''}${(d/r*100).toFixed(1)}%)</span>`:'';
+  const fmtDev=(d,r)=>r>0&&d!==0?` <span style="color:${d>0?'#00b87a':'#e05555'};font-size:10px;">(${d>0?'+':''}${(d/r*100).toFixed(1)}%)</span>`:'';
 
   return `<div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:20px;">
     <div style="padding:13px 16px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
