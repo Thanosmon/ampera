@@ -29,7 +29,7 @@ body:not(.logged-in) .shell{display:none!important;}
 /* TOPBAR */
 .topbar{background:linear-gradient(135deg,#002d62 0%,#003d84 100%);height:46px;display:flex;align-items:center;padding:0 24px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.1);z-index:200;gap:0;}
 .topbar-brand{display:flex;align-items:center;gap:10px;width:var(--sid-w);flex-shrink:0;}
-.logo-mark{width:46px;height:28px;flex-shrink:0;filter:brightness(0) invert(1) sepia(1) saturate(4) hue-rotate(158deg) brightness(0.95);}
+.logo-mark{width:46px;height:28px;flex-shrink:0;}
 .brand-name{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:15px;font-weight:800;letter-spacing:1.5px;color:var(--white);}
 .brand-name span{color:inherit;}
 .topbar-center{flex:1;min-width:0;font-size:11px;font-weight:500;color:rgba(255,255,255,0.72);letter-spacing:0.6px;padding-left:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Figtree','Segoe UI',sans-serif;}
@@ -905,14 +905,12 @@ td.muted{color:var(--txt3);font-size:12px;}
     linear-gradient(145deg,#001030 0%,#002060 35%,#003080 65%,#001848 100%);
   background-size:36px 36px,100% 100%;}
 #loginScreen.hidden{display:none;}
-/* Siluet bg: lebar >100% agar memenuhi kiri-kanan, anchor bawah */
-.login-bg{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:135%;height:auto;opacity:.08;pointer-events:none;filter:brightness(0) invert(1);}
-/* Layar kecil: perkecil & kurangi opacity agar tidak menutupi form */
-@media(max-width:1024px){.login-bg{width:95%;opacity:.05;}}
+/* Siluet bg: penuh bawah-kiri-kanan, tidak terpotong */
+.login-bg{position:absolute;bottom:0;left:50%;transform:translateX(-50%);height:100vh;width:auto;min-width:100%;opacity:.10;pointer-events:none;filter:brightness(0) invert(1);}
 .login-box{background:rgba(0,32,80,.45);border:1px solid rgba(0,136,200,.28);border-radius:16px;padding:40px 36px 32px;width:400px;max-width:94vw;backdrop-filter:blur(18px);box-shadow:0 24px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);position:relative;z-index:1;animation:lbIn .4s ease;}
 @keyframes lbIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .login-logo{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:24px;}
-.login-logo img{filter:brightness(0) invert(1) sepia(1) saturate(4) hue-rotate(158deg) brightness(0.95);}
+.login-logo img{filter:none;}
 .login-brand{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:28px;font-weight:800;color:white;letter-spacing:2.5px;text-align:center;}
 .login-brand span{color:inherit;}
 .login-sub{font-size:11px;color:rgba(255,255,255,.60);margin-top:2px;line-height:1.6;text-align:center;letter-spacing:0.2px;}
@@ -1054,10 +1052,10 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
 
 <!-- ═══ LOGIN SCREEN ═══ -->
 <div id="loginScreen">
-  <img class="login-bg" src="logo-ampera.svg" width="4961" height="3508" alt="">
+  <img class="login-bg" src="logo-ampera-kuning.svg" width="1191" height="652" alt="">
   <div class="login-box">
     <div class="login-logo">
-      <img src="logo-ampera.svg" width="160" height="99" alt="Logo Jembatan Ampera" style="object-fit:contain;">
+      <img src="logo-ampera-kuning.svg" width="160" height="99" alt="Logo Jembatan Ampera" style="object-fit:contain;">
       <div class="login-brand">AM<span>PE</span>RA</div>
       <div class="login-sub">Akselerasi Monitoring, Pelaksanaan, Evaluasi<br>Rencana Kerja &amp; Anggaran · Kanwil DJPb Sumsel</div>
     </div>
@@ -1104,7 +1102,7 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
 <div class="topbar">
   <div class="topbar-brand">
     <!-- Logo Jembatan Ampera -->
-    <img class="logo-mark" src="logo-ampera.svg" alt="Logo Jembatan Ampera">
+    <img class="logo-mark" src="logo-ampera-kuning.svg" alt="Logo Jembatan Ampera">
     <div class="brand-name">AM<span>PE</span>RA</div>
   </div>
   <div class="topbar-center">Akselerasi Monitoring, Pelaksanaan, Evaluasi Rencana Kerja &amp; Anggaran · Kanwil DJPb Prov. Sumatera Selatan</div>
