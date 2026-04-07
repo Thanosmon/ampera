@@ -34,8 +34,10 @@ body:not(.logged-in) .shell{display:none!important;}
 .brand-name span{color:var(--teal3);}
 .topbar-center{flex:1;min-width:0;font-size:11px;font-weight:500;color:rgba(255,255,255,0.72);letter-spacing:0.6px;padding-left:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Figtree','Segoe UI',sans-serif;}
 .topbar-right{display:flex;align-items:center;gap:14px;flex-shrink:0;margin-left:0;padding-left:16px;border-left:1px solid rgba(255,255,255,.08);}
-/* Sembunyikan subtitle topbar di layar menengah agar tidak crowded */
-@media(max-width:1280px){.topbar-center{display:none;}}
+/* Laptop: kecilkan font subtitle, tetap tampil */
+@media(max-width:1280px){.topbar-center{font-size:10px;letter-spacing:0.3px;}}
+/* Tablet: sembunyikan subtitle, hemat ruang */
+@media(max-width:900px){.topbar-center{display:none;}}
 /* Kurangi padding di layar menengah */
 @media(max-width:1280px){.topbar{padding:0 16px;}.topbar-brand{width:auto;}}
 .topbar-badge{background:var(--teal-dim);border:1px solid rgba(0,164,189,0.3);color:var(--teal3);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;transition:all .18s;user-select:none;}
