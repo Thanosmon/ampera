@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AMPERA &mdash; Akselerasi Monitoring, Pelaksanaan, Evaluasi Rencana Kerja &amp; Anggaran</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23002d62'/%3E%3Crect x='5' y='20' width='4' height='7' rx='1.5' fill='%230088C8'/%3E%3Crect x='11' y='14' width='4' height='13' rx='1.5' fill='%230088C8'/%3E%3Crect x='17' y='9' width='4' height='18' rx='1.5' fill='%2300C4E0'/%3E%3Crect x='23' y='5' width='4' height='22' rx='1.5' fill='%2300C4E0'/%3E%3Cpolyline points='7,19 13,12 19,8 27,4' stroke='%23FFD700' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23002d62'/%3E%3Cpath d='M1 22 Q16 18 31 22 L31 24 Q16 20 1 24 Z' fill='%23c0392b'/%3E%3Crect x='2' y='5' width='10' height='2.5' rx='0.3' fill='%23c0392b'/%3E%3Crect x='2.5' y='7.5' width='3.5' height='14' rx='0.3' fill='%23c0392b'/%3E%3Crect x='8' y='7.5' width='3.5' height='14' rx='0.3' fill='%23c0392b'/%3E%3Crect x='2' y='13' width='10' height='2' fill='%23a93226'/%3E%3Crect x='2.5' y='15.5' width='9' height='2' rx='0.3' fill='%2327ae60'/%3E%3Crect x='20' y='5' width='10' height='2.5' rx='0.3' fill='%23c0392b'/%3E%3Crect x='20.5' y='7.5' width='3.5' height='14' rx='0.3' fill='%23c0392b'/%3E%3Crect x='26' y='7.5' width='3.5' height='14' rx='0.3' fill='%23c0392b'/%3E%3Crect x='20' y='13' width='10' height='2' fill='%23a93226'/%3E%3Crect x='20.5' y='15.5' width='9' height='2' rx='0.3' fill='%2327ae60'/%3E%3Crect x='3' y='24' width='3' height='4' fill='%23a93226'/%3E%3Crect x='8' y='24' width='3' height='4' fill='%23a93226'/%3E%3Crect x='21' y='24' width='3' height='4' fill='%23a93226'/%3E%3Crect x='26' y='24' width='3' height='4' fill='%23a93226'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -31,7 +31,7 @@ body:not(.logged-in) .shell{display:none!important;}
 .topbar-brand{display:flex;align-items:center;gap:10px;width:var(--sid-w);flex-shrink:0;}
 .logo-mark{width:46px;height:28px;flex-shrink:0;}
 .brand-name{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:15px;font-weight:800;letter-spacing:1.5px;color:var(--white);}
-.brand-name span{color:var(--teal3);}
+.brand-name span{color:#f5bc4a;}
 .topbar-center{flex:1;min-width:0;font-size:11px;font-weight:500;color:rgba(255,255,255,0.72);letter-spacing:0.6px;padding-left:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Figtree','Segoe UI',sans-serif;}
 .topbar-right{display:flex;align-items:center;gap:14px;flex-shrink:0;margin-left:0;padding-left:16px;}
 /* Laptop: kecilkan font subtitle, tetap tampil */
@@ -833,7 +833,7 @@ td.muted{color:var(--txt3);font-size:12px;}
 @keyframes lbIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .login-logo{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:24px;}
 .login-brand{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:28px;font-weight:800;color:white;letter-spacing:2.5px;text-align:center;}
-.login-brand span{color:#0099d8;}
+.login-brand span{color:#f5bc4a;}
 .login-sub{font-size:11px;color:rgba(255,255,255,.60);margin-top:2px;line-height:1.6;text-align:center;letter-spacing:0.2px;}
 .login-div{height:1px;background:rgba(255,255,255,.09);margin:18px 0;}
 .login-lbl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:rgba(255,255,255,.38);margin-bottom:5px;}
@@ -993,24 +993,35 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
   </svg>
   <div class="login-box">
     <div class="login-logo">
-      <svg viewBox="0 0 60 38" width="80" height="50" fill="none">
-        <rect x="0" y="30" width="60" height="8" fill="#001848"/>
-        <path d="M0 31 Q7.5 29 15 31 Q22.5 33 30 31 Q37.5 29 45 31 Q52.5 33 60 31" stroke="rgba(255,255,255,.2)" stroke-width=".8" fill="none"/>
-        <rect x="2" y="24" width="56" height="4" rx="1" fill="#0058a5"/>
-        <rect x="10" y="13" width="4" height="13" rx=".8" fill="#0077C8"/>
-        <rect x="46" y="13" width="4" height="13" rx=".8" fill="#0077C8"/>
-        <rect x="11" y="2" width="2" height="13" rx=".6" fill="#0099d8"/>
-        <rect x="47" y="2" width="2" height="13" rx=".6" fill="#0099d8"/>
-        <rect x="8" y="6" width="8" height="1.6" rx=".6" fill="#0077C8"/>
-        <rect x="44" y="6" width="8" height="1.6" rx=".6" fill="#0077C8"/>
-        <line x1="12" y1="3" x2="3" y2="24" stroke="#f5bc4a" stroke-width="1" opacity=".9"/>
-        <line x1="12" y1="3" x2="21" y2="24" stroke="#f5bc4a" stroke-width="1" opacity=".9"/>
-        <line x1="12" y1="3" x2="30" y2="24" stroke="#f5bc4a" stroke-width=".7" opacity=".5"/>
-        <line x1="48" y1="3" x2="57" y2="24" stroke="#f5bc4a" stroke-width="1" opacity=".9"/>
-        <line x1="48" y1="3" x2="39" y2="24" stroke="#f5bc4a" stroke-width="1" opacity=".9"/>
-        <line x1="48" y1="3" x2="30" y2="24" stroke="#f5bc4a" stroke-width=".7" opacity=".5"/>
-        <circle cx="12" cy="3" r="1.6" fill="#0099d8"/>
-        <circle cx="48" cy="3" r="1.6" fill="#0099d8"/>
+      <svg viewBox="0 0 100 62" width="100" height="62" fill="none">
+        <!-- Jembatan Ampera -->
+        <!-- Bridge deck arc -->
+        <path d="M0 47 Q50 40 100 47 L100 52 Q50 45 0 52 Z" fill="#c0392b"/>
+        <!-- Left pylon: top cap -->
+        <rect x="5" y="2" width="22" height="5" rx="0.5" fill="#c0392b"/>
+        <!-- Left pylon: left column -->
+        <rect x="6" y="7" width="8" height="44" rx="0.5" fill="#c0392b"/>
+        <!-- Left pylon: right column -->
+        <rect x="18" y="7" width="8" height="44" rx="0.5" fill="#c0392b"/>
+        <!-- Left pylon: mid band -->
+        <rect x="5" y="25" width="22" height="4" fill="#a93226"/>
+        <!-- Left pylon: green accent -->
+        <rect x="7" y="31" width="17" height="4" rx="0.5" fill="#27ae60"/>
+        <!-- Right pylon: top cap -->
+        <rect x="73" y="2" width="22" height="5" rx="0.5" fill="#c0392b"/>
+        <!-- Right pylon: left column -->
+        <rect x="73" y="7" width="8" height="44" rx="0.5" fill="#c0392b"/>
+        <!-- Right pylon: right column -->
+        <rect x="85" y="7" width="8" height="44" rx="0.5" fill="#c0392b"/>
+        <!-- Right pylon: mid band -->
+        <rect x="73" y="25" width="22" height="4" fill="#a93226"/>
+        <!-- Right pylon: green accent -->
+        <rect x="75" y="31" width="17" height="4" rx="0.5" fill="#27ae60"/>
+        <!-- Abutment supports -->
+        <rect x="7" y="52" width="6" height="8" fill="#a93226"/>
+        <rect x="19" y="52" width="6" height="8" fill="#a93226"/>
+        <rect x="74" y="52" width="6" height="8" fill="#a93226"/>
+        <rect x="86" y="52" width="6" height="8" fill="#a93226"/>
       </svg>
       <div class="login-brand">AM<span>PE</span>RA</div>
       <div class="login-sub">Akselerasi Monitoring, Pelaksanaan, Evaluasi<br>Rencana Kerja &amp; Anggaran · Kanwil DJPb Sumsel</div>
@@ -1058,24 +1069,35 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
 <div class="topbar">
   <div class="topbar-brand">
     <!-- Logo Jembatan Ampera -->
-    <svg class="logo-mark" viewBox="0 0 46 28" fill="none">
-      <rect x="0" y="22" width="46" height="6" fill="#003560"/>
-      <path d="M0 23.5 Q5.75 22 11.5 23.5 Q17.25 25 23 23.5 Q28.75 22 34.5 23.5 Q40.25 25 46 23.5" stroke="rgba(255,255,255,.2)" stroke-width=".7" fill="none"/>
-      <rect x="1" y="18" width="44" height="3" rx="1" fill="#007c91"/>
-      <rect x="8" y="10" width="3.5" height="10" rx=".8" fill="#00a3bd"/>
-      <rect x="34.5" y="10" width="3.5" height="10" rx=".8" fill="#00a3bd"/>
-      <rect x="9.2" y="2" width="1.8" height="10" rx=".6" fill="#00c4e0"/>
-      <rect x="35" y="2" width="1.8" height="10" rx=".6" fill="#00c4e0"/>
-      <rect x="6.5" y="5.5" width="7.5" height="1.4" rx=".5" fill="#00a3bd"/>
-      <rect x="32" y="5.5" width="7.5" height="1.4" rx=".5" fill="#00a3bd"/>
-      <line x1="10.1" y1="2.5" x2="2" y2="18" stroke="#f5bc4a" stroke-width=".8" opacity=".9"/>
-      <line x1="10.1" y1="2.5" x2="17" y2="18" stroke="#f5bc4a" stroke-width=".8" opacity=".9"/>
-      <line x1="10.1" y1="2.5" x2="23" y2="18" stroke="#f5bc4a" stroke-width=".6" opacity=".5"/>
-      <line x1="35.9" y1="2.5" x2="44" y2="18" stroke="#f5bc4a" stroke-width=".8" opacity=".9"/>
-      <line x1="35.9" y1="2.5" x2="29" y2="18" stroke="#f5bc4a" stroke-width=".8" opacity=".9"/>
-      <line x1="35.9" y1="2.5" x2="23" y2="18" stroke="#f5bc4a" stroke-width=".6" opacity=".5"/>
-      <circle cx="10.1" cy="2.5" r="1.4" fill="#00c4e0"/>
-      <circle cx="35.9" cy="2.5" r="1.4" fill="#00c4e0"/>
+    <svg class="logo-mark" viewBox="0 0 100 62" fill="none">
+      <!-- Jembatan Ampera -->
+      <!-- Bridge deck arc -->
+      <path d="M0 47 Q50 40 100 47 L100 52 Q50 45 0 52 Z" fill="#c0392b"/>
+      <!-- Left pylon: top cap -->
+      <rect x="5" y="2" width="22" height="5" rx="0.5" fill="#c0392b"/>
+      <!-- Left pylon: left column -->
+      <rect x="6" y="7" width="8" height="44" rx="0.5" fill="#c0392b"/>
+      <!-- Left pylon: right column -->
+      <rect x="18" y="7" width="8" height="44" rx="0.5" fill="#c0392b"/>
+      <!-- Left pylon: mid band -->
+      <rect x="5" y="25" width="22" height="4" fill="#a93226"/>
+      <!-- Left pylon: green accent -->
+      <rect x="7" y="31" width="17" height="4" rx="0.5" fill="#27ae60"/>
+      <!-- Right pylon: top cap -->
+      <rect x="73" y="2" width="22" height="5" rx="0.5" fill="#c0392b"/>
+      <!-- Right pylon: left column -->
+      <rect x="73" y="7" width="8" height="44" rx="0.5" fill="#c0392b"/>
+      <!-- Right pylon: right column -->
+      <rect x="85" y="7" width="8" height="44" rx="0.5" fill="#c0392b"/>
+      <!-- Right pylon: mid band -->
+      <rect x="73" y="25" width="22" height="4" fill="#a93226"/>
+      <!-- Right pylon: green accent -->
+      <rect x="75" y="31" width="17" height="4" rx="0.5" fill="#27ae60"/>
+      <!-- Abutment supports -->
+      <rect x="7" y="52" width="6" height="8" fill="#a93226"/>
+      <rect x="19" y="52" width="6" height="8" fill="#a93226"/>
+      <rect x="74" y="52" width="6" height="8" fill="#a93226"/>
+      <rect x="86" y="52" width="6" height="8" fill="#a93226"/>
     </svg>
     <div class="brand-name">AM<span>PE</span>RA</div>
   </div>
