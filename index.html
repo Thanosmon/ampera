@@ -29,9 +29,9 @@ body:not(.logged-in) .shell{display:none!important;}
 /* TOPBAR */
 .topbar{background:linear-gradient(135deg,#002d62 0%,#003d84 100%);height:46px;display:flex;align-items:center;padding:0 24px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.1);z-index:200;gap:0;}
 .topbar-brand{display:flex;align-items:center;gap:10px;width:var(--sid-w);flex-shrink:0;}
-.logo-mark{width:46px;height:28px;flex-shrink:0;}
+.logo-mark{width:46px;height:28px;flex-shrink:0;filter:brightness(0) invert(1) sepia(1) saturate(4) hue-rotate(158deg) brightness(0.95);}
 .brand-name{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:15px;font-weight:800;letter-spacing:1.5px;color:var(--white);}
-.brand-name span{color:#f5bc4a;}
+.brand-name span{color:inherit;}
 .topbar-center{flex:1;min-width:0;font-size:11px;font-weight:500;color:rgba(255,255,255,0.72);letter-spacing:0.6px;padding-left:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Figtree','Segoe UI',sans-serif;}
 .topbar-right{display:flex;align-items:center;gap:14px;flex-shrink:0;margin-left:0;padding-left:16px;}
 /* Laptop: kecilkan font subtitle, tetap tampil */
@@ -909,8 +909,9 @@ td.muted{color:var(--txt3);font-size:12px;}
 .login-box{background:rgba(0,32,80,.45);border:1px solid rgba(0,136,200,.28);border-radius:16px;padding:40px 36px 32px;width:400px;max-width:94vw;backdrop-filter:blur(18px);box-shadow:0 24px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);position:relative;z-index:1;animation:lbIn .4s ease;}
 @keyframes lbIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .login-logo{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:24px;}
+.login-logo img{filter:brightness(0) invert(1) sepia(1) saturate(4) hue-rotate(158deg) brightness(0.95);}
 .login-brand{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:28px;font-weight:800;color:white;letter-spacing:2.5px;text-align:center;}
-.login-brand span{color:#f5bc4a;}
+.login-brand span{color:inherit;}
 .login-sub{font-size:11px;color:rgba(255,255,255,.60);margin-top:2px;line-height:1.6;text-align:center;letter-spacing:0.2px;}
 .login-div{height:1px;background:rgba(255,255,255,.09);margin:18px 0;}
 .login-lbl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:rgba(255,255,255,.38);margin-bottom:5px;}
