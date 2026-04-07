@@ -1477,11 +1477,20 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
         </div>
       </div>
 
+      <!-- Per-rincian inputs -->
+      <div id="tmRincianWrap" style="display:none;margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">✏️ Realisasi per Rincian Biaya</div>
+        <div id="tmRincianRows" style="display:flex;flex-direction:column;gap:5px;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surf);border-radius:7px;margin-top:6px;border-top:2px solid var(--teal2);">
+          <span style="font-size:11px;font-weight:600;color:var(--txt2);">Total Realisasi</span>
+          <span style="font-family:'Fira Code',monospace;font-size:14px;font-weight:700;color:var(--teal);" id="tmRincianTotal">Rp 0</span>
+        </div>
+      </div>
+
       <!-- Panel Sisa per Rincian -->
       <div id="tmSisaPanel" style="display:none;margin-bottom:14px;">
-        <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">📊 Estimasi Sisa per Rincian Biaya</div>
+        <div id="tmSisaTitle" style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">📊 Estimasi Sisa per Rincian Biaya</div>
         <div id="tmSisaRows" style="display:flex;flex-direction:column;gap:4px;"></div>
-        <div style="font-size:9px;color:var(--txt3);margin-top:6px;font-style:italic;">*Estimasi proporsional berdasarkan realisasi kumulatif kegiatan ini</div>
       </div>
 
       <!-- Info deviasi / hint -->
@@ -1904,6 +1913,45 @@ function dokChipsHTML(dokumen){
   }).join('');
 }
 
+function sisaRincianHTML(k){
+  if(!k.rincian||k.rincian.length===0)return'';
+  const totalRincian=k.rincian.reduce((s,r)=>s+rT(r),0);
+  if(!totalRincian)return'';
+  const hasActual=k.realisasiRincianBulan&&Object.keys(k.realisasiRincianBulan).length>0;
+  const rows=k.rincian.map((r,idx)=>{
+    const sub=rT(r);
+    let spent=0;
+    for(const m of(k.doneBulan||[])){
+      const rrb=k.realisasiRincianBulan?.[m];
+      if(rrb&&rrb[idx]!==undefined){spent+=rrb[idx];}
+      else{const prop=totalRincian>0?sub/totalRincian:0;spent+=Math.round(prop*kTPBReal(k,m));}
+    }
+    const sisa=Math.max(0,sub-spent);
+    const pct=sub>0?Math.min(100,Math.round(spent/sub*100)):0;
+    const barColor=pct>=90?'var(--green)':pct>=60?'var(--teal)':pct>=30?'var(--gold)':'var(--red)';
+    return`<tr>
+      <td style="font-family:'Fira Code',monospace;font-size:10px;color:var(--teal)">${escH(r.mak||'—')}</td>
+      <td style="font-size:11px;">${escH(r.uraian||'—')}</td>
+      <td class="r" style="font-family:'Fira Code',monospace;font-size:11px;">${fmt(sub)}</td>
+      <td class="r" style="font-family:'Fira Code',monospace;font-size:11px;color:var(--green);">${fmt(spent)}</td>
+      <td class="r" style="font-family:'Fira Code',monospace;font-size:11px;color:${sisa===0?'var(--green)':'var(--gold)'};">${sisa===0?'✓ Lunas':fmt(sisa)}</td>
+      <td style="width:80px;padding:0 8px;">
+        <div style="height:5px;background:var(--bdr);border-radius:99px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${barColor};border-radius:99px;"></div>
+        </div>
+        <div style="font-size:9px;color:var(--txt3);text-align:right;margin-top:2px;">${pct}%</div>
+      </td>
+    </tr>`;
+  }).join('');
+  return`<div style="margin-top:14px">
+    <div class="ri-lbl" style="margin-bottom:6px;">💰 Sisa Anggaran per Rincian${hasActual?'':' <span style="font-size:9px;font-weight:400;color:var(--gold);font-style:italic;">(estimasi)</span>'}</div>
+    <table class="ri-tbl">
+      <thead><tr><th>MAK</th><th>Uraian</th><th class="r">Anggaran</th><th class="r">Terpakai</th><th class="r">Sisa</th><th>Progress</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
 // ── RENDER PER KEGIATAN ──
 function renderKeg(){
   const cont=document.getElementById('mainContent');
@@ -1967,6 +2015,7 @@ function renderKeg(){
                   <tfoot><tr><td colspan="6" style="font-size:11px;color:var(--txt3)">Total Rincian (referensi)</td><td class="r">${fmt(k.rincian.reduce((s,r)=>s+rT(r),0))}</td></tr></tfoot>
                 </table>
               </div>
+              ${sisaRincianHTML(k)}
               <div style="margin-top:14px">
                 <div class="ri-lbl" style="margin-bottom:8px">📎 Dokumen Pendukung</div>
                 <div class="dok-chips">${dokChipsHTML(k.dokumen)}</div>
@@ -2362,6 +2411,7 @@ function togDB(id,bulan){
     // Batalkan: hapus dari done + hapus realisasi aktual
     k.doneBulan=k.doneBulan.filter(m=>m!==bulan);
     if(k.realisasiBulan)delete k.realisasiBulan[bulan];
+    if(k.realisasiRincianBulan)delete k.realisasiRincianBulan[bulan];
     toast(`"${k.nama}" — ${MN[bulan-1]} dibatalkan`,'↩');
     saveLS();renderAll();
   }else{
@@ -2395,6 +2445,8 @@ function tmUseRencana(){
   const wrap=document.getElementById('tmRealWrap');
   wrap.style.opacity='.45';wrap.style.pointerEvents='none';
   document.getElementById('tmDevLabel').textContent='—';
+  document.getElementById('tmRealWrap').style.display='';
+  document.getElementById('tmRincianWrap').style.display='none';
 }
 
 function tmUseManual(){
@@ -2406,6 +2458,17 @@ function tmUseManual(){
   wrap.style.opacity='1';wrap.style.pointerEvents='auto';
   const inp=document.getElementById('tmReal');
   setTimeout(()=>{inp.focus();inp.select();},80);
+  const m2=document.getElementById('tandaiModal');
+  const k2=data.kegiatan.find(k=>k.id===m2._id);
+  const hasRinc=k2&&k2.rincian&&k2.rincian.some(r=>rT(r)>0);
+  if(hasRinc){
+    document.getElementById('tmRealWrap').style.display='none';
+    _tmRenderRincianInputs(k2,m2._bulan);
+  }else{
+    const w=document.getElementById('tmRealWrap');
+    w.style.opacity='1';w.style.pointerEvents='auto';
+  }
+  document.getElementById('tmReal').value=document.getElementById('tandaiModal')._rencana||'';
   tmCheckDeviasi();
 }
 
@@ -2424,29 +2487,94 @@ function tmCheckDeviasi(){
   if(k)_tmRenderSisa(k,m._bulan,real);
 }
 
+function _tmRenderRincianInputs(k,bulan){
+  const wrap=document.getElementById('tmRincianWrap');
+  const rowsEl=document.getElementById('tmRincianRows');
+  const rencTotal=kTPB(k,bulan);
+  const totalRincian=k.rincian.reduce((s,r)=>s+rT(r),0);
+  const saved=k.realisasiRincianBulan?.[bulan];
+  rowsEl.innerHTML=k.rincian.map((r,i)=>{
+    const sub=rT(r);
+    const val=saved&&saved[i]!==undefined?saved[i]:Math.round(totalRincian>0?(sub/totalRincian)*rencTotal:0);
+    return`<div style="display:grid;grid-template-columns:1fr 130px;gap:8px;align-items:center;padding:7px 10px;background:var(--surf);border-radius:7px;">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(r.uraian||'—')}</div>
+        <div style="font-size:9px;color:var(--txt3);">Rencana: ${fmt(sub)}</div>
+      </div>
+      <input type="number" min="0" step="1" value="${val}"
+        id="tmRinc_${i}"
+        style="width:100%;border:1.5px solid var(--bdr2);border-radius:6px;padding:5px 8px;font-size:12px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--card);outline:none;text-align:right;box-sizing:border-box;"
+        oninput="tmSumRincian()">
+    </div>`;
+  }).join('');
+  wrap.style.display='block';
+  tmSumRincian();
+}
+
+function tmSumRincian(){
+  const m=document.getElementById('tandaiModal');
+  const k=data.kegiatan.find(k=>k.id===m._id);
+  if(!k)return;
+  let total=0;
+  k.rincian.forEach((_,i)=>{
+    const inp=document.getElementById('tmRinc_'+i);
+    if(inp)total+=parseFloat(inp.value)||0;
+  });
+  document.getElementById('tmReal').value=total;
+  document.getElementById('tmRincianTotal').textContent=fmt(total);
+  tmCheckDeviasi();
+  _tmRenderSisa(k,m._bulan,total);
+}
+
 function _tmRenderSisa(k,bulanSedang,realOverride){
   const panel=document.getElementById('tmSisaPanel');
   const rows=document.getElementById('tmSisaRows');
+  const titleEl=document.getElementById('tmSisaTitle');
   if(!k.rincian||k.rincian.length===0){panel.style.display='none';return;}
   const totalRincian=k.rincian.reduce((s,r)=>s+rT(r),0);
   if(!totalRincian){panel.style.display='none';return;}
-  // Total realisasi kumulatif (semua bulan yang sudah done, plus bulan ini jika ada override)
-  const realSelesai=(k.doneBulan||[]).reduce((s,m)=>s+kTPBReal(k,m),0);
-  const realBulanIni=realOverride!==undefined?realOverride:kTPB(k,bulanSedang);
-  const totalReal=realSelesai+realBulanIni;
-  const sisaTotal=Math.max(0,totalRincian-totalReal);
+
+  const hasActualRinc=k.realisasiRincianBulan&&Object.keys(k.realisasiRincianBulan).length>0;
+
   panel.style.display='block';
-  rows.innerHTML=k.rincian.map(r=>{
+  if(titleEl){
+    titleEl.textContent=hasActualRinc?'📊 Sisa per Rincian Biaya':'📊 Estimasi Sisa per Rincian Biaya';
+  }
+
+  // Hapus footnote lama jika ada
+  const existNote=rows.parentElement.querySelector('.tm-sisa-note');
+  if(existNote)existNote.remove();
+
+  rows.innerHTML=k.rincian.map((r,idx)=>{
     const subtotal=rT(r);
-    const proporsi=totalRincian>0?subtotal/totalRincian:0;
-    const realEst=Math.round(proporsi*totalReal);
-    const sisaEst=Math.max(0,subtotal-realEst);
-    const pct=subtotal>0?Math.min(100,Math.round(realEst/subtotal*100)):0;
+    let spent=0;
+    for(const m of(k.doneBulan||[])){
+      const rrb=k.realisasiRincianBulan?.[m];
+      if(rrb&&rrb[idx]!==undefined){
+        spent+=rrb[idx];
+      }else{
+        const prop=totalRincian>0?subtotal/totalRincian:0;
+        spent+=Math.round(prop*kTPBReal(k,m));
+      }
+    }
+    if(realOverride!==undefined){
+      const inpRinc=document.getElementById('tmRinc_'+idx);
+      if(inpRinc){
+        spent+=parseFloat(inpRinc.value)||0;
+      }else{
+        const prop=totalRincian>0?subtotal/totalRincian:0;
+        spent+=Math.round(prop*realOverride);
+      }
+    }
+    const sisa=Math.max(0,subtotal-spent);
+    const pct=subtotal>0?Math.min(100,Math.round(spent/subtotal*100)):0;
     const barColor=pct>=90?'var(--green)':pct>=60?'var(--teal)':pct>=30?'var(--gold)':'var(--red)';
-    return `<div style="background:var(--surf);border-radius:7px;padding:8px 10px;">
+    const sisaColor=sisa===0?'var(--green)':'var(--gold)';
+    const sisaLabel=sisa===0?'✓ Lunas':(hasActualRinc?'Sisa ':'Sisa ≈ ')+fmt(sisa);
+    return`<div style="background:var(--surf);border-radius:7px;padding:8px 10px;">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
         <span style="font-size:11px;font-weight:500;color:var(--txt);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(r.uraian||'—')}</span>
-        <span style="font-size:10px;color:${sisaEst===0?'var(--green)':'var(--gold)'};font-weight:600;margin-left:8px;white-space:nowrap;">${sisaEst===0?'✓ Lunas':'Sisa ≈ '+fmt(sisaEst)}</span>
+        <span style="font-size:10px;color:${sisaColor};font-weight:600;margin-left:8px;white-space:nowrap;">${sisaLabel}</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <div style="flex:1;height:5px;background:var(--bdr);border-radius:99px;overflow:hidden;">
@@ -2456,6 +2584,12 @@ function _tmRenderSisa(k,bulanSedang,realOverride){
       </div>
     </div>`;
   }).join('');
+
+  const note=document.createElement('div');
+  note.className='tm-sisa-note';
+  note.style.cssText='font-size:9px;color:var(--txt3);margin-top:6px;font-style:italic;';
+  note.textContent=hasActualRinc?'*Berdasarkan input aktual per rincian':'*Estimasi proporsional — gunakan Input per Rincian untuk data akurat';
+  rows.parentElement.appendChild(note);
 }
 function konfirmasiTandai(){
   const m=document.getElementById('tandaiModal');
@@ -2471,6 +2605,17 @@ function konfirmasiTandai(){
   // Hanya simpan realisasiBulan jika berbeda dari rencana (hemat storage)
   if(useManual&&realVal!==renc)k.realisasiBulan[bulan]=realVal;
   else delete k.realisasiBulan[bulan];
+  // Simpan realisasi per rincian jika ada input-nya
+  const rincWrap=document.getElementById('tmRincianWrap');
+  if(useManual&&rincWrap.style.display!=='none'&&k.rincian&&k.rincian.length){
+    if(!k.realisasiRincianBulan)k.realisasiRincianBulan={};
+    k.realisasiRincianBulan[bulan]=k.rincian.map((_,i)=>{
+      const inp=document.getElementById('tmRinc_'+i);
+      return parseFloat(inp?.value)||0;
+    });
+  }else if(!useManual){
+    if(k.realisasiRincianBulan)delete k.realisasiRincianBulan[bulan];
+  }
   m.classList.remove('open');
   const dev=realVal-renc;
   const devStr=useManual&&dev!==0?` · Deviasi ${dev>0?'▲+':'▼'}${fmt(Math.abs(dev))}`:'';
