@@ -1375,32 +1375,55 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
 
 <!-- MODAL TANDAI TERLAKSANA -->
 <div class="modal-overlay" id="tandaiModal" onclick="if(event.target===this)this.classList.remove('open')">
-  <div class="modal" style="width:420px">
+  <div class="modal" style="width:460px">
     <div class="modal-head">
-      <div><h3>✅ Tandai Terlaksana</h3><p id="tmBulan" style="color:var(--teal);font-weight:600;"></p></div>
+      <div><h3>✅ Tandai Terlaksana</h3><p id="tmBulan" style="color:var(--teal);font-weight:600;font-size:13px;margin-top:2px;"></p></div>
       <span class="modal-x" onclick="document.getElementById('tandaiModal').classList.remove('open')">✕</span>
     </div>
     <div class="modal-body">
+      <!-- Nama kegiatan -->
       <div style="font-size:12px;color:var(--txt2);margin-bottom:14px;padding:8px 12px;background:var(--surf);border-radius:8px;border-left:3px solid var(--teal);">
         <strong id="tmNama"></strong>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Rencana (RPD)</div>
+
+      <!-- Toggle: Sesuai Rencana / Input Manual -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button id="tmBtnRenc" onclick="tmUseRencana()" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;border:2px solid var(--teal);background:var(--teal);color:white;font-family:'Figtree',sans-serif;">
+          ✓ Gunakan Angka Rencana
+        </button>
+        <button id="tmBtnManual" onclick="tmUseManual()" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;border:2px solid var(--bdr2);background:var(--card);color:var(--txt2);font-family:'Figtree',sans-serif;">
+          ✎ Input Realisasi Aktual
+        </button>
+      </div>
+
+      <!-- Baris Rencana & Input -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div style="background:var(--surf);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:9px;font-weight:700;color:var(--txt3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px;">Anggaran Rencana</div>
           <div style="font-size:15px;font-weight:700;font-family:'Fira Code',monospace;color:var(--ink);" id="tmRencana">—</div>
-          <div style="font-size:10px;color:var(--txt3);margin-top:3px;">Dari jadwal kegiatan</div>
+          <div style="font-size:10px;color:var(--txt3);margin-top:2px;">Dari jadwal kegiatan</div>
         </div>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Realisasi Aktual (Rp)</div>
+        <div id="tmRealWrap" style="background:var(--surf);border-radius:8px;padding:10px 12px;opacity:.5;pointer-events:none;transition:opacity .2s;">
+          <div style="font-size:9px;font-weight:700;color:var(--txt3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px;">Realisasi Aktual (Rp)</div>
           <input id="tmReal" type="number" min="0" step="1"
-            style="width:100%;border:2px solid var(--teal);border-radius:7px;padding:7px 10px;font-size:13px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--card);outline:none;box-sizing:border-box;"
+            style="width:100%;border:1.5px solid var(--bdr2);border-radius:7px;padding:6px 9px;font-size:13px;font-family:'Fira Code',monospace;color:var(--ink);background:var(--card);outline:none;box-sizing:border-box;transition:border-color .2s;"
             placeholder="0"
+            oninput="tmCheckDeviasi()"
             onkeydown="if(event.key==='Enter')konfirmasiTandai()">
-          <div style="font-size:10px;color:var(--txt3);margin-top:3px;">Edit jika berbeda dari rencana</div>
+          <div id="tmDevLabel" style="font-size:10px;margin-top:4px;color:var(--txt3);">—</div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--txt3);padding:8px 10px;background:var(--surf);border-radius:7px;">
-        💡 Deviasi (selisih rencana vs realisasi) akan otomatis tercatat di RPD dan dihitung untuk IKPA.
+
+      <!-- Panel Sisa per Rincian -->
+      <div id="tmSisaPanel" style="display:none;margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">📊 Estimasi Sisa per Rincian Biaya</div>
+        <div id="tmSisaRows" style="display:flex;flex-direction:column;gap:4px;"></div>
+        <div style="font-size:9px;color:var(--txt3);margin-top:6px;font-style:italic;">*Estimasi proporsional berdasarkan realisasi kumulatif kegiatan ini</div>
+      </div>
+
+      <!-- Info deviasi / hint -->
+      <div id="tmHint" style="font-size:11px;color:var(--txt3);padding:8px 10px;background:var(--surf);border-radius:7px;">
+        💡 Pilih <strong>Gunakan Angka Rencana</strong> untuk pencatatan cepat, atau <strong>Input Realisasi Aktual</strong> jika nominal SPJ berbeda dari rencana.
       </div>
     </div>
     <div class="modal-foot">
@@ -2277,29 +2300,109 @@ function openTandaiModal(id,bulan){
   const k=data.kegiatan.find(k=>k.id===id);if(!k)return;
   const rencana=kTPB(k,bulan);
   const m=document.getElementById('tandaiModal');
-  m._id=id;m._bulan=bulan;
+  m._id=id;m._bulan=bulan;m._rencana=rencana;m._useManual=false;
   document.getElementById('tmNama').textContent=k.nama;
-  document.getElementById('tmBulan').textContent=MN[bulan-1];
+  document.getElementById('tmBulan').textContent=MN[bulan-1]+' '+getTAYear();
   document.getElementById('tmRencana').textContent=fmt(rencana);
-  const inp=document.getElementById('tmReal');
-  inp.value=rencana||'';
+  document.getElementById('tmReal').value=rencana||'';
+  document.getElementById('tmDevLabel').textContent='—';
+  document.getElementById('tmHint').innerHTML='💡 Pilih <strong>Gunakan Angka Rencana</strong> untuk pencatatan cepat, atau <strong>Input Realisasi Aktual</strong> jika nominal SPJ berbeda dari rencana.';
+  // Selalu mulai di mode "Gunakan Rencana"
+  tmUseRencana();
+  // Render sisa rincian
+  _tmRenderSisa(k,bulan);
   m.classList.add('open');
-  setTimeout(()=>{inp.focus();inp.select();},120);
+}
+
+function tmUseRencana(){
+  const m=document.getElementById('tandaiModal');
+  if(m)m._useManual=false;
+  document.getElementById('tmBtnRenc').style.cssText='flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid var(--teal);background:var(--teal);color:white;font-family:Figtree,sans-serif;';
+  document.getElementById('tmBtnManual').style.cssText='flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid var(--bdr2);background:var(--card);color:var(--txt2);font-family:Figtree,sans-serif;';
+  const wrap=document.getElementById('tmRealWrap');
+  wrap.style.opacity='.45';wrap.style.pointerEvents='none';
+  document.getElementById('tmDevLabel').textContent='—';
+}
+
+function tmUseManual(){
+  const m=document.getElementById('tandaiModal');
+  if(m)m._useManual=true;
+  document.getElementById('tmBtnManual').style.cssText='flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid var(--ink2);background:var(--ink2);color:white;font-family:Figtree,sans-serif;';
+  document.getElementById('tmBtnRenc').style.cssText='flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid var(--bdr2);background:var(--card);color:var(--txt2);font-family:Figtree,sans-serif;';
+  const wrap=document.getElementById('tmRealWrap');
+  wrap.style.opacity='1';wrap.style.pointerEvents='auto';
+  const inp=document.getElementById('tmReal');
+  setTimeout(()=>{inp.focus();inp.select();},80);
+  tmCheckDeviasi();
+}
+
+function tmCheckDeviasi(){
+  const m=document.getElementById('tandaiModal');if(!m)return;
+  const renc=m._rencana||0;
+  const real=parseFloat(document.getElementById('tmReal').value)||0;
+  const dev=real-renc;
+  const lbl=document.getElementById('tmDevLabel');
+  if(!real){lbl.textContent='—';lbl.style.color='var(--txt3)';return;}
+  if(dev===0){lbl.textContent='= Sesuai rencana';lbl.style.color='var(--green)';}
+  else if(dev>0){lbl.textContent=`▲ Lebih ${fmt(dev)} dari rencana`;lbl.style.color='var(--gold)';}
+  else{lbl.textContent=`▼ Hemat ${fmt(Math.abs(dev))} dari rencana`;lbl.style.color='var(--teal)';}
+  // Update estimasi sisa
+  const k=data.kegiatan.find(k=>k.id===m._id);
+  if(k)_tmRenderSisa(k,m._bulan,real);
+}
+
+function _tmRenderSisa(k,bulanSedang,realOverride){
+  const panel=document.getElementById('tmSisaPanel');
+  const rows=document.getElementById('tmSisaRows');
+  if(!k.rincian||k.rincian.length===0){panel.style.display='none';return;}
+  const totalRincian=k.rincian.reduce((s,r)=>s+rT(r),0);
+  if(!totalRincian){panel.style.display='none';return;}
+  // Total realisasi kumulatif (semua bulan yang sudah done, plus bulan ini jika ada override)
+  const realSelesai=(k.doneBulan||[]).reduce((s,m)=>s+kTPBReal(k,m),0);
+  const realBulanIni=realOverride!==undefined?realOverride:kTPB(k,bulanSedang);
+  const totalReal=realSelesai+realBulanIni;
+  const sisaTotal=Math.max(0,totalRincian-totalReal);
+  panel.style.display='block';
+  rows.innerHTML=k.rincian.map(r=>{
+    const subtotal=rT(r);
+    const proporsi=totalRincian>0?subtotal/totalRincian:0;
+    const realEst=Math.round(proporsi*totalReal);
+    const sisaEst=Math.max(0,subtotal-realEst);
+    const pct=subtotal>0?Math.min(100,Math.round(realEst/subtotal*100)):0;
+    const barColor=pct>=90?'var(--green)':pct>=60?'var(--teal)':pct>=30?'var(--gold)':'var(--red)';
+    return `<div style="background:var(--surf);border-radius:7px;padding:8px 10px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+        <span style="font-size:11px;font-weight:500;color:var(--txt);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(r.uraian||'—')}</span>
+        <span style="font-size:10px;color:${sisaEst===0?'var(--green)':'var(--gold)'};font-weight:600;margin-left:8px;white-space:nowrap;">${sisaEst===0?'✓ Lunas':'Sisa ≈ '+fmt(sisaEst)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="flex:1;height:5px;background:var(--bdr);border-radius:99px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${barColor};border-radius:99px;transition:width .3s;"></div>
+        </div>
+        <span style="font-size:9px;color:var(--txt3);white-space:nowrap;">${pct}% · ${fmt(subtotal)}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 function konfirmasiTandai(){
   const m=document.getElementById('tandaiModal');
   const id=m._id,bulan=m._bulan;
-  const realVal=parseFloat(document.getElementById('tmReal').value)||0;
+  const useManual=m._useManual||false;
+  const renc=kTPB(data.kegiatan.find(k=>k.id===id)||{},bulan);
+  // Jika pakai rencana: simpan null (kTPBReal fallback ke rencana), jika manual: simpan nilai input
+  const realVal=useManual?(parseFloat(document.getElementById('tmReal').value)||0):renc;
   const k=data.kegiatan.find(k=>k.id===id);if(!k)return;
   if(!k.doneBulan)k.doneBulan=[];
   if(!k.realisasiBulan)k.realisasiBulan={};
   k.doneBulan.push(bulan);k.doneBulan.sort((a,b)=>a-b);
-  k.realisasiBulan[bulan]=realVal;
+  // Hanya simpan realisasiBulan jika berbeda dari rencana (hemat storage)
+  if(useManual&&realVal!==renc)k.realisasiBulan[bulan]=realVal;
+  else delete k.realisasiBulan[bulan];
   m.classList.remove('open');
-  const renc=kTPB(k,bulan);
   const dev=realVal-renc;
-  const devStr=dev!==0?` · Deviasi ${dev>0?'+':''}${fmt(dev)}`:'';
-  toast(`"${k.nama}" — ${MN[bulan-1]} terlaksana · ${fmt(realVal)} terserap${devStr}`,'✓');
+  const devStr=useManual&&dev!==0?` · Deviasi ${dev>0?'▲+':'▼'}${fmt(Math.abs(dev))}`:'';
+  const modeStr=useManual?'Realisasi aktual':'Sesuai rencana';
+  toast(`✓ ${MN[bulan-1]} terlaksana · ${fmt(realVal)} (${modeStr})${devStr}`,'✅');
   saveLS();renderAll();
 }
 function delKeg(id){
