@@ -831,10 +831,10 @@ td.muted{color:var(--txt3);font-size:12px;}
 .login-bg{position:absolute;bottom:0;left:0;right:0;opacity:.09;pointer-events:none;}
 .login-box{background:rgba(0,32,80,.45);border:1px solid rgba(0,136,200,.28);border-radius:16px;padding:40px 36px 32px;width:400px;max-width:94vw;backdrop-filter:blur(18px);box-shadow:0 24px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);position:relative;z-index:1;animation:lbIn .4s ease;}
 @keyframes lbIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:24px;justify-content:center;}
-.login-brand{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:26px;font-weight:800;color:white;letter-spacing:2px;}
+.login-logo{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:24px;}
+.login-brand{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:28px;font-weight:800;color:white;letter-spacing:2.5px;text-align:center;}
 .login-brand span{color:#0099d8;}
-.login-sub{font-size:11px;color:rgba(255,255,255,.42);margin-top:3px;line-height:1.5;text-align:center;}
+.login-sub{font-size:11px;color:rgba(255,255,255,.60);margin-top:2px;line-height:1.6;text-align:center;letter-spacing:0.2px;}
 .login-div{height:1px;background:rgba(255,255,255,.09);margin:18px 0;}
 .login-lbl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:rgba(255,255,255,.38);margin-bottom:5px;}
 .login-inp{width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.13);border-radius:8px;padding:10px 14px;color:white;font-family:'Figtree',sans-serif;font-size:14px;outline:none;transition:all .2s;margin-bottom:12px;}
@@ -993,7 +993,7 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
   </svg>
   <div class="login-box">
     <div class="login-logo">
-      <svg viewBox="0 0 60 38" width="60" height="38" fill="none">
+      <svg viewBox="0 0 60 38" width="80" height="50" fill="none">
         <rect x="0" y="30" width="60" height="8" fill="#001848"/>
         <path d="M0 31 Q7.5 29 15 31 Q22.5 33 30 31 Q37.5 29 45 31 Q52.5 33 60 31" stroke="rgba(255,255,255,.2)" stroke-width=".8" fill="none"/>
         <rect x="2" y="24" width="56" height="4" rx="1" fill="#0058a5"/>
@@ -1012,10 +1012,8 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
         <circle cx="12" cy="3" r="1.6" fill="#0099d8"/>
         <circle cx="48" cy="3" r="1.6" fill="#0099d8"/>
       </svg>
-      <div>
-        <div class="login-brand">AM<span>PE</span>RA</div>
-        <div class="login-sub">Akselerasi Monitoring, Pelaksanaan, Evaluasi<br>Rencana Kerja &amp; Anggaran · Kanwil DJPb Sumsel</div>
-      </div>
+      <div class="login-brand">AM<span>PE</span>RA</div>
+      <div class="login-sub">Akselerasi Monitoring, Pelaksanaan, Evaluasi<br>Rencana Kerja &amp; Anggaran · Kanwil DJPb Sumsel</div>
     </div>
     <div class="login-div"></div>
     <label class="login-lbl">Nama Pengguna</label>
