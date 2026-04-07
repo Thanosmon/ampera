@@ -293,9 +293,10 @@ td.muted{color:var(--txt3);font-size:12px;}
 .kd.ak .kd-n{color:var(--teal);}
 .kd.wknd .kd-n{color:var(--red);opacity:0.7;}
 .kd.ak.wknd .kd-n{color:var(--red);opacity:0.85;}
-.kd-dots{position:absolute;bottom:3px;left:0;right:0;display:flex;gap:2px;justify-content:center;}
-.kev-dot{width:5px;height:5px;border-radius:50%;background:var(--teal2);}
+.kd-dots{position:absolute;bottom:3px;left:0;right:0;display:flex;gap:2px;justify-content:center;overflow:hidden;flex-wrap:nowrap;align-items:center;}
+.kev-dot{width:5px;height:5px;border-radius:50%;background:var(--teal2);flex-shrink:0;}
 .kev-dot.s{background:var(--green);}
+.kev-dot-more{font-size:7px;font-weight:700;color:var(--teal);line-height:1;flex-shrink:0;letter-spacing:-0.3px;}
 .kb-evs{padding:7px 10px;border-top:1px solid var(--bdr);display:flex;flex-direction:column;gap:4px;}
 .kev{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:6px;background:rgba(0,164,189,0.07);font-size:11px;cursor:pointer;transition:background 0.15s;border:1px solid transparent;}
 .kev:hover{background:rgba(0,164,189,0.14);border-color:rgba(0,164,189,0.2);}
@@ -2210,7 +2211,14 @@ function renderKal(){
       const isWeekend=dayOfWeek===0||dayOfWeek===6;
       const showDot=hasKegOnWeek&&isMondayOfWeek;
       const cls=['kd',hasKegOnWeek?'ak':'',hasKegOnWeek&&kgsThisWeek.every(k=>isDB(k,mI))?'ss':'',iT?'hi':'',isWeekend?'wknd':''].filter(Boolean).join(' ');
-      const dots=showDot?kgsThisWeek.map(k=>`<div class="kev-dot${isDB(k,mI)?' s':''}"></div>`).join(''):'';
+      const MAX_D=3;
+      let dots='';
+      if(showDot){
+        const vis=kgsThisWeek.slice(0,MAX_D);
+        const extra=kgsThisWeek.length-MAX_D;
+        dots=vis.map(k=>`<div class="kev-dot${isDB(k,mI)?' s':''}"></div>`).join('');
+        if(extra>0) dots+=`<div class="kev-dot-more">+${extra}</div>`;
+      }
       const wkStyle=hasKegOnWeek&&!kgsThisWeek.every(k=>isDB(k,mI))?'background:rgba(0,164,189,0.16);':(hasKegOnWeek&&kgsThisWeek.every(k=>isDB(k,mI))?'background:rgba(0,184,122,0.18);':'');
       dH+=`<div class="${cls}" style="${wkStyle}"><div class="kd-n">${d}</div>${dots?`<div class="kd-dots">${dots}</div>`:''}</div>`;
     }
