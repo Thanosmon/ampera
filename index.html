@@ -905,7 +905,7 @@ td.muted{color:var(--txt3);font-size:12px;}
     linear-gradient(145deg,#001030 0%,#002060 35%,#003080 65%,#001848 100%);
   background-size:36px 36px,100% 100%;}
 #loginScreen.hidden{display:none;}
-.login-bg{position:absolute;inset:0;opacity:.07;pointer-events:none;}
+.login-bg{position:absolute;bottom:-15%;left:50%;transform:translateX(-50%);width:88%;height:auto;opacity:.08;pointer-events:none;filter:brightness(0) invert(1);}
 .login-box{background:rgba(0,32,80,.45);border:1px solid rgba(0,136,200,.28);border-radius:16px;padding:40px 36px 32px;width:400px;max-width:94vw;backdrop-filter:blur(18px);box-shadow:0 24px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);position:relative;z-index:1;animation:lbIn .4s ease;}
 @keyframes lbIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .login-logo{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:24px;}
@@ -1051,41 +1051,7 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
 
 <!-- ═══ LOGIN SCREEN ═══ -->
 <div id="loginScreen">
-  <svg class="login-bg" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMid slice" fill="white">
-    <!-- Jembatan Ampera — siluet latar login -->
-    <!-- Bridge deck arc -->
-    <path d="M0 300 Q600 268 1200 300 L1200 322 Q600 290 0 322 Z"/>
-    <!-- === PYLON KIRI (center x=175) === -->
-    <!-- Top cap -->
-    <rect x="120" y="10" width="110" height="26" rx="2"/>
-    <!-- Left column -->
-    <rect x="124" y="36" width="40" height="272"/>
-    <!-- Right column -->
-    <rect x="206" y="36" width="40" height="272"/>
-    <!-- Mid band -->
-    <rect x="120" y="148" width="110" height="22"/>
-    <!-- Mid band lower -->
-    <rect x="124" y="188" width="40" height="18"/>
-    <rect x="206" y="188" width="40" height="18"/>
-    <!-- Abutment kiri -->
-    <rect x="126" y="322" width="36" height="80"/>
-    <rect x="208" y="322" width="36" height="80"/>
-    <!-- === PYLON KANAN (center x=1025) === -->
-    <!-- Top cap -->
-    <rect x="970" y="10" width="110" height="26" rx="2"/>
-    <!-- Left column -->
-    <rect x="974" y="36" width="40" height="272"/>
-    <!-- Right column -->
-    <rect x="1056" y="36" width="40" height="272"/>
-    <!-- Mid band -->
-    <rect x="970" y="148" width="110" height="22"/>
-    <!-- Mid band lower -->
-    <rect x="974" y="188" width="40" height="18"/>
-    <rect x="1056" y="188" width="40" height="18"/>
-    <!-- Abutment kanan -->
-    <rect x="976" y="322" width="36" height="80"/>
-    <rect x="1058" y="322" width="36" height="80"/>
-  </svg>
+  <img class="login-bg" src="logo-ampera.svg" alt="">
   <div class="login-box">
     <div class="login-logo">
       <img src="logo-ampera.svg" width="160" height="99" alt="Logo Jembatan Ampera" style="object-fit:contain;">
