@@ -2153,6 +2153,7 @@ function renderPerBidang(){
                 <tfoot><tr><td colspan="6" style="font-size:11px;color:var(--txt3)">Total Rincian (referensi)</td><td class="r">${fmt(k.rincian.reduce((s,r)=>s+rT(r),0))}</td></tr></tfoot>
               </table>
             </div>
+            ${sisaRincianHTML(k)}
             <div style="margin-top:14px">
               <div class="ri-lbl" style="margin-bottom:8px">📎 Dokumen Pendukung</div>
               <div class="dok-chips">${dokChipsHTML(k.dokumen)}</div>
@@ -2222,14 +2223,34 @@ function renderBulan(){
       const mk=kMinggu(k,idx);
       const mkLabel=mk.length?mk.map(w=>`<span class="jd-wbadge">Minggu ${w}</span>`).join(' '):`<span style="color:var(--txt3)">—</span>`;
       html+=`<tr class="${sd?'done-row':''}">
-        <td class="c" style="padding:0;border-right:1px solid var(--bdr);font-size:11px;font-weight:700;color:var(--teal);font-family:'Fira Code',monospace">${ki+1}</td>
-        <td class="keg-td"><strong>${escH(k.nama)}</strong>${k.dokumen&&k.dokumen.length?`<span class="dok-cnt" style="margin-left:6px">📎 ${k.dokumen.length}</span>`:''}</td>
+        <td class="c" onclick="togExp('${k.id}')" style="cursor:pointer;padding:0;border-right:1px solid var(--bdr);font-size:11px;font-weight:700;color:var(--teal);font-family:'Fira Code',monospace">${ki+1}</td>
+        <td class="keg-td" onclick="togExp('${k.id}')" style="cursor:pointer;"><div class="keg-name">${escH(k.nama)}${k.dokumen&&k.dokumen.length?`<span class="dok-cnt" style="margin-left:6px">📎 ${k.dokumen.length}</span>`:''}</div><div style="font-size:10px;color:var(--txt3);margin-top:2px">Klik untuk lihat rincian</div></td>
         <td class="muted">${escH(bNm(k.bidangId))}</td>
         <td class="muted">${escH(k.tempat)}</td>
         <td>${mkLabel}</td>
         <td class="r mono">${fmt(pb)}</td>
         <td class="c"><span class="badge ${sd?'badge-done':'badge-pend'}"><span class="bdot"></span>${sd?'Terlaksana':'Belum'}</span></td>
         <td class="c">${canTandai(k)?`<button class="ico-btn" onclick="togDB('${k.id}',${idx})" style="${sd?'border-color:var(--green);color:var(--green);background:var(--green-dim)':''}">${sd?'✓':'○'}</button>`:`<span style="font-size:13px;color:${sd?'var(--green)':'var(--txt3)'}">${sd?'✓':'—'}</span>`}</td>
+      </tr>
+      <tr class="rin-row" id="rr-${k.id}">
+        <td colspan="8" style="padding:0">
+          <div class="rin-inner">
+            ${jadwalTableHTML(k)}
+            <div style="margin-top:14px">
+              <div class="ri-lbl">Rincian Biaya (Referensi) — ${escH(k.nama)}</div>
+              <table class="ri-tbl">
+                <thead><tr><th>MAK</th><th>Uraian</th><th>Jml</th><th>Hr/Frek</th><th>Satuan</th><th class="r">Biaya/Sat</th><th class="r">Subtotal</th></tr></thead>
+                <tbody>${k.rincian.map(r=>`<tr><td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--teal)">${escH(r.mak||'')}</td><td>${escH(r.uraian)}</td><td>${r.jumlah}</td><td>${r.hari}</td><td>${escH(r.satuan)}</td><td class="r">${fmt(r.biayaSatuan)}</td><td class="r">${fmt(rT(r))}</td></tr>`).join('')}</tbody>
+                <tfoot><tr><td colspan="6" style="font-size:11px;color:var(--txt3)">Total Rincian (referensi)</td><td class="r">${fmt(k.rincian.reduce((s,r)=>s+rT(r),0))}</td></tr></tfoot>
+              </table>
+            </div>
+            ${sisaRincianHTML(k)}
+            <div style="margin-top:14px">
+              <div class="ri-lbl" style="margin-bottom:8px">📎 Dokumen Pendukung</div>
+              <div class="dok-chips">${dokChipsHTML(k.dokumen)}</div>
+            </div>
+          </div>
+        </td>
       </tr>`;
     });
     html+=`</tbody></table></div></div>`;
