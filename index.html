@@ -501,26 +501,26 @@ td.muted{color:var(--txt3);font-size:12px;}
 ═══════════════════════════════════ */
 .dash-header {
   background: linear-gradient(135deg, #005aa0 0%, #0070B5 55%, #0088C8 100%);
-  padding: 20px 28px 16px;
+  padding: 16px 28px 13px;
   border-bottom: 1px solid rgba(255,255,255,0.12);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
   flex-shrink: 0;
 }
 .dash-header-left h2 {
   font-family: 'Sora', sans-serif;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: white;
   letter-spacing: 0.3px;
 }
 .dash-header-left p {
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(255,255,255,0.45);
-  margin-top: 3px;
+  margin-top: 2px;
 }
 .dash-bulan-selector {
   display: flex;
@@ -573,7 +573,7 @@ td.muted{color:var(--txt3);font-size:12px;}
 }
 @media(max-width:900px){ .dash-kpi-strip { grid-template-columns: repeat(2,1fr); } }
 .dash-kpi {
-  padding: 16px 22px;
+  padding: 12px 20px;
   border-right: 1px solid var(--bdr);
   position: relative;
   overflow: hidden;
@@ -606,7 +606,7 @@ td.muted{color:var(--txt3);font-size:12px;}
 }
 .dash-kpi-val {
   font-family: 'Fira Code', monospace;
-  font-size: 18px; font-weight: 600; color: var(--txt); line-height: 1.2;
+  font-size: 16px; font-weight: 600; color: var(--txt); line-height: 1.2;
 }
 .dk-teal .dash-kpi-val  { color: var(--teal); }
 .dk-green .dash-kpi-val { color: var(--green); }
@@ -619,7 +619,7 @@ td.muted{color:var(--txt3);font-size:12px;}
   display: inline-flex; align-items: center; gap: 4px;
   padding: 2px 7px; border-radius: 4px;
   font-size: 10px; font-weight: 700;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 .dkb-green { background: rgba(0,184,122,0.12); color: var(--green); }
 .dkb-red   { background: rgba(204,68,68,0.1); color: #c44; }
@@ -630,7 +630,7 @@ td.muted{color:var(--txt3);font-size:12px;}
 .sticky-summary {
   background: linear-gradient(135deg, #005aa0 0%, #0070B5 55%, #0088C8 100%);
   padding: 0 28px;
-  height: 52px;
+  height: 44px;
   display: flex;
   align-items: center;
   gap: 0;
@@ -887,6 +887,39 @@ body.logged-in [data-admin].show-admin{display:flex;}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 /* Print fix */
 @media print{#loginScreen{display:none!important;}}
+
+/* ═══ COMPACT MODE — Layar Pendek (Laptop) ═══ */
+@media(max-height:820px){
+  /* Topbar lebih ramping */
+  .topbar{height:40px;}
+  /* Sticky bar lebih tipis */
+  .sticky-summary{height:36px;}
+  .ss-val{font-size:13px;}
+  .ss-val.ss-pct{font-size:14px;}
+  .ss-lbl{font-size:8px;}
+  .ss-divider{height:24px;}
+  .ss-prog-track{margin-top:2px;}
+  /* Dash header sangat compact */
+  .dash-header{padding:10px 24px 8px;gap:8px;}
+  .dash-header-left h2{font-size:16px;}
+  .dash-header-left p{font-size:10px;margin-top:1px;}
+  .dash-bulan-selector{padding:5px 10px;}
+  .dash-bulan-selector select{font-size:13px;}
+  .dash-print-btn{padding:5px 10px;font-size:11px;}
+  /* KPI strip compact */
+  .dash-kpi{padding:9px 16px;}
+  .dash-kpi-val{font-size:14px;}
+  .dash-kpi-lbl{margin-bottom:3px;}
+  .dash-kpi-sub{font-size:9px;margin-top:2px;}
+  .dash-kpi-badge{margin-top:3px;font-size:9px;padding:1px 6px;}
+}
+@media(max-height:700px){
+  /* Sangat compact — sembunyikan sub-info KPI yang panjang */
+  .dash-kpi-sub span:last-child{display:none;}
+  .sticky-summary{height:32px;}
+  .dash-header{padding:7px 20px 6px;}
+  .dash-header-left p{display:none;}
+}
 
 /* ═══ GLOBAL SEARCH ═══ */
 .gsearch-wrap{position:relative;display:flex;align-items:center;margin-left:auto;}
