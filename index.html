@@ -905,10 +905,10 @@ td.muted{color:var(--txt3);font-size:12px;}
     linear-gradient(145deg,#001030 0%,#002060 35%,#003080 65%,#001848 100%);
   background-size:36px 36px,100% 100%;}
 #loginScreen.hidden{display:none;}
-.login-bg{position:absolute;bottom:0;left:0;right:0;opacity:.09;pointer-events:none;}
+.login-bg{position:absolute;inset:0;opacity:.07;pointer-events:none;}
 .login-box{background:rgba(0,32,80,.45);border:1px solid rgba(0,136,200,.28);border-radius:16px;padding:40px 36px 32px;width:400px;max-width:94vw;backdrop-filter:blur(18px);box-shadow:0 24px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);position:relative;z-index:1;animation:lbIn .4s ease;}
 @keyframes lbIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-.login-logo{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:24px;}
+.login-logo{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:24px;}
 .login-logo img{filter:brightness(0) invert(1) sepia(1) saturate(4) hue-rotate(158deg) brightness(0.95);}
 .login-brand{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:28px;font-weight:800;color:white;letter-spacing:2.5px;text-align:center;}
 .login-brand span{color:inherit;}
@@ -1051,27 +1051,44 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
 
 <!-- ═══ LOGIN SCREEN ═══ -->
 <div id="loginScreen">
-  <svg class="login-bg" viewBox="0 0 1200 260" preserveAspectRatio="none" fill="white">
-    <rect x="0" y="200" width="1200" height="60"/>
-    <rect x="0" y="182" width="1200" height="24" rx="2"/>
-    <rect x="175" y="70" width="26" height="118"/>
-    <rect x="999" y="70" width="26" height="118"/>
-    <rect x="185" y="14" width="10" height="70"/>
-    <rect x="1005" y="14" width="10" height="70"/>
-    <rect x="126" y="42" width="84" height="9" rx="3"/>
-    <rect x="990" y="42" width="84" height="9" rx="3"/>
-    <line x1="190" y1="15" x2="55" y2="182" stroke="white" stroke-width="3.5"/>
-    <line x1="190" y1="15" x2="270" y2="182" stroke="white" stroke-width="3.5"/>
-    <line x1="190" y1="15" x2="430" y2="182" stroke="white" stroke-width="2.5" opacity=".6"/>
-    <line x1="190" y1="15" x2="600" y2="182" stroke="white" stroke-width="1.5" opacity=".3"/>
-    <line x1="1010" y1="15" x2="1145" y2="182" stroke="white" stroke-width="3.5"/>
-    <line x1="1010" y1="15" x2="930" y2="182" stroke="white" stroke-width="3.5"/>
-    <line x1="1010" y1="15" x2="770" y2="182" stroke="white" stroke-width="2.5" opacity=".6"/>
-    <line x1="1010" y1="15" x2="600" y2="182" stroke="white" stroke-width="1.5" opacity=".3"/>
+  <svg class="login-bg" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMid slice" fill="white">
+    <!-- Jembatan Ampera — siluet latar login -->
+    <!-- Bridge deck arc -->
+    <path d="M0 300 Q600 268 1200 300 L1200 322 Q600 290 0 322 Z"/>
+    <!-- === PYLON KIRI (center x=175) === -->
+    <!-- Top cap -->
+    <rect x="120" y="10" width="110" height="26" rx="2"/>
+    <!-- Left column -->
+    <rect x="124" y="36" width="40" height="272"/>
+    <!-- Right column -->
+    <rect x="206" y="36" width="40" height="272"/>
+    <!-- Mid band -->
+    <rect x="120" y="148" width="110" height="22"/>
+    <!-- Mid band lower -->
+    <rect x="124" y="188" width="40" height="18"/>
+    <rect x="206" y="188" width="40" height="18"/>
+    <!-- Abutment kiri -->
+    <rect x="126" y="322" width="36" height="80"/>
+    <rect x="208" y="322" width="36" height="80"/>
+    <!-- === PYLON KANAN (center x=1025) === -->
+    <!-- Top cap -->
+    <rect x="970" y="10" width="110" height="26" rx="2"/>
+    <!-- Left column -->
+    <rect x="974" y="36" width="40" height="272"/>
+    <!-- Right column -->
+    <rect x="1056" y="36" width="40" height="272"/>
+    <!-- Mid band -->
+    <rect x="970" y="148" width="110" height="22"/>
+    <!-- Mid band lower -->
+    <rect x="974" y="188" width="40" height="18"/>
+    <rect x="1056" y="188" width="40" height="18"/>
+    <!-- Abutment kanan -->
+    <rect x="976" y="322" width="36" height="80"/>
+    <rect x="1058" y="322" width="36" height="80"/>
   </svg>
   <div class="login-box">
     <div class="login-logo">
-      <img src="logo-ampera.svg" width="110" height="68" alt="Logo Jembatan Ampera" style="object-fit:contain;">
+      <img src="logo-ampera.svg" width="160" height="99" alt="Logo Jembatan Ampera" style="object-fit:contain;">
       <div class="login-brand">AM<span>PE</span>RA</div>
       <div class="login-sub">Akselerasi Monitoring, Pelaksanaan, Evaluasi<br>Rencana Kerja &amp; Anggaran · Kanwil DJPb Sumsel</div>
     </div>
