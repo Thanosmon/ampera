@@ -813,6 +813,83 @@ td.muted{color:var(--txt3);font-size:12px;}
 .gauge-label { font-family: 'Sora', sans-serif; font-size: 28px; font-weight: 800; fill: var(--txt); }
 .gauge-sub { font-size: 11px; fill: var(--txt3); }
 
+/* ═══ LARGE MONITOR — skala naik proporsional ═══ */
+@media(min-width:1440px){
+  :root{ --sid-w:260px; }
+  /* Topbar */
+  .topbar{height:52px;}
+  .brand-name{font-size:16px;}
+  .topbar-center{font-size:12px;}
+  .logo-mark{width:54px;height:33px;}
+  /* Sidebar */
+  .sid-item{font-size:14px;padding:10px 14px;}
+  .sid-icon{font-size:16px;}
+  .sid-section-lbl{font-size:10px;}
+  .sid-stat-lbl{font-size:11px;}
+  .sid-stat-val{font-size:12px;}
+  /* Page header */
+  .page-header{padding:16px 36px;}
+  .page-title{font-size:19px;}
+  .page-title-sub{font-size:13px;}
+  .scroll-content{padding:24px 36px 40px;}
+  /* Sticky summary */
+  .sticky-summary{height:50px;}
+  .ss-lbl{font-size:10px;}
+  .ss-val{font-size:16px;}
+  .ss-val.ss-pct{font-size:19px;}
+  /* Dashboard header */
+  .dash-header{padding:18px 36px 15px;}
+  .dash-header-left h2{font-size:20px;}
+  .dash-header-left p{font-size:12px;}
+  /* KPI strip */
+  .dash-kpi{padding:14px 28px;}
+  .dash-kpi-lbl{font-size:10px;}
+  .dash-kpi-val{font-size:18px;}
+  .dash-kpi-sub{font-size:11px;}
+  .dash-kpi-badge{font-size:11px;padding:3px 9px;}
+  /* Cards & content */
+  .card-title{font-size:14px;}
+  .seclbl{font-size:12px;}
+  .btn{font-size:13px;padding:8px 17px;}
+}
+
+@media(min-width:1920px){
+  :root{ --sid-w:280px; }
+  /* Topbar */
+  .topbar{height:56px;}
+  .brand-name{font-size:17px;letter-spacing:2px;}
+  .topbar-center{font-size:13px;}
+  .logo-mark{width:62px;height:38px;}
+  /* Sidebar */
+  .sid-item{font-size:15px;padding:11px 16px;}
+  .sid-section-lbl{font-size:11px;}
+  .sid-stat-lbl{font-size:12px;}
+  .sid-stat-val{font-size:13px;}
+  /* Page header */
+  .page-header{padding:18px 44px;}
+  .page-title{font-size:21px;}
+  .page-title-sub{font-size:14px;}
+  .scroll-content{padding:28px 44px 48px;}
+  /* Sticky summary */
+  .sticky-summary{height:54px;}
+  .ss-lbl{font-size:11px;}
+  .ss-val{font-size:18px;}
+  .ss-val.ss-pct{font-size:21px;}
+  /* Dashboard header */
+  .dash-header{padding:22px 44px 18px;}
+  .dash-header-left h2{font-size:23px;}
+  .dash-header-left p{font-size:13px;}
+  /* KPI strip */
+  .dash-kpi{padding:16px 32px;}
+  .dash-kpi-lbl{font-size:11px;letter-spacing:1.2px;}
+  .dash-kpi-val{font-size:21px;}
+  .dash-kpi-sub{font-size:12px;}
+  .dash-kpi-badge{font-size:12px;padding:3px 10px;}
+  /* Cards & content */
+  .seclbl{font-size:13px;}
+  .btn{font-size:14px;padding:9px 20px;}
+}
+
 /* Print mode */
 @media print {
   .sidebar, .topbar, .page-header { display: none !important; }
