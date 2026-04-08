@@ -3222,7 +3222,7 @@ function renderDashboard(){
         <div class="chart-card">
           <div class="chart-card-head">
             <h4>📊 Rencana vs Realisasi Anggaran per Bulan</h4>
-            <span>Batang = rencana · Garis = kumulatif realisasi</span>
+            <span>Batang = rencana & realisasi per bulan</span>
           </div>
           <div class="chart-body">
             <canvas id="chartBarBulan"></canvas>
@@ -3235,7 +3235,7 @@ function renderDashboard(){
           </div>
           <div class="chart-body" style="padding:8px;">
             <div class="gauge-wrap">
-              <svg width="160" height="140" viewBox="0 0 160 140">
+              <svg viewBox="0 0 160 140" style="width:min(100%,260px);height:auto;display:block;margin:0 auto;">
                 <defs>
                   <linearGradient id="gaugeFill" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stop-color="#007c91"/>
@@ -3261,13 +3261,13 @@ function renderDashboard(){
                   ${fillArc}${dot}`;
                 })()}
                 <text x="80" y="104" text-anchor="middle" class="gauge-label" style="font-family:'Sora',sans-serif;font-size:30px;font-weight:800;fill:${pctBln===100?'#00b87a':'#007c91'}">${pctBln}%</text>
-                <text x="80" y="122" text-anchor="middle" class="gauge-sub" style="font-family:'Figtree',sans-serif;font-size:11px;fill:#7a9aac">terlaksana ${blnNm}</text>
+                <text x="80" y="122" text-anchor="middle" class="gauge-sub" style="font-family:'Figtree',sans-serif;font-size:11px;fill:#7a9aac">realisasi ${blnNm}</text>
               </svg>
             </div>
             <div style="display:flex;justify-content:center;gap:16px;margin-top:2px;flex-wrap:wrap;">
               <div style="text-align:center;">
                 <div style="font-family:'Fira Code',monospace;font-size:18px;font-weight:500;color:var(--green)">${doneCnt}</div>
-                <div style="font-size:10px;color:var(--txt3)">Terlaksana</div>
+                <div style="font-size:10px;color:var(--txt3)">Realisasi</div>
               </div>
               <div style="width:1px;background:var(--bdr);"></div>
               <div style="text-align:center;">
@@ -3410,9 +3410,8 @@ function renderDashboard(){
     data:{
       labels:MS,
       datasets:[
-        {label:'Rencana',data:perBulanAngg,backgroundColor:MS.map((_,i)=>i+1===bln?'rgba(0,124,145,0.9)':'rgba(0,124,145,0.28)'),borderColor:'rgba(0,124,145,0)',borderRadius:4,borderSkipped:false,order:1},
-        {label:'Realisasi',data:perBulanDone,backgroundColor:MS.map((_,i)=>i+1===bln?'rgba(0,184,122,0.9)':'rgba(0,184,122,0.5)'),borderColor:'rgba(0,184,122,0)',borderRadius:4,borderSkipped:false,order:2},
-        {label:'Kumulatif Realisasi',data:kumulDone,type:'line',borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,0.07)',pointBackgroundColor:'#e8a020',pointRadius:3,tension:0.35,fill:true,yAxisID:'y2',order:0}
+        {label:'Rencana',data:perBulanAngg,backgroundColor:MS.map((_,i)=>i+1===bln?'rgba(0,124,145,0.9)':'rgba(0,124,145,0.28)'),borderColor:'rgba(0,124,145,0)',borderRadius:4,borderSkipped:false},
+        {label:'Realisasi',data:perBulanDone,backgroundColor:MS.map((_,i)=>i+1===bln?'rgba(0,184,122,0.9)':'rgba(0,184,122,0.5)'),borderColor:'rgba(0,184,122,0)',borderRadius:4,borderSkipped:false}
       ]
     },
     options:{
@@ -3420,7 +3419,6 @@ function renderDashboard(){
       plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:14,font:{size:11}}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`}}},
       scales:{
         y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{callback:v=>fmtShort(v),font:{size:10}}},
-        y2:{position:'right',grid:{display:false},ticks:{callback:v=>fmtShort(v),font:{size:10}}},
         x:{grid:{display:false}}
       }
     }
