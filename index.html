@@ -1256,7 +1256,8 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
         </div>
       </div>
     </div>
-    <div class="modal-foot">
+    <div class="modal-foot" style="justify-content:space-between;">
+      <button class="btn" onclick="resetSemuaRealisasi()" style="background:rgba(224,85,85,0.1);color:#c0392b;border:1.5px solid rgba(224,85,85,0.3);font-size:11.5px;padding:6px 14px;border-radius:7px;cursor:pointer;font-family:'Figtree',sans-serif;font-weight:600;" title="Hapus semua status dilaksanakan dari seluruh kegiatan">🗑️ Reset Semua Realisasi</button>
       <button class="btn btn-o" onclick="document.getElementById('exportModal').classList.remove('open')">Tutup</button>
     </div>
   </div>
@@ -4451,6 +4452,21 @@ function openExportModal(){
   const fbv=document.getElementById('filterBulan')?.value;
   const sel=document.getElementById('laporanBulanSel');
   if(sel&&fbv) sel.value=fbv;
+}
+
+function resetSemuaRealisasi(){
+  const total=data.kegiatan.filter(k=>(k.doneBulan||[]).length>0).length;
+  if(!confirm(`Ini akan menghapus status "Dilaksanakan" dari SEMUA kegiatan (${total} kegiatan memiliki realisasi).\n\nLanjutkan?`))return;
+  data.kegiatan.forEach(k=>{
+    k.doneBulan=[];
+    delete k.realisasiBulan;
+    delete k.realisasiRincianBulan;
+  });
+  saveLS();
+  renderAll();
+  toast('Semua realisasi berhasil direset','🗑️');
+  // Push ke server agar sinkron
+  if(typeof pushToServer==='function') pushToServer(true);
 }
 
 // ════════════════════════════════════════════
