@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/USER/**)",
+      "Bash(python -c \"import pandas; print\\(pandas.__version__\\)\")",
+      "Bash(py -3 -c \"import pandas; print\\(pandas.__version__\\)\")",
+      "Bash(python3 -c \"import pandas; print\\(pandas.__version__\\)\")",
+      "Bash(py -c \"import pandas; print\\(pandas.__version__\\)\")",
+      "Bash(where python3:*)",
+      "Bash(where py:*)",
+      "Bash(where python:*)",
+      "Bash(ls /c/Python*)",
+      "Bash(node -e \"console.log\\(''node works''\\)\")",
+      "Bash(ls /c/Users/USER/AppData/Local/Microsoft/WindowsApps/python*.exe)",
+      "Bash(/c/Users/USER/AppData/Local/Microsoft/WindowsApps/python3.exe --version)",
+      "Bash(cmd /c \"python --version\")",
+      "Bash(cmd /c \"py --version\")",
+      "Bash(cmd /c \"where python 2>&1\")",
+      "Bash(cmd /c \"dir C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Programs /b 2>&1\")",
+      "Bash(perl --version)",
+      "Bash(find '/c/Users/USER/AppData/Local/Programs/Microsoft VS Code/' -maxdepth 3 -name *.exe)",
+      "Bash(powershell -Command \"Get-Command python -ErrorAction SilentlyContinue | Select-Object Source\")",
+      "Bash(powershell -Command \"Get-Command node -ErrorAction SilentlyContinue | Select-Object Source\")",
+      "Bash(powershell -Command \"python --version\")",
+      "Bash(powershell -Command \"& ''C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Microsoft\\\\WindowsApps\\\\python.exe'' --version\")",
+      "Bash(powershell -Command \"Get-Item ''C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Microsoft\\\\WindowsApps\\\\python.exe'' | Select-Object FullName, Target, LinkType\")",
+      "Bash(powershell -Command \":*)",
+      "Read(//mnt/c/Users/USER/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/e2c0b825-050a-40e3-8a59-0b5f44ff86c4/5eef0c9f-3590-4d08-9aa0-e92f625904ae/skills/**)",
+      "Bash(python -m markitdown \"/mnt/c/Users/USER/Downloads/Laporan Kinerja Keuangan Februari 2026.pptx\")",
+      "Bash(SKILL_DIR=\"C:/Users/USER/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/e2c0b825-050a-40e3-8a59-0b5f44ff86c4/5eef0c9f-3590-4d08-9aa0-e92f625904ae/skills/pptx\")",
+      "Bash(python -m markitdown \"C:/Users/USER/Downloads/Laporan Kinerja Keuangan Februari 2026.pptx\")",
+      "Bash(python3 -m markitdown \"C:/Users/USER/Downloads/Laporan Kinerja Keuangan Februari 2026.pptx\")",
+      "Bash(find /c/Users/USER -name python.exe -not -path */WindowsApps/*)"
+    ]
+  }
+}
