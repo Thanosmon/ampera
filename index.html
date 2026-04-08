@@ -1315,8 +1315,8 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
         <select id="filterBidang" onchange="renderAll()"><option value="all">Semua Bidang</option></select>
         <select id="filterStatus" onchange="renderAll()">
           <option value="all">Semua Status</option>
-          <option value="done">Sudah Terlaksana</option>
-          <option value="pending">Belum Terlaksana</option>
+          <option value="done">Sudah Dilaksanakan</option>
+          <option value="pending">Belum Dilaksanakan</option>
         </select>
         <select id="filterBulan" onchange="renderAll()">
           <option value="all">Semua Bulan</option>
@@ -1789,7 +1789,7 @@ function updSum(){
   if(ssF)ssF.style.width=Math.min(100,pct)+'%';
   const mc=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   mc('mc1',fmt(disp));mc('mc2',fmt(dn));mc('mc3',fmt(Math.max(0,disp-dn)));
-  mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
+  mc('mc4',totP+' kegiatan');mc('mc5',dnP+' dilaksanakan');
   // Sub-label mc1: angka detail (tidak dibulatkan)
   const mc1Sub=document.querySelector('#mc1')?.closest('.metric-card')?.querySelector('.metric-sub');
   if(mc1Sub){
@@ -1814,15 +1814,15 @@ function updMetricCards(ks,label){
   if(label){
     // Filter aktif: tampilkan total kegiatan filter di mc1, pagu resmi di sub
     mc('mc1',fmt(kegTot));mc('mc2',fmt(dn));mc('mc3',fmt(kegTot-dn));
-    mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
+    mc('mc4',totP+' kegiatan');mc('mc5',dnP+' dilaksanakan');
     setSub('mc1',`${label} · Pagu resmi: ${fmt(paguResmi||kegAll)}`);
-    setSub('mc2','Terserap · '+label);setSub('mc3','Belum terlaksana · '+label);
+    setSub('mc2','Terserap · '+label);setSub('mc3','Belum dilaksanakan · '+label);
     setSub('mc4','Jadwal · '+label);setSub('mc5','Dari total jadwal · '+label);
   }else{
     // Tidak difilter: tampilkan pagu resmi sebagai primer, akum. kegiatan di sub (angka penuh)
     const disp=paguResmi>0?paguResmi:kegAll;
     mc('mc1',fmt(disp));mc('mc2',fmt(dn));mc('mc3',fmt(Math.max(0,disp-dn)));
-    mc('mc4',totP+' pelaksanaan');mc('mc5',dnP+' terlaksana');
+    mc('mc4',totP+' kegiatan');mc('mc5',dnP+' dilaksanakan');
     if(paguResmi>0&&kegAll>0&&kegAll!==paguResmi)
       setSub('mc1',`Pagu resmi · Akum. kegiatan: ${fmt(kegAll)}`);
     else if(paguResmi===0&&kegAll>0)
@@ -1899,9 +1899,9 @@ function metricsHTML(){
   return`<div class="metrics-row">
     <div class="metric-card mc-teal"><div class="metric-lbl">Total Pagu</div><div class="metric-val teal" id="mc1">—</div><div class="metric-sub">Pagu resmi 51+52+53 · TA 2026</div></div>
     <div class="metric-card mc-green"><div class="metric-lbl">Realisasi</div><div class="metric-val green" id="mc2">—</div><div class="metric-sub">Kumulatif s.d. sekarang</div></div>
-    <div class="metric-card mc-gold"><div class="metric-lbl">Sisa Pagu</div><div class="metric-val gold" id="mc3">—</div><div class="metric-sub">Belum terlaksana</div></div>
-    <div class="metric-card mc-ink"><div class="metric-lbl">Total Jadwal</div><div class="metric-val" id="mc4">—</div><div class="metric-sub">Pelaksanaan sepanjang tahun</div></div>
-    <div class="metric-card mc-red"><div class="metric-lbl">Terlaksana</div><div class="metric-val" id="mc5">—</div><div class="metric-sub">Dari total jadwal pelaksanaan</div></div>
+    <div class="metric-card mc-gold"><div class="metric-lbl">Sisa Pagu</div><div class="metric-val gold" id="mc3">—</div><div class="metric-sub">Belum dilaksanakan</div></div>
+    <div class="metric-card mc-ink"><div class="metric-lbl">Total Jadwal</div><div class="metric-val" id="mc4">—</div><div class="metric-sub">Kegiatan sepanjang tahun</div></div>
+    <div class="metric-card mc-red"><div class="metric-lbl">Dilaksanakan</div><div class="metric-val" id="mc5">—</div><div class="metric-sub">Dari total jadwal kegiatan</div></div>
   </div>`;
 }
 
@@ -1915,7 +1915,7 @@ function jadwalChipsHTML(k){
   return(k.jadwal||[]).map(j=>{
     const sd=isDB(k,j.bulan);
     const wl=weekLabel(j.minggu);
-    const title=`${MN[j.bulan-1]}${j.minggu.length?', Minggu '+j.minggu.join(' & '):''}\n${fmt(j.anggaran)}\n${sd?'✓ Terlaksana':'Belum terlaksana'}`;
+    const title=`${MN[j.bulan-1]}${j.minggu.length?', Minggu '+j.minggu.join(' & '):''}\n${fmt(j.anggaran)}\n${sd?'✓ Dilaksanakan':'Belum dilaksanakan'}`;
     return`<span class="mchip-btn ${sd?'done':''}" ${clickable?`onclick="togDB('${k.id}',${j.bulan})"`:'style="cursor:default;opacity:0.75;pointer-events:none"'} title="${escH(title)}">
       <span class="mchip-top">${sd?'✓ ':''}<span>${MS[j.bulan-1]}</span></span>
       ${wl?`<span class="mchip-week">${wl}</span>`:''}
@@ -1935,7 +1935,7 @@ function jadwalTableHTML(k){
       <span class="jd-week">${wBadges}</span>
       <span></span>
       <span class="jd-angg ${sd?'done':''}">${fmt(j.anggaran)}</span>
-      <span><span class="badge ${sd?'badge-done':'badge-pend'}"><span class="bdot"></span>${sd?'Terlaksana':'Belum'}</span></span>
+      <span><span class="badge ${sd?'badge-done':'badge-pend'}"><span class="bdot"></span>${sd?'Dilaksanakan':'Belum'}</span></span>
     </div>`;
   }).join('');
   return`<div style="margin-top:14px">
@@ -2026,7 +2026,7 @@ function renderKeg(){
         <div class="bid-head-left"><div class="bid-head-accent"></div><h2>${escH(b.nama)}</h2></div>
         <div class="bid-metas">
           <div class="bid-meta"><div class="bid-meta-lbl">Anggaran</div><div class="bid-meta-val">${fmt(totB)}</div></div>
-          <div class="bid-meta"><div class="bid-meta-lbl">Terlaksana</div><div class="bid-meta-val">${fmt(dnB)}</div></div>
+          <div class="bid-meta"><div class="bid-meta-lbl">Realisasi</div><div class="bid-meta-val">${fmt(dnB)}</div></div>
           <div class="bid-prog-outer"><div class="bid-prog-track"><div class="bid-prog-bar" style="width:${pct}%"></div></div><div class="bid-prog-pct">${pct}% selesai</div></div>
           ${currentUser&&currentUser.role==='admin'?`<button onclick="delBidang('${b.id}')" title="Hapus Bidang" style="background:rgba(224,85,85,0.15);border:1px solid rgba(224,85,85,0.35);color:#ff9a9a;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Figtree',sans-serif;transition:all 0.15s;white-space:nowrap;flex-shrink:0" onmouseover="this.style.background='rgba(224,85,85,0.3)'" onmouseout="this.style.background='rgba(224,85,85,0.15)'">🗑 Hapus Bidang</button>`:''}
         </div>
@@ -2050,7 +2050,7 @@ function renderKeg(){
           <td class="nm-td">
             <div class="keg-name" onclick="togExp('${k.id}')">${escH(k.nama)}${dokCnt}</div>
             ${k.catatan?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${escH(k.catatan)}</div>`:''}
-            <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan terlaksana</div>
+            <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan dilaksanakan</div>
           </td>
           <td class="muted">${escH(k.tempat)}</td>
           <td class="jad-td"><div style="display:flex;flex-wrap:wrap;gap:2px">${jadwalChipsHTML(k)}</div></td>
@@ -2154,7 +2154,7 @@ function renderPerBidang(){
   tabsHtml+=`</div>`;
 
   // Summary + filter info
-  const filterInfo=(fs!=='all'||fm!=='all')?`<div style="font-size:11px;color:var(--teal);margin-bottom:12px;padding:7px 14px;background:rgba(0,124,145,0.08);border-radius:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">🔍 Filter aktif:${fs!=='all'?` <strong>${fs==='done'?'Sudah Terlaksana':'Belum Terlaksana'}</strong>`:''} ${fm!=='all'?` · Bulan: <strong>${MN[+fm-1]}</strong>`:''} — menampilkan ${ks.length} dari ${ksAll.length} kegiatan <button onclick="document.getElementById('filterStatus').value='all';document.getElementById('filterBulan').value='all';renderAll()" style="background:none;border:none;color:var(--teal);cursor:pointer;font-size:11px;padding:0;font-family:'Figtree',sans-serif;text-decoration:underline;margin-left:4px;">✕ Reset Filter</button></div>`:'';
+  const filterInfo=(fs!=='all'||fm!=='all')?`<div style="font-size:11px;color:var(--teal);margin-bottom:12px;padding:7px 14px;background:rgba(0,124,145,0.08);border-radius:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">🔍 Filter aktif:${fs!=='all'?` <strong>${fs==='done'?'Sudah Dilaksanakan':'Belum Terlaksana'}</strong>`:''} ${fm!=='all'?` · Bulan: <strong>${MN[+fm-1]}</strong>`:''} — menampilkan ${ks.length} dari ${ksAll.length} kegiatan <button onclick="document.getElementById('filterStatus').value='all';document.getElementById('filterBulan').value='all';renderAll()" style="background:none;border:none;color:var(--teal);cursor:pointer;font-size:11px;padding:0;font-family:'Figtree',sans-serif;text-decoration:underline;margin-left:4px;">✕ Reset Filter</button></div>`:'';
   let html=tabsHtml+filterInfo;
   html+=`<div class="bid-block">
     <div class="bid-head">
@@ -2188,7 +2188,7 @@ function renderPerBidang(){
         <td class="nm-td">
           <div class="keg-name" onclick="togExp('${k.id}')">${escH(k.nama)}${dokCnt}</div>
           ${k.catatan?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${escH(k.catatan)}</div>`:''}
-          <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan terlaksana</div>
+          <div style="font-size:10px;color:var(--txt3);margin-top:3px">${(k.doneBulan||[]).length}/${kBulanList(k).length} bulan dilaksanakan</div>
         </td>
         <td class="muted">${escH(k.tempat)}</td>
         <td class="jad-td"><div style="display:flex;flex-wrap:wrap;gap:2px">${jadwalChipsHTML(k)}</div></td>
@@ -2267,7 +2267,7 @@ function renderBulan(){
         <div class="bid-head-left"><div class="bid-head-accent"></div><h2>${m} 2026</h2></div>
         <div class="bid-metas">
           <div class="bid-meta"><div class="bid-meta-lbl">Anggaran Bulan Ini</div><div class="bid-meta-val">${fmt(tot)}</div></div>
-          <div class="bid-meta"><div class="bid-meta-lbl">Terlaksana</div><div class="bid-meta-val">${fmt(dn)}</div></div>
+          <div class="bid-meta"><div class="bid-meta-lbl">Realisasi</div><div class="bid-meta-val">${fmt(dn)}</div></div>
         </div>
       </div>
       <div class="tbl-wrap"><table class="bln-tbl">
@@ -2287,7 +2287,7 @@ function renderBulan(){
         <td class="muted">${escH(k.tempat)}</td>
         <td>${mkLabel}</td>
         <td class="r mono">${fmt(pb)}</td>
-        <td class="c"><span class="badge ${sd?'badge-done':'badge-pend'}"><span class="bdot"></span>${sd?'Terlaksana':'Belum'}</span></td>
+        <td class="c"><span class="badge ${sd?'badge-done':'badge-pend'}"><span class="bdot"></span>${sd?'Dilaksanakan':'Belum'}</span></td>
         <td class="c">${canTandai(k)?`<button class="ico-btn" onclick="togDB('${k.id}',${idx})" style="${sd?'border-color:var(--green);color:var(--green);background:var(--green-dim)':''}">${sd?'✓':'○'}</button>`:`<span style="font-size:13px;color:${sd?'var(--green)':'var(--txt3)'}">${sd?'✓':'—'}</span>`}</td>
         <td class="c"><div class="aksi">${canEdit(k)?`<button class="ico-btn" title="Edit" onclick="openEdit('${k.id}')">✎</button><button class="ico-btn del" title="Hapus" onclick="delKeg('${k.id}')">✕</button>`:''}</div></td>
       </tr>
@@ -2377,7 +2377,7 @@ function renderKal(){
   let html=metricsHTML();
   html+=`<div class="kal-legend">
     <div class="leg-i"><div class="leg-d" style="background:rgba(0,164,189,.15);border:1px solid rgba(0,164,189,.3)"></div>Ada Kegiatan</div>
-    <div class="leg-i"><div class="leg-d" style="background:rgba(0,184,122,.12);border:1px solid rgba(0,184,122,.3)"></div>Semua Terlaksana</div>
+    <div class="leg-i"><div class="leg-d" style="background:rgba(0,184,122,.12);border:1px solid rgba(0,184,122,.3)"></div>Semua Dilaksanakan</div>
     <div class="leg-i"><div class="leg-d" style="outline:2px solid var(--gold);border-radius:2px"></div>Hari Ini</div>
     <div class="leg-i"><div class="leg-d" style="background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.2)"></div><span style="color:var(--red);opacity:0.75">Sabtu/Minggu</span></div>
     <span style="margin-left:auto;font-size:11px;color:var(--txt3)">Klik kegiatan untuk buka detail · Tandai di tab Per Kegiatan atau Per Bulan</span>
@@ -2422,7 +2422,7 @@ function renderKal(){
         <div class="kev-dot2"></div>
         <span class="kev-nm">${escH(k.nama)}</span>
         ${wkLabel}
-        <span class="kev-lc">${fmtShort(kTPB(k,mI))} · ${sd?'✓ Terlaksana':'Belum'}</span>
+        <span class="kev-lc">${fmtShort(kTPB(k,mI))} · ${sd?'✓ Dilaksanakan':'Belum'}</span>
       </div>`;
     }).join('');
     html+=`<div class="kb${iC?' cur':''}">
@@ -2489,7 +2489,7 @@ function renderTL(){
     html+=`<div class="tl-card">
       <div class="tl-head">
         <h3>Timeline Pelaksanaan Kegiatan — Tahun Anggaran 2026</h3>
-        <span>Klik bar untuk tandai terlaksana · Angka = anggaran per bulan</span>
+        <span>Klik bar untuk tandai dilaksanakan · Angka = anggaran per bulan</span>
       </div>
       <div class="tl-ov">
         <table class="tl-tbl">
@@ -2499,7 +2499,7 @@ function renderTL(){
       </div>
       <div class="tl-leg">
         <div class="leg-i"><div class="leg-d" style="background:var(--teal2);border-radius:3px"></div>Direncanakan</div>
-        <div class="leg-i"><div class="leg-d" style="background:var(--green);border-radius:3px"></div>Sudah Terlaksana</div>
+        <div class="leg-i"><div class="leg-d" style="background:var(--green);border-radius:3px"></div>Sudah Dilaksanakan</div>
         <div class="leg-i"><div class="leg-d" style="background:var(--gold);border-radius:3px"></div>Bulan Ini</div>
         <div class="leg-i"><div class="leg-d" style="background:var(--surf2);border:1px solid var(--bdr2);border-radius:3px"></div>M1·2 = Minggu ke-1 &amp; 2</div>
       </div>
@@ -2736,7 +2736,7 @@ function konfirmasiTandai(){
   const dev=realVal-renc;
   const devStr=useManual&&dev!==0?` · Deviasi ${dev>0?'▲+':'▼'}${fmt(Math.abs(dev))}`:'';
   const modeStr=useManual?'Realisasi aktual':'Sesuai rencana';
-  toast(`✓ ${MN[bulan-1]} terlaksana · ${fmt(realVal)} (${modeStr})${devStr}`,'✅');
+  toast(`✓ ${MN[bulan-1]} dilaksanakan · ${fmt(realVal)} (${modeStr})${devStr}`,'✅');
   saveLS();renderAll();
 }
 function delKeg(id){
@@ -3081,11 +3081,11 @@ function renderDashboard(){
   const insights=[];
   if(pctReal<50&&CM>=6) insights.push({t:'alert',icon:'🚨',msg:`<strong>Serapan rendah:</strong> Penyerapan pagu baru ${pctReal}% padahal sudah bulan ${MN[CM-1]}. Perlu akselerasi pelaksanaan.`});
   else if(pctReal>=80) insights.push({t:'ok',icon:'✅',msg:`<strong>Serapan sangat baik:</strong> Realisasi sudah mencapai ${pctReal}% dari Total Pagu TA 2026.`});
-  if(kBulanIni.length>0&&doneCnt<kBulanIni.length) insights.push({t:'warn',icon:'⚠️',msg:`<strong>${kBulanIni.length-doneCnt} kegiatan di ${blnNm}</strong> belum ditandai terlaksana. Segera perbarui status setelah pelaksanaan.`});
+  if(kBulanIni.length>0&&doneCnt<kBulanIni.length) insights.push({t:'warn',icon:'⚠️',msg:`<strong>${kBulanIni.length-doneCnt} kegiatan di ${blnNm}</strong> belum ditandai dilaksanakan. Segera perbarui status setelah pelaksanaan.`});
   if(kBulanIni.length===0) insights.push({t:'info',icon:'ℹ️',msg:`Tidak ada kegiatan terjadwal di <strong>${blnNm}</strong>.`});
-  else if(doneCnt===kBulanIni.length) insights.push({t:'ok',icon:'🎉',msg:`Semua <strong>${kBulanIni.length} kegiatan</strong> di ${blnNm} sudah terlaksana!`});
+  else if(doneCnt===kBulanIni.length) insights.push({t:'ok',icon:'🎉',msg:`Semua <strong>${kBulanIni.length} kegiatan</strong> di ${blnNm} sudah dilaksanakan!`});
   bidData.forEach(b=>{
-    if(b.pct===0&&CM>=3) insights.push({t:'alert',icon:'⛔',msg:`<strong>${b.nama}:</strong> Belum ada satu pun kegiatan terlaksana sepanjang tahun.`});
+    if(b.pct===0&&CM>=3) insights.push({t:'alert',icon:'⛔',msg:`<strong>${b.nama}:</strong> Belum ada satu pun kegiatan dilaksanakan sepanjang tahun.`});
   });
   if(insights.length===0) insights.push({t:'info',icon:'📌',msg:`Progres berjalan normal. Pantau terus realisasi setiap bulan.`});
 
@@ -3180,7 +3180,7 @@ function renderDashboard(){
     <!-- KPI STRIP -->
     <div class="dash-kpi-strip">
       <div class="dash-kpi dk-teal">
-        <div class="dash-kpi-lbl">Kegiatan Terlaksana</div>
+        <div class="dash-kpi-lbl">Kegiatan Dilaksanakan</div>
         <div class="dash-kpi-val">${donePelaks} <span style="font-size:13px;font-weight:400;color:var(--txt3)">/ ${totPelaks}</span></div>
         <div class="dash-kpi-sub" style="display:flex;flex-direction:column;gap:2px;">
           <span>kumulatif TA ${getTAYear()}</span>
@@ -3195,17 +3195,17 @@ function renderDashboard(){
         <div class="dash-kpi-val">${fmt(totDone)}</div>
         <div class="dash-kpi-sub" style="display:flex;flex-direction:column;gap:2px;">
           <span>${pctReal}% dari Total Pagu TA ${getTAYear()}</span>
-          <span style="font-size:10px;color:var(--txt3);">Kegiatan terlaksana: <strong style="color:var(--ink);">${donePelaks}</strong> dari <strong>${totPelaks}</strong> jadwal</span>
+          <span style="font-size:10px;color:var(--txt3);">Kegiatan dilaksanakan: <strong style="color:var(--ink);">${donePelaks}</strong> dari <strong>${totPelaks}</strong> jadwal</span>
         </div>
         <div class="dash-kpi-badge ${proyRate>=0.9?'dkb-green':proyRate>=0.7?'dkb-gold':'dkb-red'}" style="margin-top:6px;">
-          ${proyRate>=0.9?'✓':proyRate>=0.7?'~':'!'} ${Math.round(proyRate*100)}% jadwal s.d. ${MN[evalM-1]} terlaksana
+          ${proyRate>=0.9?'✓':proyRate>=0.7?'~':'!'} ${Math.round(proyRate*100)}% jadwal s.d. ${MN[evalM-1]} dilaksanakan
         </div>
       </div>
       <div class="dash-kpi dk-gold">
         <div class="dash-kpi-lbl">Pagu ${blnNm}</div>
         <div class="dash-kpi-val">${fmt(angBln)}</div>
         <div class="dash-kpi-sub">${kBulanIni.length} kegiatan terjadwal</div>
-        <div class="dash-kpi-badge ${pctBln===100?'dkb-green':pctBln>0?'dkb-gold':'dkb-teal'}">${pctBln}% terlaksana bulan ini</div>
+        <div class="dash-kpi-badge ${pctBln===100?'dkb-green':pctBln>0?'dkb-gold':'dkb-teal'}">${pctBln}% dilaksanakan bulan ini</div>
       </div>
       <div class="dash-kpi ${proyEOY>=dispAngg*0.9?'dk-green':proyEOY>=dispAngg*0.75?'dk-gold':proyEOY>=dispAngg*0.6?'dk-teal':'dk-red'}">
         <div class="dash-kpi-lbl">Proyeksi Serapan Akhir Tahun</div>
@@ -3349,7 +3349,7 @@ function renderDashboard(){
                     <div class="ksi-bid">${escH(bNm(k.bidangId))} · ${escH(k.tempat)}</div>
                   </div>
                   <div class="ksi-amt">${fmt(angg)}</div>
-                  <div class="ksi-badge ${sd?'ksi-done':'ksi-pend'}">${sd?'✓ Terlaksana':'Belum'}</div>
+                  <div class="ksi-badge ${sd?'ksi-done':'ksi-pend'}">${sd?'✓ Dilaksanakan':'Belum'}</div>
                 </div>`;
               }).join('')}</div>`
           }
@@ -3386,7 +3386,7 @@ function renderDashboard(){
         <div class="chart-card">
           <div class="chart-card-head">
             <h4>📊 Realisasi per Bidang per Bulan</h4>
-            <span>Nilai terlaksana setiap bulan</span>
+            <span>Nilai dilaksanakan setiap bulan</span>
           </div>
           <div class="chart-body">
             <canvas id="chartBidangBulan"></canvas>
@@ -4107,7 +4107,7 @@ function renderIKPA(){
               ${(kode==='51'||kode==='52')?(()=>{const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];const mUp=TWMON.slice(0,twIdx+1).flat();const keg=kode==='51'?getBPKegiatan():getBBKegiatan();const r=keg.reduce((s,k)=>(k.doneBulan||[]).filter(m=>mUp.includes(m)).reduce((ss,m)=>ss+kTPB(k,m),s),0);return r?new Intl.NumberFormat('id-ID').format(r):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`;})():(bl&&bl.realisasi[twIdx]?new Intl.NumberFormat('id-ID').format(bl.realisasi[twIdx]):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`)}
             </div>
             <div style="border-top:1px dashed var(--bdr);margin:6px 0;"></div>
-            ${(kode==='51'||kode==='52')?`<div style="font-size:10px;color:var(--teal);padding:4px 0;">✦ Auto dari kegiatan terlaksana</div>`
+            ${(kode==='51'||kode==='52')?`<div style="font-size:10px;color:var(--teal);padding:4px 0;">✦ Auto dari kegiatan dilaksanakan</div>`
               :bpEdit?`<input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
               value="${bl&&bl.realisasi[twIdx]?bl.realisasi[twIdx]:''}" placeholder="ketik angka..."
               onchange="setIKPAReal('${kode}',${twIdx},this.value)"
@@ -4272,7 +4272,7 @@ function renderRPDSection(){
         <div style="margin-bottom:8px;">
           <div style="font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;text-align:left;">Realisasi (Rp)</div>
           <div style="font-size:12px;font-weight:700;font-family:'Fira Code',monospace;${hasReal?'color:#00b87a':'color:var(--txt3);font-size:11px;font-weight:400;'}">${fmtN(real)}</div>
-          <div style="font-size:10px;color:#00b87a;margin-top:2px;">${doneKeg}/${totKeg} terlaksana</div>
+          <div style="font-size:10px;color:#00b87a;margin-top:2px;">${doneKeg}/${totKeg} dilaksanakan</div>
         </div>
         ${renc>0&&hasReal?`<div style="border-top:1px dashed var(--bdr);margin:5px 0;"></div>
         <div>
@@ -4308,7 +4308,7 @@ function renderRPDSection(){
     <div style="padding:13px 16px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
       <div>
         <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);">📊 RPD — Rencana Penarikan Dana per Bulan</div>
-        <div style="font-size:11px;color:var(--txt3);margin-top:2px;">Triwulan ${twRom[twIdx]} aktif · Realisasi aktual dari input saat tandai terlaksana</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:2px;">Triwulan ${twRom[twIdx]} aktif · Realisasi aktual dari input saat tandai dilaksanakan</div>
       </div>
     </div>
     ${dlBanner}
@@ -4663,7 +4663,7 @@ function generateLaporanKinerja(){
     setFill(C.surf);rect(10,fY,W-20,16);
     setFill(C.green);rect(10,fY,3,16);
     const pctDone=kegBln.length>0?Math.round(doneK/kegBln.length*100):0;
-    txt(`Progress ${bulanNm}: ${doneK} dari ${kegBln.length} kegiatan terlaksana (${pctDone}%)`,16,fY+7,9,'bold',C.navy);
+    txt(`Progress ${bulanNm}: ${doneK} dari ${kegBln.length} kegiatan dilaksanakan (${pctDone}%)`,16,fY+7,9,'bold',C.navy);
     const bw=W-40;setFill('#e4edf3');rect(16,fY+10,bw,4);
     setFill(pctDone>=100?C.green:pctDone>=50?C.teal:C.gold2);rect(16,fY+10,bw*pctDone/100,4);
   }
@@ -5254,7 +5254,7 @@ function importFromExcel(input){
           return{bulan:idx+1,minggu:[2],anggaran:0};
         }).filter(Boolean);
 
-        // Parse bulan terlaksana
+        // Parse bulan dilaksanakan
         const doneBulan=doneStr.split(',').map(s=>s.trim()).filter(Boolean).map(bn=>{
           const idx=BNAMES.findIndex(b=>b.toLowerCase()===bn.toLowerCase()||b.slice(0,3).toLowerCase()===bn.slice(0,3).toLowerCase());
           return idx>=0?idx+1:null;
