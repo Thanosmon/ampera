@@ -4735,7 +4735,7 @@ function generateLaporanKinerja(){
 
   // ═══ HALAMAN 5 — EVALUASI IKPA ═══════════
   doc.addPage();
-  pageHeader(`EVALUASI IKPA — PENYERAPAN ANGGARAN TW ${twRom[twIdx]} ${tahun}`,`PER-5/PB/2024 & S-56/PB.2/2026 · ${periodeTxt}`);
+  pageHeader(`EVALUASI IKPA — PENYERAPAN ANGGARAN TW ${twRom[twIdx]} ${tahun}`,periodeTxt);
 
   // Hitung realisasi dari doneBulan (bukan dari bl.realisasi manual) untuk konsistensi
   const TWMON2=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
@@ -4806,7 +4806,7 @@ function generateLaporanKinerja(){
     txt('Catatan:',110,eY+7,8,'bold',C.navy);
     txt(`• Nilai estimasi dihitung dari rata-rata nilai kinerja per jenis belanja yang sudah diisi.`,110,eY+13,7,'normal','#444444');
     txt(`• Komponen penyerapan merupakan salah satu dari 8 indikator IKPA dengan bobot 20%.`,110,eY+19,7,'normal','#444444');
-    txt(`• Nilai IKPA final dihitung oleh sistem OM SPAN / MyIntress (myintress.kemenkeu.go.id).`,110,eY+25,7,'normal','#888888');
+    txt(`• Nilai IKPA yang final terdapat pada MyIntress (myintress.kemenkeu.go.id).`,110,eY+25,7,'normal','#888888');
   } else {
     setFill('#FFF8E7');rect(10,eY,W-20,18);setFill(C.gold2);rect(10,eY,3,18);
     txt('Isi data pagu dan realisasi di halaman IKPA untuk melihat estimasi nilai kinerja penyerapan.',16,eY+11,9,'normal',C.navy);
