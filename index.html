@@ -1492,7 +1492,7 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
 <div class="modal-overlay" id="tandaiModal" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal" style="width:460px">
     <div class="modal-head">
-      <div><h3>✅ Tandai Terlaksana</h3><p id="tmBulan" style="color:var(--teal);font-weight:600;font-size:13px;margin-top:2px;"></p></div>
+      <div><h3>✅ Tandai Dilaksanakan</h3><p id="tmBulan" style="color:var(--teal);font-weight:600;font-size:13px;margin-top:2px;"></p></div>
       <span class="modal-x" onclick="document.getElementById('tandaiModal').classList.remove('open')">✕</span>
     </div>
     <div class="modal-body">
@@ -1552,7 +1552,7 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
     </div>
     <div class="modal-foot">
       <button class="btn btn-o" onclick="document.getElementById('tandaiModal').classList.remove('open')">Batal</button>
-      <button class="btn btn-p" onclick="konfirmasiTandai()">✅ Tandai Terlaksana</button>
+      <button class="btn btn-p" onclick="konfirmasiTandai()">✅ Tandai Dilaksanakan</button>
     </div>
   </div>
 </div>
@@ -2155,7 +2155,7 @@ function renderPerBidang(){
   tabsHtml+=`</div>`;
 
   // Summary + filter info
-  const filterInfo=(fs!=='all'||fm!=='all')?`<div style="font-size:11px;color:var(--teal);margin-bottom:12px;padding:7px 14px;background:rgba(0,124,145,0.08);border-radius:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">🔍 Filter aktif:${fs!=='all'?` <strong>${fs==='done'?'Sudah Dilaksanakan':'Belum Terlaksana'}</strong>`:''} ${fm!=='all'?` · Bulan: <strong>${MN[+fm-1]}</strong>`:''} — menampilkan ${ks.length} dari ${ksAll.length} kegiatan <button onclick="document.getElementById('filterStatus').value='all';document.getElementById('filterBulan').value='all';renderAll()" style="background:none;border:none;color:var(--teal);cursor:pointer;font-size:11px;padding:0;font-family:'Figtree',sans-serif;text-decoration:underline;margin-left:4px;">✕ Reset Filter</button></div>`:'';
+  const filterInfo=(fs!=='all'||fm!=='all')?`<div style="font-size:11px;color:var(--teal);margin-bottom:12px;padding:7px 14px;background:rgba(0,124,145,0.08);border-radius:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">🔍 Filter aktif:${fs!=='all'?` <strong>${fs==='done'?'Sudah Dilaksanakan':'Belum Dilaksanakan'}</strong>`:''} ${fm!=='all'?` · Bulan: <strong>${MN[+fm-1]}</strong>`:''} — menampilkan ${ks.length} dari ${ksAll.length} kegiatan <button onclick="document.getElementById('filterStatus').value='all';document.getElementById('filterBulan').value='all';renderAll()" style="background:none;border:none;color:var(--teal);cursor:pointer;font-size:11px;padding:0;font-family:'Figtree',sans-serif;text-decoration:underline;margin-left:4px;">✕ Reset Filter</button></div>`:'';
   let html=tabsHtml+filterInfo;
   html+=`<div class="bid-block">
     <div class="bid-head">
@@ -4473,13 +4473,16 @@ function generateLaporanKinerja(){
   }
 
   const ikpa=getIKPAData();
-  const tw=getCurrentTW(),twIdx=tw-1;
   const twRom=['I','II','III','IV'];
   const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
   const kodes=Object.keys(IKPA_CONF);
   const tahun=getTAYear();
   const nowM=new Date().getMonth()+1;
-  const bulanNm=MN[nowM-1];
+  // Bulan laporan: gunakan filter bulan dari dashboard jika dipilih, fallback ke bulan berjalan
+  const filterBulanVal=document.getElementById('filterBulan')?.value;
+  const rptM=(filterBulanVal&&filterBulanVal!=='all')?+filterBulanVal:nowM;
+  const tw=Math.ceil(rptM/3),twIdx=tw-1; // TW sesuai bulan laporan
+  const bulanNm=MN[rptM-1];
   const tanggal=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
 
   // ═══ HALAMAN 1 — COVER ═══════════════════
@@ -4492,7 +4495,7 @@ function generateLaporanKinerja(){
   // Teks kiri
   txt('LAPORAN KINERJA',W/4,72,26,'bold',C.white,'center');
   txt('KEUANGAN',W/4,84,26,'bold',C.gold,'center');
-  txt(`Periode ${bulanNm} ${tahun}`,W/4,98,14,'normal',C.white,'center');
+  txt(`Periode s.d. ${bulanNm} ${tahun}`,W/4,98,14,'normal',C.white,'center');
   setFill(C.gold);rrect(W/4-35,104,70,8);
   txt('Dialog Kinerja Organisasi & Managerial Meeting',W/4,109,8,'bold',C.navy,'center');
   // Teks kanan
@@ -4632,15 +4635,15 @@ function generateLaporanKinerja(){
   doc.addPage();
   pageHeader(`RENCANA KEGIATAN ${bulanNm.toUpperCase()} ${tahun}`,`Status per ${tanggal}`);
 
-  const kegBln=data.kegiatan.filter(k=>data.bidang.some(b=>b.id===k.bidangId)&&k.jadwal.some(j=>j.bulan===nowM));
+  const kegBln=data.kegiatan.filter(k=>data.bidang.some(b=>b.id===k.bidangId)&&k.jadwal.some(j=>j.bulan===rptM));
   const rowsK=kegBln.map((k,i)=>{
-    const j=k.jadwal.find(j=>j.bulan===nowM);
-    const done=k.doneBulan.includes(nowM);
+    const j=k.jadwal.find(j=>j.bulan===rptM);
+    const done=k.doneBulan.includes(rptM);
     const mStr=(j?.minggu||[]).map(m=>'M'+m).join(', ');
-    return [i+1,k.nama,getBidangNama(k.bidangId)||'—',mStr,fmt(j?.anggaran||0),done?'Terlaksana':'Belum'];
+    return [i+1,k.nama,getBidangNama(k.bidangId)||'—',mStr,fmt(j?.anggaran||0),done?'Dilaksanakan':'Belum'];
   });
-  const totK=kegBln.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===nowM);return s+(j?.anggaran||0);},0);
-  const doneK=kegBln.filter(k=>k.doneBulan.includes(nowM)).length;
+  const totK=kegBln.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===rptM);return s+(j?.anggaran||0);},0);
+  const doneK=kegBln.filter(k=>k.doneBulan.includes(rptM)).length;
   rowsK.push([{content:'TOTAL',colSpan:4,styles:{fontStyle:'bold',fillColor:[225,230,240]}},{content:fmt(totK),styles:{fontStyle:'bold'}},'']);
 
   doc.autoTable({
@@ -4652,7 +4655,7 @@ function generateLaporanKinerja(){
     columnStyles:{0:{halign:'center',cellWidth:10},4:{halign:'right',cellWidth:38},5:{halign:'center',cellWidth:28}},
     didParseCell:(d)=>{
       if(d.section==='body'&&d.column.index===5){
-        if(d.cell.raw==='Terlaksana')d.cell.styles.textColor=[0,150,100];
+        if(d.cell.raw==='Dilaksanakan')d.cell.styles.textColor=[0,150,100];
         else if(d.cell.raw==='Belum')d.cell.styles.textColor=[200,140,0];
       }
     }
@@ -4664,7 +4667,7 @@ function generateLaporanKinerja(){
     setFill(C.surf);rect(10,fY,W-20,16);
     setFill(C.green);rect(10,fY,3,16);
     const pctDone=kegBln.length>0?Math.round(doneK/kegBln.length*100):0;
-    txt(`Progress ${bulanNm}: ${doneK} dari ${kegBln.length} kegiatan dilaksanakan (${pctDone}%)`,16,fY+7,9,'bold',C.navy);
+    txt(`Realisasi ${bulanNm}: ${doneK} dari ${kegBln.length} kegiatan dilaksanakan (${pctDone}%)`,16,fY+7,9,'bold',C.navy);
     const bw=W-40;setFill('#e4edf3');rect(16,fY+10,bw,4);
     setFill(pctDone>=100?C.green:pctDone>=50?C.teal:C.gold2);rect(16,fY+10,bw*pctDone/100,4);
   }
@@ -4734,8 +4737,8 @@ function generateLaporanKinerja(){
   }
   pageFooter(5,5);
 
-  doc.save(`Laporan_Kinerja_${bulanNm}_${tahun}.pdf`);
-  toast('Laporan Kinerja Keuangan berhasil dibuat','📊');
+  doc.save(`Laporan_Kinerja_sd_${bulanNm}_${tahun}.pdf`);
+  toast(`Laporan Kinerja s.d. ${bulanNm} ${tahun} berhasil dibuat`,'📊');
   document.getElementById('exportModal').classList.remove('open');
   }catch(e){console.error('generateLaporanKinerja error:',e);toast('Gagal buat laporan: '+e.message,'❌');}
 }
@@ -4795,7 +4798,7 @@ function exportPDF(mode){
     let y=header('Dashboard & Ringkasan Anggaran');
     y=kpiRow(doc,y,[
       ['Total Pagu',fmt(total_ang),teal],
-      ['Terlaksana',fmt(total_don),green],
+      ['Dilaksanakan',fmt(total_don),green],
       ['Sisa',fmt(total_ang-total_don),gold],
       ['% Realisasi',pct,ink]
     ]);
@@ -4824,7 +4827,7 @@ function exportPDF(mode){
       y=sectionHdr(doc,y,b.nama);
       doc.autoTable({
         startY:y,margin:{left:M,right:M},
-        head:[['Kegiatan','Tempat','Jadwal Bulan','Anggaran','Terlaksana','% Real.']],
+        head:[['Kegiatan','Tempat','Jadwal Bulan','Anggaran','Dilaksanakan','% Real.']],
         body:kb.map(k=>{
           const ta=k.jadwal.reduce((a,j)=>a+j.anggaran,0);
           const td=k.jadwal.filter(j=>k.doneBulan.includes(j.bulan)).reduce((a,j)=>a+j.anggaran,0);
@@ -4864,7 +4867,7 @@ function exportPDF(mode){
       didParseCell:function(d){
         if(d.section==='body'&&d.column.index===4){
           if(d.cell.raw==='__DONE__'){
-            d.cell.text=['Terlaksana'];
+            d.cell.text=['Dilaksanakan'];
             d.cell.styles.fillColor=[0,184,122];
             d.cell.styles.textColor=[255,255,255];
             d.cell.styles.fontStyle='bold';
@@ -4967,7 +4970,7 @@ function exportPDF(mode){
     const lx=M,ly=doc.lastAutoTable.finalY+5;
     doc.setFontSize(7.5);doc.setTextColor(80,100,115);
     doc.setFillColor(...CLR_DONE);doc.roundedRect(lx,ly,5,3.5,0.8,0.8,'F');
-    doc.text('Terlaksana',lx+7,ly+2.8);
+    doc.text('Dilaksanakan',lx+7,ly+2.8);
     doc.setFillColor(...CLR_PLAN);doc.roundedRect(lx+38,ly,5,3.5,0.8,0.8,'F');
     doc.text('Direncanakan',lx+45,ly+2.8);
   }
@@ -5013,7 +5016,7 @@ function exportExcel(mode){
   function kTD(k){return k.jadwal.filter(j=>k.doneBulan.includes(j.bulan)).reduce((a,j)=>a+j.anggaran,0);}
 
   if(mode==='semua'||mode==='kegiatan'){
-    const rows=[['No','Nama Kegiatan','Bidang','Tempat','Pagu','Realisasi','% Serapan','Bulan Pelaksanaan','Bulan Terlaksana','Catatan']];
+    const rows=[['No','Nama Kegiatan','Bidang','Tempat','Pagu','Realisasi','% Serapan','Bulan Pelaksanaan','Bulan Dilaksanakan','Catatan']];
     data.kegiatan.forEach((k,i)=>{
       const ta=kT(k),td=kTD(k);
       rows.push([i+1,k.nama,getBidangNama(k.bidangId),k.tempat,ta,td,ta?(td/ta*100).toFixed(1)+'%':'-',
@@ -5026,13 +5029,13 @@ function exportExcel(mode){
   }
 
   if(mode==='semua'||mode==='bulan'){
-    const rows=[['Bulan','Nama Kegiatan','Bidang','Anggaran Bulan Ini','Status','Terlaksana']];
+    const rows=[['Bulan','Nama Kegiatan','Bidang','Anggaran Bulan Ini','Status','Dilaksanakan']];
     for(let m=1;m<=12;m++){
       data.kegiatan.forEach(k=>{
         const j=k.jadwal.find(jj=>jj.bulan===m);
         if(!j)return;
         const done=k.doneBulan.includes(m);
-        rows.push([BNAMES[m-1],k.nama,getBidangNama(k.bidangId),j.anggaran,done?'Terlaksana':'Direncanakan',done?j.anggaran:0]);
+        rows.push([BNAMES[m-1],k.nama,getBidangNama(k.bidangId),j.anggaran,done?'Dilaksanakan':'Direncanakan',done?j.anggaran:0]);
       });
     }
     const ws=XLSX.utils.aoa_to_sheet(rows);
@@ -5223,7 +5226,7 @@ function importFromExcel(input){
       if(rows.length<2)throw new Error('Data kosong');
 
       // Baca header row (row 0)
-      // Kolom: No, Nama Kegiatan, Bidang, Tempat, Pagu, Realisasi, % Serapan, Bulan Pelaksanaan, Bulan Terlaksana, Catatan
+      // Kolom: No, Nama Kegiatan, Bidang, Tempat, Pagu, Realisasi, % Serapan, Bulan Pelaksanaan, Bulan Dilaksanakan, Catatan
       const BNAMES=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
       const newKeg=[];
       const bidangMap={};
@@ -5293,7 +5296,7 @@ function downloadImportTemplate(){
   // Buat template Excel kosong dengan format yang benar
   const wb=XLSX.utils.book_new();
   const rows=[
-    ['No','Nama Kegiatan','Bidang','Tempat','Pagu','Realisasi','% Serapan','Bulan Pelaksanaan','Bulan Terlaksana','Catatan'],
+    ['No','Nama Kegiatan','Bidang','Tempat','Pagu','Realisasi','% Serapan','Bulan Pelaksanaan','Bulan Dilaksanakan','Catatan'],
     [1,'Contoh Kegiatan','Bidang PPA I','Palembang',5000000,2500000,'50%','Maret, Juni','Maret','Contoh catatan'],
     [2,'Kegiatan Lain','Bidang PPA II','Baturaja',3000000,0,'0%','April, Oktober','',''],
   ];
