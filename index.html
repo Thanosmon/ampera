@@ -2781,10 +2781,23 @@ function delKeg(id){
   const k=data.kegiatan.find(k=>k.id===id);
   if(!k)return;
   if(!canEdit(k)){toast('Anda tidak memiliki akses hapus kegiatan ini','⛔');return;}
-  if(confirm(`Hapus kegiatan "${k.nama}"?`)){
-    data.kegiatan=data.kegiatan.filter(k=>k.id!==id);
-    saveLS();toast('Kegiatan dihapus','🗑');renderAll();
-  }
+  const doneCnt=(k.doneBulan||[]).length;
+  showConfirm({
+    title:'🗑️ Hapus Kegiatan',
+    sub:'Tindakan ini tidak dapat dibatalkan',
+    body:`<div style="font-size:13px;color:var(--txt2);margin-bottom:10px;">
+      Hapus kegiatan <strong>"${escH(k.nama)}"</strong>?
+    </div>
+    ${doneCnt>0?`<div style="background:#fff5f5;border:1.5px solid rgba(224,85,85,0.3);border-radius:8px;padding:10px 12px;font-size:12px;color:#c0392b;">
+      ⚠️ Kegiatan ini memiliki <strong>${doneCnt} bulan realisasi</strong> yang juga akan ikut terhapus.
+    </div>`:''}`,
+    okLabel:'Ya, Hapus',
+    okColor:'#e05555',
+    onOk(){
+      data.kegiatan=data.kegiatan.filter(x=>x.id!==id);
+      saveLS();toast('Kegiatan dihapus','🗑');renderAll();
+    }
+  });
 }
 
 // ── RINCIAN EDITOR ──
@@ -3006,7 +3019,15 @@ function saveKegiatan(){
   };
   if(editId){
     const idx=data.kegiatan.findIndex(k=>k.id===editId);
-    data.kegiatan[idx]={...data.kegiatan[idx],...obj};
+    const existing=data.kegiatan[idx];
+    // Bersihkan doneBulan & realisasi untuk bulan yang sudah tidak ada di jadwal baru
+    const newBulanSet=new Set(jadwal.map(j=>j.bulan));
+    const cleanDone=(existing.doneBulan||[]).filter(m=>newBulanSet.has(m));
+    const cleanReal={};
+    const cleanRealRinc={};
+    if(existing.realisasiBulan){Object.keys(existing.realisasiBulan).forEach(m=>{if(newBulanSet.has(+m))cleanReal[m]=existing.realisasiBulan[m];});}
+    if(existing.realisasiRincianBulan){Object.keys(existing.realisasiRincianBulan).forEach(m=>{if(newBulanSet.has(+m))cleanRealRinc[m]=existing.realisasiRincianBulan[m];});}
+    data.kegiatan[idx]={...existing,...obj,doneBulan:cleanDone,realisasiBulan:cleanReal,realisasiRincianBulan:cleanRealRinc};
     toast('Kegiatan berhasil diperbarui','✎');
   }else{
     obj.id='k'+Date.now();obj.doneBulan=[];
@@ -3026,15 +3047,23 @@ function delBidang(id){
   const b=data.bidang.find(b=>b.id===id);
   if(!b)return;
   const kgsCount=data.kegiatan.filter(k=>k.bidangId===id).length;
-  if(kgsCount>0){
-    if(!confirm(`Bidang "${b.nama}" memiliki ${kgsCount} kegiatan.\n\nSemua kegiatan di bidang ini juga akan ikut dihapus.\n\nLanjutkan?`))return;
-    data.kegiatan=data.kegiatan.filter(k=>k.bidangId!==id);
-  }else{
-    if(!confirm(`Hapus bidang "${b.nama}"?`))return;
-  }
-  data.bidang=data.bidang.filter(b=>b.id!==id);
-  saveLS();toast(`Bidang "${b.nama}" dihapus`,'🗑');
-  renderAll();
+  showConfirm({
+    title:'🗑️ Hapus Bidang',
+    sub:'Tindakan ini tidak dapat dibatalkan',
+    body:`<div style="font-size:13px;color:var(--txt2);margin-bottom:${kgsCount>0?10:0}px;">
+      Hapus bidang <strong>"${escH(b.nama)}"</strong>?
+    </div>
+    ${kgsCount>0?`<div style="background:#fff5f5;border:1.5px solid rgba(224,85,85,0.3);border-radius:8px;padding:10px 12px;font-size:12px;color:#c0392b;">
+      ⚠️ Bidang ini memiliki <strong>${kgsCount} kegiatan</strong> yang juga akan ikut terhapus seluruhnya.
+    </div>`:''}`,
+    okLabel:'Ya, Hapus',
+    okColor:'#e05555',
+    onOk(){
+      data.kegiatan=data.kegiatan.filter(k=>k.bidangId!==id);
+      data.bidang=data.bidang.filter(b=>b.id!==id);
+      saveLS();toast(`Bidang "${b.nama}" dihapus`,'🗑');renderAll();
+    }
+  });
 }
 function closeModal(e){if(e.target===document.getElementById('modalOverlay'))closeModalDirect();}
 function closeModalDirect(){document.getElementById('modalOverlay').classList.remove('open');}
