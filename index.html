@@ -1685,7 +1685,9 @@ function migrateData(d){
     d.ikpa={belanja:{'51':{pagu:0,realisasi:[0,0,0,0]},'52':{pagu:0,realisasi:[0,0,0,0]},'53':{pagu:0,realisasi:[0,0,0,0]},'57':{pagu:0,realisasi:[0,0,0,0]}}};
   }
   // Inisialisasi RPD (Rencana Penarikan Dana) jika belum ada
-  if(d&&!d.rpd)d.rpd={'51':{rencana:Array(12).fill(0),realisasi:Array(12).fill(0)}};
+  if(d&&!d.rpd)d.rpd={'51':{rencana:Array(12).fill(0)}};
+  // Migrasi: hapus data realisasi RPD lama (kini dihitung dari doneBulan kegiatan)
+  if(d&&d.rpd&&d.rpd['51'])delete d.rpd['51'].realisasi;
   // Inisialisasi Belanja Pegawai (3 item terpisah)
   if(d&&!d.belanjaPegawai)d.belanjaPegawai={
     uangMakan:{pagu:0,bulan:{}},
@@ -4031,10 +4033,11 @@ function setBPBulanRealisasi(key,m,val){
 
 // ─── RPD helpers ─────────────────────────────────────
 function getRPD(){
-  if(!data.rpd)data.rpd={'51':{rencana:Array(12).fill(0),realisasi:Array(12).fill(0)}};
-  if(!data.rpd['51'])data.rpd['51']={rencana:Array(12).fill(0),realisasi:Array(12).fill(0)};
+  if(!data.rpd)data.rpd={'51':{rencana:Array(12).fill(0)}};
+  if(!data.rpd['51'])data.rpd['51']={rencana:Array(12).fill(0)};
   if(data.rpd['51'].rencana.length<12)data.rpd['51'].rencana=[...data.rpd['51'].rencana,...Array(12-data.rpd['51'].rencana.length).fill(0)];
-  if(data.rpd['51'].realisasi.length<12)data.rpd['51'].realisasi=[...data.rpd['51'].realisasi,...Array(12-data.rpd['51'].realisasi.length).fill(0)];
+  // Realisasi RPD tidak lagi dipakai — selalu dihitung dari doneBulan kegiatan
+  delete data.rpd['51'].realisasi;
   return data.rpd;
 }
 let _rpdToast=null;
@@ -4042,17 +4045,15 @@ function setRPDRencana(mi,val){
   if(!canEditBP()){toast('Hanya Admin/Editor Bagian Umum yang dapat mengubah data ini','⛔');return;}
   getRPD()['51'].rencana[mi]=parseFloat(val)||0;saveLS();updateRPDTotals();updSum();clearTimeout(_rpdToast);_rpdToast=setTimeout(()=>toast('RPD tersimpan','💾'),700);
 }
-function setRPDRealisasi(mi,val){
-  if(!canEditBP()){toast('Hanya Admin/Editor Bagian Umum yang dapat mengubah data ini','⛔');return;}
-  getRPD()['51'].realisasi[mi]=parseFloat(val)||0;saveLS();updateRPDTotals();updSum();clearTimeout(_rpdToast);_rpdToast=setTimeout(()=>toast('RPD tersimpan','💾'),700);
-}
 function updateRPDTotals(){
   const tw=getCurrentTW()-1;
   const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
   const bt=TWMON[tw];
   const r=getRPD()['51'];
   const totRenc=bt.reduce((s,m)=>s+(r.rencana[m-1]||0),0);
-  const totReal=bt.reduce((s,m)=>s+(r.realisasi[m-1]||0),0);
+  // Realisasi dari doneBulan kegiatan
+  const bpKeg2=getBPKegiatan(),bbKeg2=getBBKegiatan();
+  const totReal=bt.reduce((s,m)=>s+[...bpKeg2,...bbKeg2].filter(k=>k.doneBulan.includes(m)).reduce((ss,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return ss+(j?.anggaran||0);},0),0);
   const el=document.getElementById('rpd-totals');
   if(el)el.innerHTML=`Total Rencana: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmt(totRenc)}</strong> · Realisasi: <strong style="color:#00b87a;font-family:'Fira Code',monospace;">${fmt(totReal)}</strong>`;
 }
@@ -4621,9 +4622,9 @@ function generateLaporanKinerja(){
   let totRenc51=0,totReal51=0,totRenc52=0,totReal52=0,totRenc53=0,totReal53=0;
   bulanTW.forEach(m=>{
     const mi=m-1;
-    // Akun 51: dari RPD
+    // Akun 51: rencana dari RPD, realisasi dari doneBulan kegiatan (konsisten dg dashboard)
     const r51renc=rpd51.rencana[mi]||0;
-    const r51real=rpd51.realisasi[mi]||0;
+    const r51real=getBPKegiatan().filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
     totRenc51+=r51renc; totReal51+=r51real;
     // Akun 52: kegiatan non-bagian-umum
     const keg52=data.kegiatan.filter(k=>!bidangUmumIds.has(k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
