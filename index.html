@@ -2819,11 +2819,16 @@ function addJadwal(j={}){
   while(usedBulan.includes(nextBulan)&&nextBulan<=12)nextBulan++;
   if(nextBulan>12){toast('Semua 12 bulan sudah ditambahkan','⚠️');return;}
   mj.push({bulan:j.bulan||nextBulan,minggu:j.minggu?[...j.minggu]:[],anggaran:j.anggaran||0});
+  mj.sort((a,b)=>a.bulan-b.bulan); // auto-sort ascending
   renderJadwal();
 }
 function remJadwal(i){mj.splice(i,1);renderJadwal();}
 function syncJadwal(i,f,v){
-  if(f==='bulan'){mj[i].bulan=+v;updJadwalFoot();}
+  if(f==='bulan'){
+    mj[i].bulan=+v;
+    mj.sort((a,b)=>a.bulan-b.bulan); // auto-sort saat ganti bulan
+    renderJadwal();
+  }
   else if(f==='anggaran'){
     // Tangkap total referensi SEBELUM update (prioritas: Total Resmi → Rincian → sum mj saat ini)
     const resmiVal=parseFloat(document.getElementById('fTotalResmi')?.value)||0;
@@ -2832,9 +2837,8 @@ function syncJadwal(i,f,v){
     const totalRef=resmiVal||rincianTot||prevMjTot;
     // Update nilai bulan ini
     mj[i].anggaran=parseFloat(v)||0;
-    // Auto-distribusi khusus Belanja Pegawai (akun='51')
-    const isBP=document.getElementById('fAkun')?.value==='51';
-    if(isBP&&totalRef>0){
+    // Auto-distribusi sisa ke bulan-bulan berikutnya (untuk semua jenis kegiatan)
+    if(totalRef>0){
       const bulanIni=mj[i].bulan;
       const afterRows=mj.filter(j=>j.bulan>bulanIni);
       if(afterRows.length>0){
