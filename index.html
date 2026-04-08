@@ -4536,7 +4536,9 @@ function generateLaporanKinerja(){
   doc.addPage();
   pageHeader(`MONITORING RPD & REALISASI ANGGARAN TA ${tahun}`,`${periodeTxt} · TW ${twRom[twIdx]}`);
 
-  // ── Hitung realisasi dari doneBulan (konsisten dengan data kegiatan) ──
+  // ── Hitung rencana & realisasi dari kegiatan doneBulan (konsisten dengan dashboard) ──
+  // Akun 51 (Belanja Pegawai): rencana dari RPD, realisasi dari kegiatan getBPKegiatan()
+  // Akun 52+53: rencana & realisasi dari jadwal kegiatan & doneBulan
   const bidangUmumIds2=new Set(data.bidang.filter(b=>/umum/i.test(b.nama)).map(b=>b.id));
   const rpd51h2=getRPD()['51'];
   const limitM=isTahunan?12:rptM;
@@ -4544,7 +4546,8 @@ function generateLaporanKinerja(){
   const rowsRPD=[];
   for(let m=1;m<=12;m++){
     const r51renc=rpd51h2.rencana[m-1]||0;
-    const r51real=rpd51h2.realisasi[m-1]||0;
+    // Realisasi akun 51 dari doneBulan kegiatan (konsisten dg dashboard, bukan RPD manual)
+    const r51real=getBPKegiatan().filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
     const keg52=data.kegiatan.filter(k=>!bidangUmumIds2.has(k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
     const keg53=data.kegiatan.filter(k=>bidangUmumIds2.has(k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
     const r52renc=keg52.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
