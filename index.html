@@ -4532,58 +4532,77 @@ function generateLaporanKinerja(){
   txt(`TW ${twRom[twIdx]} Aktif`,W*3/4,115,9,'normal',C.wht6,'center');
   txt(`Dicetak: ${tanggal}`,W/2+14,H-10,8,'normal',C.wht35);
 
-  // ═══ HALAMAN 2 — MONITORING PENYERAPAN ═══
+  // ═══ HALAMAN 2 — MONITORING RPD & REALISASI ═══
   doc.addPage();
-  pageHeader(`MONITORING PENYERAPAN ANGGARAN TA ${tahun}`,`${periodeTxt} · TW ${twRom[twIdx]}`);
+  pageHeader(`MONITORING RPD & REALISASI ANGGARAN TA ${tahun}`,`${periodeTxt} · TW ${twRom[twIdx]}`);
 
-  // KPI row
-  let totPagu=kodes.reduce((s,k)=>s+(ikpa.belanja[k]?.pagu||0),0);
-  let totReal=kodes.reduce((s,k)=>s+(ikpa.belanja[k]?.realisasi[twIdx]||0),0);
+  // ── Hitung realisasi dari doneBulan (konsisten dengan data kegiatan) ──
+  const bidangUmumIds2=new Set(data.bidang.filter(b=>/umum/i.test(b.nama)).map(b=>b.id));
+  const rpd51h2=getRPD()['51'];
+  const limitM=isTahunan?12:rptM;
+  let cumRenc=0,cumReal=0;
+  const rowsRPD=[];
+  for(let m=1;m<=12;m++){
+    const r51renc=rpd51h2.rencana[m-1]||0;
+    const r51real=rpd51h2.realisasi[m-1]||0;
+    const keg52=data.kegiatan.filter(k=>!bidangUmumIds2.has(k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
+    const keg53=data.kegiatan.filter(k=>bidangUmumIds2.has(k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
+    const r52renc=keg52.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
+    const r52real=keg52.filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
+    const r53renc=keg53.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
+    const r53real=keg53.filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
+    const renc=r51renc+r52renc+r53renc, real=r51real+r52real+r53real;
+    if(m<=limitM){cumRenc+=renc;cumReal+=real;}
+    const dev=real-renc;
+    const cumRencM=cumRenc, cumRealM=cumReal;
+    const pctKum=cumRencM>0?(cumRealM/cumRencM*100).toFixed(1)+'%':'—';
+    const devStyle=dev>=0?[0,140,90]:[200,60,60];
+    rowsRPD.push([
+      MN[m-1],
+      renc>0?fmt(renc):'—',
+      real>0?fmt(real):'—',
+      {content:renc>0?(dev>=0?'+'+fmt(dev):fmt(dev)):'—',styles:{textColor:devStyle}},
+      m<=limitM?fmt(cumRencM):'—',
+      m<=limitM?(cumRealM>0?fmt(cumRealM):'—'):'—',
+      m<=limitM?pctKum:'—'
+    ]);
+  }
+  const totPagu=kodes.reduce((s,k)=>s+(ikpa.belanja[k]?.pagu||0),0);
+  const totReal=cumReal;
   const pctReal=totPagu>0?(totReal/totPagu*100):0;
-  const targTWPct=IKPA_CONF['52'].target[twIdx]; // belanja barang sebagai acuan
+  const targTWPct=IKPA_CONF['52'].target[twIdx];
+  const deviasi=totReal-cumRenc;
+
   const cw=(W-20)/4-2;
   kpiCard(10,20,cw,18,'Total Pagu (Rp)',totPagu>0?fmt(totPagu):'—',C.navyL);
-  kpiCard(10+cw+2,20,cw,18,isTahunan?'Realisasi Tahunan':`Realisasi s.d. ${bulanNm}`,totReal>0?fmt(totReal):'—',C.green);
-  kpiCard(10+2*(cw+2),20,cw,18,'% Realisasi',pctReal.toFixed(2)+'%',pctReal>=targTWPct?C.green:pctReal>=targTWPct*0.7?C.gold2:C.red);
-  kpiCard(10+3*(cw+2),20,cw,18,`Target TW ${twRom[twIdx]}`,`${IKPA_CONF['51'].target[twIdx]}% – ${IKPA_CONF['52'].target[twIdx]}%`,C.navy);
-
-  // Tabel per jenis belanja
-  const rowsP=kodes.map(kode=>{
-    const conf=IKPA_CONF[kode],bl=ikpa.belanja[kode];
-    const pg=bl?.pagu||0,rl=bl?.realisasi[twIdx]||0;
-    const pct=pg>0?(rl/pg*100).toFixed(2)+'%':'N/A';
-    const n=bl?.paguSet?ikpaNilai(kode,twIdx):null;
-    const stat=n?{aman:'✓ Aman',toleransi:'≈ Toleransi',perhatian:'! Perhatian',kritis:'✗ Kritis',na:'N/A'}[n.status]:'—';
-    const nilaiStr=n&&n.nilai!==null?String(n.nilai):'—';
-    return [conf.nama,pg>0?fmt(pg):'—',rl>0?fmt(rl):'—',pct,`${conf.target[twIdx]}%`,nilaiStr,stat];
-  });
-  rowsP.push(['TOTAL',fmt(totPagu),fmt(totReal),pctReal.toFixed(2)+'%','—','—','']);
+  kpiCard(10+cw+2,20,cw,18,`Rencana ${isTahunan?'Tahunan':`s.d. ${bulanNm}`}`,cumRenc>0?fmt(cumRenc):'—',C.blue);
+  kpiCard(10+2*(cw+2),20,cw,18,`Realisasi ${isTahunan?'Tahunan':`s.d. ${bulanNm}`}`,totReal>0?fmt(totReal):'—',C.green);
+  kpiCard(10+3*(cw+2),20,cw,18,'Deviasi s.d. '+bulanNm,deviasi!==0?(deviasi>0?'+':'')+fmt(deviasi):'0',deviasi>=0?C.green:C.red);
 
   doc.autoTable({
-    head:[['Jenis Belanja','Pagu','Realisasi TW '+twRom[twIdx],'% Real.','Target','Nilai','Status']],
-    body:rowsP,
+    head:[['Bulan','Rencana\nBulan Ini','Realisasi\nBulan Ini','Deviasi','Kumulatif\nRencana','Kumulatif\nRealisasi','%\nKumulatif']],
+    body:rowsRPD,
     startY:43,margin:{left:10,right:10},
-    styles:{fontSize:9,cellPadding:3},
+    styles:{fontSize:8.5,cellPadding:2.5,halign:'right'},
     headStyles:{fillColor:[32,56,100],textColor:255,fontStyle:'bold',halign:'center'},
-    columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'center'},4:{halign:'center'},5:{halign:'center',fontStyle:'bold'},6:{halign:'center'}},
+    columnStyles:{0:{halign:'left',fontStyle:'bold'},3:{halign:'right'},6:{halign:'center'}},
     didParseCell:(d)=>{
-      if(d.section==='body'&&d.column.index===6){
-        const v=d.cell.raw||'';
-        if(v.includes('✓'))d.cell.styles.textColor=[0,150,100];
-        else if(v.includes('!'))d.cell.styles.textColor=[200,140,0];
-        else if(v.includes('✗'))d.cell.styles.textColor=[200,60,60];
+      if(d.section==='body'){
+        const rowM=d.row.index+1;
+        if(rowM===limitM){d.cell.styles.fillColor=[230,245,235];d.cell.styles.fontStyle='bold';}
+        else if(rowM>limitM){d.cell.styles.textColor=[180,190,200];}
       }
-      if(d.section==='body'&&d.row.index===rowsP.length-1)d.cell.styles.fontStyle='bold';
     }
   });
 
-  // Catatan rencana target
-  const lY=(doc.lastAutoTable?.finalY||100)+8;
-  setFill(C.surf);rect(10,lY,W-20,22);
-  setFill(C.navyL);rect(10,lY,3,22);
-  txt('Target Penyerapan Triwulanan (PER-5/PB/2024 & S-56/PB.2/2026):',16,lY+6,8,'bold',C.navy);
-  txt(`Belanja Pegawai (51): TW I ${IKPA_CONF['51'].target[0]}% | TW II ${IKPA_CONF['51'].target[1]}% | TW III ${IKPA_CONF['51'].target[2]}% | TW IV ${IKPA_CONF['51'].target[3]}%   Threshold ±10% berlaku TW I–III`,16,lY+13,7,'normal','#444444');
-  txt(`Belanja Barang (52): TW I ${IKPA_CONF['52'].target[0]}% | TW II ${IKPA_CONF['52'].target[1]}% | TW III ${IKPA_CONF['52'].target[2]}% | TW IV ${IKPA_CONF['52'].target[3]}%   Belanja Modal (53): TW I ${IKPA_CONF['53'].target[0]}% | TW II ${IKPA_CONF['53'].target[1]}% | TW III ${IKPA_CONF['53'].target[2]}% | TW IV ${IKPA_CONF['53'].target[3]}%`,16,lY+19,7,'normal','#444444');
+  // Catatan sumber data
+  const lY=(doc.lastAutoTable?.finalY||100)+6;
+  if(lY<H-18){
+    setFill(C.surf);rect(10,lY,W-20,18);setFill(C.navyL);rect(10,lY,3,18);
+    txt('Keterangan:',16,lY+6,7.5,'bold',C.navy);
+    txt('Rencana Akun 51 = RPD (Rencana Penarikan Dana); Akun 52 = Anggaran kegiatan non-Bagian Umum; Akun 53 = Anggaran kegiatan Bagian Umum.',16,lY+12,7,'normal','#555555');
+    txt('Deviasi = Realisasi dikurangi Rencana (positif = lebih cepat dari rencana, negatif = lebih lambat).',16,lY+17,7,'normal','#555555');
+  }
   pageFooter(2,5);
 
   // ═══ HALAMAN 3 — TARGET BELANJA TW ═══════
@@ -4716,18 +4735,33 @@ function generateLaporanKinerja(){
 
   // ═══ HALAMAN 5 — EVALUASI IKPA ═══════════
   doc.addPage();
-  pageHeader(`EVALUASI IKPA — PENYERAPAN ANGGARAN TW ${twRom[twIdx]} ${tahun}`,'Berdasarkan S-56/PB.2/2026');
+  pageHeader(`EVALUASI IKPA — PENYERAPAN ANGGARAN TW ${twRom[twIdx]} ${tahun}`,`PER-5/PB/2024 & S-56/PB.2/2026 · ${periodeTxt}`);
+
+  // Hitung realisasi dari doneBulan (bukan dari bl.realisasi manual) untuk konsistensi
+  const TWMON2=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
+  const monthsUpToTW=TWMON2.slice(0,twIdx+1).flat();
+  function getRealKode(kode){
+    if(kode==='51'){
+      return getBPKegiatan().reduce((s,k)=>(k.doneBulan||[]).filter(m=>monthsUpToTW.includes(m)).reduce((ss,m)=>ss+kTPB(k,m),s),0);
+    }
+    if(kode==='52'){
+      return getBBKegiatan().reduce((s,k)=>(k.doneBulan||[]).filter(m=>monthsUpToTW.includes(m)).reduce((ss,m)=>ss+kTPB(k,m),s),0);
+    }
+    // kode 53 & lainnya: dari realisasi manual IKPA
+    return ikpa.belanja[kode]?.realisasi[twIdx]||0;
+  }
 
   const rowsIK=kodes.map(kode=>{
     const conf=IKPA_CONF[kode],bl=ikpa.belanja[kode];
-    const pg=bl?.pagu||0,rl=bl?.realisasi[twIdx]||0;
+    const pg=bl?.pagu||0;
+    const rl=bl?.paguSet?getRealKode(kode):0;
     const pct=pg>0?(rl/pg*100).toFixed(2)+'%':'N/A';
     const n=bl?.paguSet?ikpaNilai(kode,twIdx):null;
     const minPct=(conf.target[twIdx]-conf.threshold[twIdx])+'%';
     const nilaiStr=n&&n.nilai!==null?String(n.nilai):'—';
-    const stat=n?{aman:'AMAN',toleransi:'TOLERANSI',perhatian:'PERHATIAN',kritis:'KRITIS',na:'N/A'}[n.status]:'BELUM DIISI';
+    const stat=n?{aman:'Aman',toleransi:'Toleransi',perhatian:'Perhatian',kritis:'Kritis',na:'N/A'}[n.status]:'Belum Diisi';
     return [conf.nama,pg>0?fmt(pg):'—',rl>0?fmt(rl):'—',pct,conf.target[twIdx]+'%',
-            conf.threshold[twIdx]>0?'±'+conf.threshold[twIdx]+'%':'—',minPct,nilaiStr,stat];
+            conf.threshold[twIdx]>0?'+-'+conf.threshold[twIdx]+'%':'—',minPct,nilaiStr,stat];
   });
 
   doc.autoTable({
@@ -4741,10 +4775,11 @@ function generateLaporanKinerja(){
     didParseCell:(d)=>{
       if(d.section==='body'&&d.column.index===8){
         const v=d.cell.raw;
-        if(v==='AMAN')d.cell.styles.textColor=[0,150,100];
-        else if(v==='TOLERANSI')d.cell.styles.textColor=[0,100,145];
-        else if(v==='PERHATIAN')d.cell.styles.textColor=[200,140,0];
-        else if(v==='KRITIS')d.cell.styles.textColor=[200,60,60];
+        if(v==='Aman')d.cell.styles.textColor=[0,150,100];
+        else if(v==='Toleransi')d.cell.styles.textColor=[0,100,145];
+        else if(v==='Perhatian')d.cell.styles.textColor=[200,140,0];
+        else if(v==='Kritis'){d.cell.styles.textColor=[200,60,60];d.cell.styles.fontStyle='bold';}
+        else if(v==='Belum Diisi')d.cell.styles.textColor=[160,170,185];
       }
     }
   });
