@@ -1948,6 +1948,13 @@ function sisaRincianHTML(k){
     <table class="ri-tbl">
       <thead><tr><th>MAK</th><th>Uraian</th><th class="r">Anggaran</th><th class="r">Terpakai</th><th class="r">Sisa</th><th>Progress</th></tr></thead>
       <tbody>${rows}</tbody>
+      <tfoot><tr>
+        <td colspan="2" style="font-size:11px;font-weight:700;color:var(--txt2);">Total</td>
+        <td class="r" style="font-family:'Fira Code',monospace;font-size:11px;font-weight:700;">${fmt(k.rincian.reduce((s,r)=>s+rT(r),0))}</td>
+        <td class="r" style="font-family:'Fira Code',monospace;font-size:11px;font-weight:700;color:var(--green);">${(()=>{let t=0;k.rincian.forEach((r,idx)=>{for(const m of(k.doneBulan||[])){const rrb=k.realisasiRincianBulan?.[m];if(rrb&&rrb[idx]!==undefined){t+=rrb[idx];}else{const prop=totalRincian>0?rT(r)/totalRincian:0;t+=Math.round(prop*kTPBReal(k,m));}}});return fmt(t);})()}</td>
+        <td class="r" style="font-family:'Fira Code',monospace;font-size:11px;font-weight:700;color:var(--gold);">${(()=>{let tAng=0,tSpent=0;k.rincian.forEach((r,idx)=>{tAng+=rT(r);for(const m of(k.doneBulan||[])){const rrb=k.realisasiRincianBulan?.[m];if(rrb&&rrb[idx]!==undefined){tSpent+=rrb[idx];}else{const prop=totalRincian>0?rT(r)/totalRincian:0;tSpent+=Math.round(prop*kTPBReal(k,m));}}});return fmt(Math.max(0,tAng-tSpent));})()}</td>
+        <td></td>
+      </tr></tfoot>
     </table>
   </div>`;
 }
