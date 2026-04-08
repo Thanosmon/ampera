@@ -1211,6 +1211,24 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
           <div style="font-size:12px;color:rgba(255,255,255,.85);line-height:1.6;margin-bottom:10px;">
             Generate otomatis <strong style="color:#EEB860;">Laporan Kinerja Keuangan</strong> dalam format PDF siap cetak — berisi monitoring penyerapan anggaran, rencana vs realisasi per bulan, rencana kegiatan bulan ini, dan evaluasi IKPA.
           </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <label style="font-size:11.5px;color:rgba(255,255,255,.75);white-space:nowrap;flex-shrink:0;">📅 Periode s.d.:</label>
+            <select id="laporanBulanSel" style="flex:1;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:6px 10px;font-size:12.5px;font-family:'Figtree',sans-serif;cursor:pointer;outline:none;">
+              <option value="all" style="background:#1e3a5f;">📊 Tahunan (Semua Bulan)</option>
+              <option value="1"  style="background:#1e3a5f;">Januari</option>
+              <option value="2"  style="background:#1e3a5f;">Februari</option>
+              <option value="3"  style="background:#1e3a5f;">Maret</option>
+              <option value="4"  style="background:#1e3a5f;">April</option>
+              <option value="5"  style="background:#1e3a5f;">Mei</option>
+              <option value="6"  style="background:#1e3a5f;">Juni</option>
+              <option value="7"  style="background:#1e3a5f;">Juli</option>
+              <option value="8"  style="background:#1e3a5f;">Agustus</option>
+              <option value="9"  style="background:#1e3a5f;">September</option>
+              <option value="10" style="background:#1e3a5f;">Oktober</option>
+              <option value="11" style="background:#1e3a5f;">November</option>
+              <option value="12" style="background:#1e3a5f;">Desember</option>
+            </select>
+          </div>
           <button class="btn btn-p" onclick="generateLaporanKinerja()" style="width:100%;justify-content:center;gap:8px;font-size:13px;padding:10px;">
             📊 Buat Laporan Kinerja Keuangan
           </button>
@@ -4428,6 +4446,10 @@ document.addEventListener('click',e=>{
 
 function openExportModal(){
   document.getElementById('exportModal').classList.add('open');
+  // Sinkronkan selector periode laporan dengan filter bulan dashboard
+  const fbv=document.getElementById('filterBulan')?.value;
+  const sel=document.getElementById('laporanBulanSel');
+  if(sel&&fbv) sel.value=fbv;
 }
 
 // ════════════════════════════════════════════
@@ -4478,11 +4500,15 @@ function generateLaporanKinerja(){
   const kodes=Object.keys(IKPA_CONF);
   const tahun=getTAYear();
   const nowM=new Date().getMonth()+1;
-  // Bulan laporan: gunakan filter bulan dari dashboard jika dipilih, fallback ke bulan berjalan
-  const filterBulanVal=document.getElementById('filterBulan')?.value;
-  const rptM=(filterBulanVal&&filterBulanVal!=='all')?+filterBulanVal:nowM;
-  const tw=Math.ceil(rptM/3),twIdx=tw-1; // TW sesuai bulan laporan
+  // Bulan laporan: prioritas selector modal, fallback filter dashboard, fallback bulan berjalan
+  const selVal=document.getElementById('laporanBulanSel')?.value;
+  const fbVal=document.getElementById('filterBulan')?.value;
+  const chosenVal=selVal||fbVal;
+  const isTahunan=(!chosenVal||chosenVal==='all');
+  const rptM=isTahunan?12:(+chosenVal);
+  const tw=Math.ceil(rptM/3),twIdx=tw-1;
   const bulanNm=MN[rptM-1];
+  const periodeTxt=isTahunan?`Tahunan ${tahun}`:`s.d. ${bulanNm} ${tahun}`;
   const tanggal=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
 
   // ═══ HALAMAN 1 — COVER ═══════════════════
@@ -4495,7 +4521,7 @@ function generateLaporanKinerja(){
   // Teks kiri
   txt('LAPORAN KINERJA',W/4,72,26,'bold',C.white,'center');
   txt('KEUANGAN',W/4,84,26,'bold',C.gold,'center');
-  txt(`Periode s.d. ${bulanNm} ${tahun}`,W/4,98,14,'normal',C.white,'center');
+  txt(`Periode ${periodeTxt}`,W/4,98,14,'normal',C.white,'center');
   setFill(C.gold);rrect(W/4-35,104,70,8);
   txt('Dialog Kinerja Organisasi & Managerial Meeting',W/4,109,8,'bold',C.navy,'center');
   // Teks kanan
@@ -4508,7 +4534,7 @@ function generateLaporanKinerja(){
 
   // ═══ HALAMAN 2 — MONITORING PENYERAPAN ═══
   doc.addPage();
-  pageHeader(`MONITORING PENYERAPAN ANGGARAN TA ${tahun}`,`s.d. ${bulanNm} ${tahun} · TW ${twRom[twIdx]}`);
+  pageHeader(`MONITORING PENYERAPAN ANGGARAN TA ${tahun}`,`${periodeTxt} · TW ${twRom[twIdx]}`);
 
   // KPI row
   let totPagu=kodes.reduce((s,k)=>s+(ikpa.belanja[k]?.pagu||0),0);
@@ -4517,7 +4543,7 @@ function generateLaporanKinerja(){
   const targTWPct=IKPA_CONF['52'].target[twIdx]; // belanja barang sebagai acuan
   const cw=(W-20)/4-2;
   kpiCard(10,20,cw,18,'Total Pagu (Rp)',totPagu>0?fmt(totPagu):'—',C.navyL);
-  kpiCard(10+cw+2,20,cw,18,`Realisasi s.d. ${bulanNm}`,totReal>0?fmt(totReal):'—',C.green);
+  kpiCard(10+cw+2,20,cw,18,isTahunan?'Realisasi Tahunan':`Realisasi s.d. ${bulanNm}`,totReal>0?fmt(totReal):'—',C.green);
   kpiCard(10+2*(cw+2),20,cw,18,'% Realisasi',pctReal.toFixed(2)+'%',pctReal>=targTWPct?C.green:pctReal>=targTWPct*0.7?C.gold2:C.red);
   kpiCard(10+3*(cw+2),20,cw,18,`Target TW ${twRom[twIdx]}`,`${IKPA_CONF['51'].target[twIdx]}% – ${IKPA_CONF['52'].target[twIdx]}%`,C.navy);
 
@@ -4633,21 +4659,35 @@ function generateLaporanKinerja(){
 
   // ═══ HALAMAN 4 — RENCANA KEGIATAN ════════
   doc.addPage();
-  pageHeader(`RENCANA KEGIATAN ${bulanNm.toUpperCase()} ${tahun}`,`Status per ${tanggal}`);
+  pageHeader(isTahunan?`REKAPITULASI KEGIATAN TA ${tahun}`:`RENCANA KEGIATAN ${bulanNm.toUpperCase()} ${tahun}`,`Status per ${tanggal}`);
 
-  const kegBln=data.kegiatan.filter(k=>data.bidang.some(b=>b.id===k.bidangId)&&k.jadwal.some(j=>j.bulan===rptM));
+  const kegBln=isTahunan
+    ? data.kegiatan.filter(k=>data.bidang.some(b=>b.id===k.bidangId)&&k.jadwal.length>0)
+    : data.kegiatan.filter(k=>data.bidang.some(b=>b.id===k.bidangId)&&k.jadwal.some(j=>j.bulan===rptM));
   const rowsK=kegBln.map((k,i)=>{
+    if(isTahunan){
+      const totA=k.jadwal.reduce((s,j)=>s+j.anggaran,0);
+      const jadStr=k.jadwal.map(j=>MN[j.bulan-1].slice(0,3)).join(', ');
+      const doneAll=k.doneBulan.length>0&&k.jadwal.every(j=>k.doneBulan.includes(j.bulan));
+      const partDone=k.doneBulan.length>0;
+      const sts=doneAll?'Dilaksanakan':partDone?'Sebagian':'Belum';
+      return [i+1,k.nama,getBidangNama(k.bidangId)||'—',jadStr,fmt(totA),sts];
+    }
     const j=k.jadwal.find(j=>j.bulan===rptM);
     const done=k.doneBulan.includes(rptM);
     const mStr=(j?.minggu||[]).map(m=>'M'+m).join(', ');
     return [i+1,k.nama,getBidangNama(k.bidangId)||'—',mStr,fmt(j?.anggaran||0),done?'Dilaksanakan':'Belum'];
   });
-  const totK=kegBln.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===rptM);return s+(j?.anggaran||0);},0);
-  const doneK=kegBln.filter(k=>k.doneBulan.includes(rptM)).length;
+  const totK=isTahunan
+    ? kegBln.reduce((s,k)=>s+k.jadwal.reduce((a,j)=>a+j.anggaran,0),0)
+    : kegBln.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===rptM);return s+(j?.anggaran||0);},0);
+  const doneK=isTahunan
+    ? kegBln.filter(k=>k.doneBulan.length>0).length
+    : kegBln.filter(k=>k.doneBulan.includes(rptM)).length;
   rowsK.push([{content:'TOTAL',colSpan:4,styles:{fontStyle:'bold',fillColor:[225,230,240]}},{content:fmt(totK),styles:{fontStyle:'bold'}},'']);
 
   doc.autoTable({
-    head:[['No','Kegiatan','Bidang','Minggu','Anggaran (Rp)','Status']],
+    head:[['No','Kegiatan','Bidang',isTahunan?'Jadwal':'Minggu','Anggaran (Rp)','Status']],
     body:rowsK,
     startY:22,margin:{left:10,right:10},
     styles:{fontSize:9,cellPadding:3},
@@ -4656,6 +4696,7 @@ function generateLaporanKinerja(){
     didParseCell:(d)=>{
       if(d.section==='body'&&d.column.index===5){
         if(d.cell.raw==='Dilaksanakan')d.cell.styles.textColor=[0,150,100];
+        else if(d.cell.raw==='Sebagian')d.cell.styles.textColor=[38,123,217];
         else if(d.cell.raw==='Belum')d.cell.styles.textColor=[200,140,0];
       }
     }
@@ -4667,7 +4708,7 @@ function generateLaporanKinerja(){
     setFill(C.surf);rect(10,fY,W-20,16);
     setFill(C.green);rect(10,fY,3,16);
     const pctDone=kegBln.length>0?Math.round(doneK/kegBln.length*100):0;
-    txt(`Realisasi ${bulanNm}: ${doneK} dari ${kegBln.length} kegiatan dilaksanakan (${pctDone}%)`,16,fY+7,9,'bold',C.navy);
+    txt(isTahunan?`Realisasi Tahunan: ${doneK} dari ${kegBln.length} kegiatan dilaksanakan (${pctDone}%)`:`Realisasi ${bulanNm}: ${doneK} dari ${kegBln.length} kegiatan dilaksanakan (${pctDone}%)`,16,fY+7,9,'bold',C.navy);
     const bw=W-40;setFill('#e4edf3');rect(16,fY+10,bw,4);
     setFill(pctDone>=100?C.green:pctDone>=50?C.teal:C.gold2);rect(16,fY+10,bw*pctDone/100,4);
   }
@@ -4737,8 +4778,9 @@ function generateLaporanKinerja(){
   }
   pageFooter(5,5);
 
-  doc.save(`Laporan_Kinerja_sd_${bulanNm}_${tahun}.pdf`);
-  toast(`Laporan Kinerja s.d. ${bulanNm} ${tahun} berhasil dibuat`,'📊');
+  const fileSuffix=isTahunan?`Tahunan_${tahun}`:`sd_${bulanNm}_${tahun}`;
+  doc.save(`Laporan_Kinerja_${fileSuffix}.pdf`);
+  toast(`Laporan Kinerja ${periodeTxt} berhasil dibuat`,'📊');
   document.getElementById('exportModal').classList.remove('open');
   }catch(e){console.error('generateLaporanKinerja error:',e);toast('Gagal buat laporan: '+e.message,'❌');}
 }
