@@ -2307,7 +2307,6 @@ function showKegDetail(id){
     </div>
     ${canEdit(k)?`<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--bdr);display:flex;gap:8px;">
       <button class="btn btn-o" onclick="document.getElementById('kegDetailOv').remove();openEdit('${k.id}')">✎ Edit Kegiatan</button>
-      <button class="btn" style="background:rgba(224,85,85,0.15);border-color:rgba(224,85,85,0.4);color:#e05555;" onclick="document.getElementById('kegDetailOv').remove();delKeg('${k.id}')">✕ Hapus</button>
     </div>`:''}
   </div>`;
   document.body.appendChild(ov);
