@@ -3222,7 +3222,7 @@ function renderDashboard(){
         <div class="chart-card">
           <div class="chart-card-head">
             <h4>📊 Rencana vs Realisasi Anggaran per Bulan</h4>
-            <span>Batang = rencana · Garis = kumulatif terlaksana</span>
+            <span>Batang = rencana · Garis = kumulatif realisasi</span>
           </div>
           <div class="chart-body">
             <canvas id="chartBarBulan"></canvas>
@@ -3410,9 +3410,9 @@ function renderDashboard(){
     data:{
       labels:MS,
       datasets:[
-        {label:'Rencana',data:perBulanAngg,backgroundColor:MS.map((_,i)=>i+1===bln?'rgba(0,124,145,0.9)':'rgba(0,124,145,0.28)'),borderColor:'rgba(0,124,145,0)',borderRadius:4,borderSkipped:false,order:2},
-        {label:'Terlaksana',data:perBulanDone,backgroundColor:MS.map((_,i)=>i+1===bln?'rgba(0,184,122,0.9)':'rgba(0,184,122,0.5)'),borderColor:'rgba(0,184,122,0)',borderRadius:4,borderSkipped:false,order:1},
-        {label:'Kumulatif Terlaksana',data:kumulDone,type:'line',borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,0.07)',pointBackgroundColor:'#e8a020',pointRadius:3,tension:0.35,fill:true,yAxisID:'y2',order:0}
+        {label:'Rencana',data:perBulanAngg,backgroundColor:MS.map((_,i)=>i+1===bln?'rgba(0,124,145,0.9)':'rgba(0,124,145,0.28)'),borderColor:'rgba(0,124,145,0)',borderRadius:4,borderSkipped:false,order:1},
+        {label:'Realisasi',data:perBulanDone,backgroundColor:MS.map((_,i)=>i+1===bln?'rgba(0,184,122,0.9)':'rgba(0,184,122,0.5)'),borderColor:'rgba(0,184,122,0)',borderRadius:4,borderSkipped:false,order:2},
+        {label:'Kumulatif Realisasi',data:kumulDone,type:'line',borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,0.07)',pointBackgroundColor:'#e8a020',pointRadius:3,tension:0.35,fill:true,yAxisID:'y2',order:0}
       ]
     },
     options:{
