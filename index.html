@@ -1263,6 +1263,22 @@ mark.ghl{background:rgba(0,119,200,.15);color:var(--ink);border-radius:2px;paddi
   </div>
 </div>
 
+<!-- ═══ MODAL KONFIRMASI UMUM ═══ -->
+<div class="modal-overlay" id="confirmModal" style="z-index:9999;">
+  <div class="modal" style="width:420px;max-width:92vw;">
+    <div class="modal-head" id="confirmModalHead">
+      <div><h3 id="confirmModalTitle">Konfirmasi</h3><p id="confirmModalSub"></p></div>
+    </div>
+    <div class="modal-body" style="padding:18px 20px 8px;">
+      <div id="confirmModalBody" style="font-size:13px;color:var(--txt2);line-height:1.6;"></div>
+    </div>
+    <div class="modal-foot" style="justify-content:flex-end;gap:10px;">
+      <button class="btn btn-o" id="confirmModalCancel" onclick="closeConfirmModal()">Batal</button>
+      <button class="btn" id="confirmModalOk" style="background:#e05555;color:#fff;border:none;">Ya, Lanjutkan</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ STICKY SUMMARY BAR ═══ -->
 <div class="sticky-summary" id="stickySummary">
   <div class="ss-item">
@@ -4454,19 +4470,43 @@ function openExportModal(){
   if(sel&&fbv) sel.value=fbv;
 }
 
+function showConfirm({title,sub='',body,okLabel='Ya, Lanjutkan',okColor='#e05555',onOk}){
+  document.getElementById('confirmModalTitle').textContent=title;
+  document.getElementById('confirmModalSub').textContent=sub;
+  document.getElementById('confirmModalBody').innerHTML=body;
+  const okBtn=document.getElementById('confirmModalOk');
+  okBtn.textContent=okLabel;
+  okBtn.style.background=okColor;
+  okBtn.onclick=()=>{closeConfirmModal();if(onOk)onOk();};
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirmModal(){
+  document.getElementById('confirmModal').classList.remove('open');
+}
+
 function resetSemuaRealisasi(){
   const total=data.kegiatan.filter(k=>(k.doneBulan||[]).length>0).length;
-  if(!confirm(`Ini akan menghapus status "Dilaksanakan" dari SEMUA kegiatan (${total} kegiatan memiliki realisasi).\n\nLanjutkan?`))return;
-  data.kegiatan.forEach(k=>{
-    k.doneBulan=[];
-    delete k.realisasiBulan;
-    delete k.realisasiRincianBulan;
+  showConfirm({
+    title:'🗑️ Reset Semua Realisasi',
+    sub:'Tindakan ini tidak dapat dibatalkan',
+    body:`<div style="background:#fff5f5;border:1.5px solid rgba(224,85,85,0.3);border-radius:8px;padding:12px 14px;margin-bottom:12px;">
+      <div style="font-weight:700;color:#c0392b;margin-bottom:6px;">Perhatian!</div>
+      <div>Status <strong>Dilaksanakan</strong> dari <strong>${total} kegiatan</strong> akan dihapus seluruhnya.</div>
+    </div>
+    <div style="font-size:12px;color:var(--txt3);">Data rencana jadwal dan anggaran <strong>tidak</strong> akan terpengaruh — hanya status realisasi yang dihapus.</div>`,
+    okLabel:'Ya, Reset Sekarang',
+    okColor:'#e05555',
+    onOk(){
+      data.kegiatan.forEach(k=>{
+        k.doneBulan=[];
+        delete k.realisasiBulan;
+        delete k.realisasiRincianBulan;
+      });
+      saveLS();renderAll();
+      toast('Semua realisasi berhasil direset','🗑️');
+      if(typeof pushToServer==='function') pushToServer(true);
+    }
   });
-  saveLS();
-  renderAll();
-  toast('Semua realisasi berhasil direset','🗑️');
-  // Push ke server agar sinkron
-  if(typeof pushToServer==='function') pushToServer(true);
 }
 
 // ════════════════════════════════════════════
