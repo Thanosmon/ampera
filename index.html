@@ -4380,57 +4380,86 @@ function renderRPDSection(){
       const dev=real-renc; totRenc+=renc; totReal+=real;
       const devClr=dev>0?'#00b87a':dev<0?'#e05555':'var(--txt3)';
       const isTWM=bulanTW.includes(mi+1);
-      return `<tr style="background:${isTWM?'rgba(0,124,145,.03)':''};${mi>0?'border-top:1px solid var(--bdr)15;':''}">
-        <td style="padding:5px 10px;font-size:11px;font-weight:${isTWM?700:400};color:${isTWM?'var(--teal)':'var(--txt2)'};white-space:nowrap;border-right:1px solid var(--bdr);width:80px;">
-          ${mn}${isTWM?` <span style="font-size:9px;color:var(--teal);opacity:.7;">TW${twRom[twIdx]}</span>`:''}
+      const pct=renc>0?Math.min(200,Math.round((real/renc)*100)):0;
+      const barClr=pct>=100?'#00b87a':pct>=70?'#007c91':pct>0?'#e8a020':'#e0e7ef';
+      const barPct=Math.min(100,pct);
+      const devSign=(dev>=0&&renc>0)?'+':'';
+      return `<tr style="background:${isTWM?'rgba(0,124,145,.04)':''};border-top:1px solid var(--bdr);">
+        <td style="padding:6px 12px;font-size:11px;font-weight:${isTWM?700:400};color:${isTWM?'var(--teal)':'var(--txt2)'};white-space:nowrap;border-right:1px solid var(--bdr);">
+          ${mn}${isTWM?` <span style="font-size:9px;color:var(--teal);font-weight:600;opacity:.8;"> TW${twRom[twIdx]}</span>`:''}
         </td>
-        <td style="padding:4px 8px;border-right:1px solid var(--bdr);width:130px;">
+        <td style="padding:5px 10px;border-right:1px solid var(--bdr);">
           ${canE?`<input type="number" min="0" step="1" value="${renc||''}" placeholder="0"
             style="${inpStyle}"
             oninput="setRPDManual('${kode}',${mi},'rencana',this.value)"
             onfocus="this.style.borderColor='${color}'" onblur="this.style.borderColor='var(--bdr)'">`
           :`<span style="font-size:11px;font-family:'Fira Code',monospace;">${renc?fmtI(renc):'—'}</span>`}
         </td>
-        <td style="padding:4px 8px;border-right:1px solid var(--bdr);width:130px;">
+        <td style="padding:5px 10px;border-right:1px solid var(--bdr);">
           ${canE?`<input type="number" min="0" step="1" value="${real||''}" placeholder="0"
             style="${inpStyle}${real?'color:#00b87a;':''}"
             oninput="setRPDManual('${kode}',${mi},'realisasi',this.value)"
             onfocus="this.style.borderColor='#00b87a'" onblur="this.style.borderColor='var(--bdr)'">`
           :`<span style="font-size:11px;font-family:'Fira Code',monospace;color:${real?'#00b87a':'var(--txt3)'};">${real?fmtI(real):'—'}</span>`}
         </td>
-        <td style="padding:4px 8px;border-right:1px solid var(--bdr);width:130px;">
+        <td style="padding:5px 10px;border-right:1px solid var(--bdr);">
           ${canE?`<input type="date" value="${tgl}"
             style="${inpStyle}font-family:'Figtree',sans-serif;font-size:10.5px;"
             onchange="setRPDManual('${kode}',${mi},'tglSP2D',this.value)">`
           :`<span style="font-size:10px;color:var(--txt3);">${tgl||'—'}</span>`}
         </td>
-        <td style="padding:5px 10px;text-align:right;font-size:11px;font-family:'Fira Code',monospace;font-weight:600;color:${devClr};">
-          ${renc>0||(real>0)?((dev>=0&&renc>0)?'+':'')+new Intl.NumberFormat('id-ID').format(dev):'—'}
+        <td style="padding:6px 12px;border-right:1px solid var(--bdr);vertical-align:middle;">
+          ${renc>0?`<div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;min-width:60px;height:6px;border-radius:99px;background:#e4edf3;overflow:hidden;">
+              <div style="height:100%;width:${barPct}%;background:${barClr};border-radius:99px;transition:width .4s;"></div>
+            </div>
+            <span style="font-size:11px;font-weight:700;color:${barClr};white-space:nowrap;min-width:36px;text-align:right;">${pct}%</span>
+          </div>`:`<span style="font-size:10px;color:var(--txt3);">—</span>`}
+        </td>
+        <td style="padding:6px 12px;text-align:right;font-size:11px;font-family:'Fira Code',monospace;font-weight:600;color:${devClr};white-space:nowrap;">
+          ${renc>0||(real>0)?`${devSign}${new Intl.NumberFormat('id-ID').format(dev)}`:'—'}
         </td>
       </tr>`;
     }).join('');
     const totDev=totReal-totRenc;
+    const totPct=totRenc>0?Math.round((totReal/totRenc)*100):0;
+    const totBarClr=totPct>=100?'#00b87a':totPct>=70?'#007c91':totPct>0?'#e8a020':'var(--txt3)';
     return `<div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:14px;">
-      <div style="padding:11px 16px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-        <div>
+      <div style="padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
           <span style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);">${icon} ${nama}</span>
-          <span style="font-size:10px;color:var(--txt3);margin-left:6px;">Akun ${kode}</span>
+          <span style="font-size:10px;color:var(--txt3);background:var(--surf);padding:2px 7px;border-radius:99px;border:1px solid var(--bdr);">Akun ${kode}</span>
         </div>
-        <div style="display:flex;gap:14px;font-size:11px;flex-wrap:wrap;">
-          <span style="color:var(--txt3);">Total Rencana: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${totRenc?fmtI(totRenc):'—'}</strong></span>
-          <span style="color:var(--txt3);">Total Realisasi SP2D: <strong style="color:#00b87a;font-family:'Fira Code',monospace;">${totReal?fmtI(totReal):'—'}</strong></span>
-          ${totRenc>0?`<span style="color:${totDev>=0?'#00b87a':'#e05555'};font-weight:700;">${totDev>=0?'+':''}${fmtN(Math.abs(totDev))} (${totRenc?((totReal/totRenc)*100).toFixed(1):'0'}%)</span>`:''}
+        <div style="display:flex;align-items:center;gap:16px;font-size:11px;flex-wrap:wrap;">
+          <span style="color:var(--txt3);">Rencana: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${totRenc?fmtI(totRenc):'—'}</strong></span>
+          <span style="color:var(--txt3);">Realisasi SP2D: <strong style="color:#00b87a;font-family:'Fira Code',monospace;">${totReal?fmtI(totReal):'—'}</strong></span>
+          ${totRenc>0?`<span style="display:flex;align-items:center;gap:6px;">
+            <div style="width:60px;height:5px;border-radius:99px;background:#e4edf3;overflow:hidden;">
+              <div style="height:100%;width:${Math.min(100,totPct)}%;background:${totBarClr};border-radius:99px;"></div>
+            </div>
+            <strong style="color:${totBarClr};font-family:'Fira Code',monospace;">${totPct}%</strong>
+            <span style="color:${totDev>=0?'#00b87a':'#e05555'};">(${totDev>=0?'+':''}${fmtI(Math.abs(totDev))})</span>
+          </span>`:''}
         </div>
       </div>
-      <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <table style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:640px;">
+          <colgroup>
+            <col style="width:9%;">
+            <col style="width:22%;">
+            <col style="width:22%;">
+            <col style="width:17%;">
+            <col style="width:18%;">
+            <col style="width:12%;">
+          </colgroup>
           <thead>
             <tr style="background:var(--surf);">
-              <th style="padding:7px 10px;text-align:left;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">BULAN</th>
-              <th style="padding:7px 10px;text-align:left;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">RENCANA RPD (Rp)</th>
-              <th style="padding:7px 10px;text-align:left;font-size:9.5px;font-weight:600;color:#00b87a;letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">REALISASI SP2D (Rp)</th>
-              <th style="padding:7px 10px;text-align:left;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">TANGGAL SP2D</th>
-              <th style="padding:7px 10px;text-align:right;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);">DEVIASI</th>
+              <th style="padding:8px 12px;text-align:left;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">BULAN</th>
+              <th style="padding:8px 12px;text-align:left;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">RENCANA RPD (Rp)</th>
+              <th style="padding:8px 12px;text-align:left;font-size:9.5px;font-weight:600;color:#00b87a;letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">REALISASI SP2D (Rp)</th>
+              <th style="padding:8px 12px;text-align:left;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">TANGGAL SP2D</th>
+              <th style="padding:8px 12px;text-align:left;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">SERAPAN</th>
+              <th style="padding:8px 12px;text-align:right;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);">DEVIASI</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
