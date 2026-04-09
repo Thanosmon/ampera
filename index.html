@@ -1701,10 +1701,16 @@ function migrateData(d){
   if(d&&!d.ikpa){
     d.ikpa={belanja:{'51':{pagu:0,realisasi:[0,0,0,0]},'52':{pagu:0,realisasi:[0,0,0,0]},'53':{pagu:0,realisasi:[0,0,0,0]},'57':{pagu:0,realisasi:[0,0,0,0]}}};
   }
-  // Inisialisasi RPD (Rencana Penarikan Dana) jika belum ada
-  if(d&&!d.rpd)d.rpd={'51':{rencana:Array(12).fill(0)}};
-  // Migrasi: hapus data realisasi RPD lama (kini dihitung dari doneBulan kegiatan)
-  if(d&&d.rpd&&d.rpd['51'])delete d.rpd['51'].realisasi;
+  // Migrasi RPD: inisialisasi/upgrade ke format baru (3 kode, rencana+realisasi+tglSP2D)
+  if(!d.rpd)d.rpd={};
+  ['51','52','53'].forEach(k=>{
+    if(!d.rpd[k])d.rpd[k]={};
+    const r=d.rpd[k];
+    // Migrasi: preserve rencana lama akun 51, bersihkan realisasi lama (auto dari doneBulan)
+    if(!r.rencana||r.rencana.length<12)r.rencana=Array(12).fill(0).map((v,i)=>r.rencana?.[i]||0);
+    if(!r.realisasi||r.realisasi.length<12)r.realisasi=Array(12).fill(0).map((v,i)=>r.realisasi?.[i]||0);
+    if(!r.tglSP2D||r.tglSP2D.length<12)r.tglSP2D=Array(12).fill('').map((v,i)=>r.tglSP2D?.[i]||'');
+  });
   // Inisialisasi Belanja Pegawai (3 item terpisah)
   if(d&&!d.belanjaPegawai)d.belanjaPegawai={
     uangMakan:{pagu:0,bulan:{}},
@@ -3987,37 +3993,22 @@ function getCurrentTW(){return _activeTW||Math.ceil((new Date().getMonth()+1)/3)
 function switchTW(tw){_activeTW=tw;renderIKPA();}
 function ikpaNilai(kode,twIdx){
   const conf=IKPA_CONF[kode];
-  // Akun 51 & 52: realisasi auto dari kegiatan terlaksana (kumulatif s.d. TW)
-  if(kode==='51'||kode==='52'){
-    const bl=getIKPAData().belanja[kode];
-    if(!bl||!bl.paguSet)return null;
-    const pagu=bl.pagu;
-    if(pagu===0)return{pct:0,target:conf.target[twIdx],minPct:conf.target[twIdx]-conf.threshold[twIdx],threshold:conf.threshold[twIdx],nilai:null,status:'na'};
-    const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
-    const monthsUpTo=TWMON.slice(0,twIdx+1).flat();
-    const kegiatan=kode==='51'?getBPKegiatan():getBBKegiatan();
-    const realisasi=kegiatan.reduce((s,k)=>{
-      return s+(k.doneBulan||[]).filter(m=>monthsUpTo.includes(m)).reduce((ss,m)=>ss+kTPB(k,m),0);
-    },0);
-    const pct=(realisasi/pagu)*100;
-    const target=conf.target[twIdx],threshold=conf.threshold[twIdx],minPct=target-threshold;
-    let nilai,status;
-    if(pct>=target){nilai=100;status='aman';}
-    else if(threshold>0&&pct>=minPct){nilai=100;status='toleransi';}
-    else{nilai=minPct>0?Math.min(100,Math.round((pct/minPct)*100)):0;status=pct<minPct*0.7?'kritis':'perhatian';}
-    return{pct,target,minPct,threshold,nilai,status};
-  }
-  // Akun 53 & lainnya: realisasi input manual per TW
   const bl=getIKPAData().belanja[kode];
   if(!bl||!bl.paguSet)return null;
-  if(bl.pagu===0)return{pct:0,target:conf.target[twIdx],minPct:conf.target[twIdx]-conf.threshold[twIdx],threshold:conf.threshold[twIdx],nilai:null,status:'na'};
-  const pct=(bl.realisasi[twIdx]/bl.pagu)*100;
+  const pagu=bl.pagu;
+  if(pagu===0)return{pct:0,target:conf.target[twIdx],minPct:conf.target[twIdx]-conf.threshold[twIdx],threshold:conf.threshold[twIdx],nilai:null,status:'na'};
+  // Semua kode: realisasi kumulatif dari RPD manual s.d. akhir TW
+  const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
+  const monthsUpTo=TWMON.slice(0,twIdx+1).flat();
+  const rpd=getRPD()[kode];
+  const realisasi=rpd?monthsUpTo.reduce((s,m)=>s+(rpd.realisasi[m-1]||0),0):0;
+  const pct=(realisasi/pagu)*100;
   const target=conf.target[twIdx],threshold=conf.threshold[twIdx],minPct=target-threshold;
   let nilai,status;
   if(pct>=target){nilai=100;status='aman';}
   else if(threshold>0&&pct>=minPct){nilai=100;status='toleransi';}
   else{nilai=minPct>0?Math.min(100,Math.round((pct/minPct)*100)):0;status=pct<minPct*0.7?'kritis':'perhatian';}
-  return{pct,target,minPct,threshold,nilai,status};
+  return{pct,target,minPct,threshold,nilai,status,realisasi};
 }
 function setIKPAPagu(kode,val){
   if(!canEditBP()){toast('Hanya Admin/Editor Bagian Umum yang dapat mengubah data ini','⛔');return;}
@@ -4082,30 +4073,33 @@ function setBPBulanRealisasi(key,m,val){
 }
 
 // ─── RPD helpers ─────────────────────────────────────
+// data.rpd = { '51':{rencana:[12],realisasi:[12],tglSP2D:[12]}, '52':{...}, '53':{...} }
 function getRPD(){
-  if(!data.rpd)data.rpd={'51':{rencana:Array(12).fill(0)}};
-  if(!data.rpd['51'])data.rpd['51']={rencana:Array(12).fill(0)};
-  if(data.rpd['51'].rencana.length<12)data.rpd['51'].rencana=[...data.rpd['51'].rencana,...Array(12-data.rpd['51'].rencana.length).fill(0)];
-  // Realisasi RPD tidak lagi dipakai — selalu dihitung dari doneBulan kegiatan
-  delete data.rpd['51'].realisasi;
+  if(!data.rpd)data.rpd={};
+  ['51','52','53'].forEach(k=>{
+    if(!data.rpd[k])data.rpd[k]={};
+    const r=data.rpd[k];
+    if(!r.rencana||r.rencana.length<12)r.rencana=Array(12).fill(0).map((v,i)=>r.rencana?.[i]||0);
+    if(!r.realisasi||r.realisasi.length<12)r.realisasi=Array(12).fill(0).map((v,i)=>r.realisasi?.[i]||0);
+    if(!r.tglSP2D||r.tglSP2D.length<12)r.tglSP2D=Array(12).fill('').map((v,i)=>r.tglSP2D?.[i]||'');
+  });
   return data.rpd;
 }
 let _rpdToast=null;
-function setRPDRencana(mi,val){
+// Setter tunggal: kode=51/52/53, mi=0-11, field=rencana/realisasi/tglSP2D
+function setRPDManual(kode,mi,field,val){
   if(!canEditBP()){toast('Hanya Admin/Editor Bagian Umum yang dapat mengubah data ini','⛔');return;}
-  getRPD()['51'].rencana[mi]=parseFloat(val)||0;saveLS();updateRPDTotals();updSum();clearTimeout(_rpdToast);_rpdToast=setTimeout(()=>toast('RPD tersimpan','💾'),700);
+  const r=getRPD()[kode];
+  if(field==='rencana'||field==='realisasi')r[field][mi]=parseFloat(val)||0;
+  else if(field==='tglSP2D')r[field][mi]=val||'';
+  saveLS();
+  clearTimeout(_rpdToast);
+  _rpdToast=setTimeout(()=>{toast('RPD tersimpan','💾');renderIKPA();},600);
 }
+// Compat: setRPDRencana lama (hanya akun 51)
+function setRPDRencana(mi,val){setRPDManual('51',mi,'rencana',val);}
 function updateRPDTotals(){
-  const tw=getCurrentTW()-1;
-  const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
-  const bt=TWMON[tw];
-  const r=getRPD()['51'];
-  const totRenc=bt.reduce((s,m)=>s+(r.rencana[m-1]||0),0);
-  // Realisasi dari doneBulan kegiatan
-  const bpKeg2=getBPKegiatan(),bbKeg2=getBBKegiatan();
-  const totReal=bt.reduce((s,m)=>s+[...bpKeg2,...bbKeg2].filter(k=>k.doneBulan.includes(m)).reduce((ss,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return ss+(j?.anggaran||0);},0),0);
-  const el=document.getElementById('rpd-totals');
-  if(el)el.innerHTML=`Total Rencana: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmt(totRenc)}</strong> · Realisasi: <strong style="color:#00b87a;font-family:'Fira Code',monospace;">${fmt(totReal)}</strong>`;
+  // Tidak dipakai lagi secara terpisah — renderIKPA() sudah refresh semua
 }
 
 function renderIKPA(){
@@ -4172,18 +4166,12 @@ function renderIKPA(){
             ${kode==='51'?`<div style="font-size:10px;color:var(--txt3);padding:2px 0 0;">Akum. kegiatan: ${fmt(getBPKegiatan().reduce((s,k)=>s+kT(k),0))}</div>`:''}
           </div>
           <div style="display:flex;flex-direction:column;">
-            <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">${kode==='51'?`Realisasi s.d. TW ${twRom[twIdx]} (Rp)`:`Realisasi TW ${twRom[twIdx]} (Rp)`}</div>
+            <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Realisasi SP2D s.d. TW ${twRom[twIdx]} (Rp)</div>
             <div class="ikpa-card-val" style="min-height:26px;color:var(--green);display:flex;align-items:center;">
-              ${(kode==='51'||kode==='52')?(()=>{const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];const mUp=TWMON.slice(0,twIdx+1).flat();const keg=kode==='51'?getBPKegiatan():getBBKegiatan();const r=keg.reduce((s,k)=>(k.doneBulan||[]).filter(m=>mUp.includes(m)).reduce((ss,m)=>ss+kTPB(k,m),s),0);return r?new Intl.NumberFormat('id-ID').format(r):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`;})():(bl&&bl.realisasi[twIdx]?new Intl.NumberFormat('id-ID').format(bl.realisasi[twIdx]):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`)}
+              ${(()=>{const mUp=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]].slice(0,twIdx+1).flat();const rpd=getRPD()[kode];const r=rpd?mUp.reduce((s,m)=>s+(rpd.realisasi[m-1]||0),0):0;return r?new Intl.NumberFormat('id-ID').format(r):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`;})()}
             </div>
             <div style="border-top:1px dashed var(--bdr);margin:6px 0;"></div>
-            ${(kode==='51'||kode==='52')?`<div style="font-size:10px;color:var(--teal);padding:4px 0;">✦ Auto dari kegiatan dilaksanakan</div>`
-              :bpEdit?`<input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
-              value="${bl&&bl.realisasi[twIdx]?bl.realisasi[twIdx]:''}" placeholder="ketik angka..."
-              onchange="setIKPAReal('${kode}',${twIdx},this.value)"
-              onfocus="this.style.borderColor='${conf.color}'"
-              onblur="this.style.borderColor='var(--bdr)'">`
-              :`<div style="font-size:10px;color:var(--txt3);padding:4px 0;font-style:italic;">🔒 Hanya Admin / Editor Bagian Umum</div>`}
+            <div style="font-size:10px;color:var(--teal);padding:2px 0;">✦ Input per bulan di bagian RPD di bawah</div>
           </div>
         </div>
       </div>
@@ -4374,48 +4362,95 @@ function renderRPDSection(){
 
   const fmtDev=(d,r)=>r>0&&d!==0?` <span style="color:${d>0?'#00b87a':'#e05555'};font-size:10px;">(${d>0?'+':''}${(d/r*100).toFixed(1)}%)</span>`:'';
 
-  return `<div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:20px;">
-    <div style="padding:13px 16px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+  const rpd=getRPD();
+  const fmtI=n=>n?new Intl.NumberFormat('id-ID').format(n):'';
+  const canE=canEditBP();
+  const inpStyle=`width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:5px 7px;font-size:11px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;`;
+  const BL_CONF=[
+    {kode:'51',icon:'👤',nama:'Belanja Pegawai',color:'#007c91'},
+    {kode:'52',icon:'📦',nama:'Belanja Barang',color:'#267bd9'},
+    {kode:'53',icon:'🏗️',nama:'Belanja Modal',color:'#7c5cbf'}
+  ];
+
+  const blocksHtml=BL_CONF.map(({kode,icon,nama,color})=>{
+    const r=rpd[kode];
+    let totRenc=0,totReal=0;
+    const rows=MN.map((mn,mi)=>{
+      const renc=r.rencana[mi]||0,real=r.realisasi[mi]||0,tgl=r.tglSP2D[mi]||'';
+      const dev=real-renc; totRenc+=renc; totReal+=real;
+      const devClr=dev>0?'#00b87a':dev<0?'#e05555':'var(--txt3)';
+      const isTWM=bulanTW.includes(mi+1);
+      return `<tr style="background:${isTWM?'rgba(0,124,145,.03)':''};${mi>0?'border-top:1px solid var(--bdr)15;':''}">
+        <td style="padding:5px 10px;font-size:11px;font-weight:${isTWM?700:400};color:${isTWM?'var(--teal)':'var(--txt2)'};white-space:nowrap;border-right:1px solid var(--bdr);width:80px;">
+          ${mn}${isTWM?` <span style="font-size:9px;color:var(--teal);opacity:.7;">TW${twRom[twIdx]}</span>`:''}
+        </td>
+        <td style="padding:4px 8px;border-right:1px solid var(--bdr);width:130px;">
+          ${canE?`<input type="number" min="0" step="1" value="${renc||''}" placeholder="0"
+            style="${inpStyle}"
+            oninput="setRPDManual('${kode}',${mi},'rencana',this.value)"
+            onfocus="this.style.borderColor='${color}'" onblur="this.style.borderColor='var(--bdr)'">`
+          :`<span style="font-size:11px;font-family:'Fira Code',monospace;">${renc?fmtI(renc):'—'}</span>`}
+        </td>
+        <td style="padding:4px 8px;border-right:1px solid var(--bdr);width:130px;">
+          ${canE?`<input type="number" min="0" step="1" value="${real||''}" placeholder="0"
+            style="${inpStyle}${real?'color:#00b87a;':''}"
+            oninput="setRPDManual('${kode}',${mi},'realisasi',this.value)"
+            onfocus="this.style.borderColor='#00b87a'" onblur="this.style.borderColor='var(--bdr)'">`
+          :`<span style="font-size:11px;font-family:'Fira Code',monospace;color:${real?'#00b87a':'var(--txt3)'};">${real?fmtI(real):'—'}</span>`}
+        </td>
+        <td style="padding:4px 8px;border-right:1px solid var(--bdr);width:130px;">
+          ${canE?`<input type="date" value="${tgl}"
+            style="${inpStyle}font-family:'Figtree',sans-serif;font-size:10.5px;"
+            onchange="setRPDManual('${kode}',${mi},'tglSP2D',this.value)">`
+          :`<span style="font-size:10px;color:var(--txt3);">${tgl||'—'}</span>`}
+        </td>
+        <td style="padding:5px 10px;text-align:right;font-size:11px;font-family:'Fira Code',monospace;font-weight:600;color:${devClr};">
+          ${renc>0||(real>0)?((dev>=0&&renc>0)?'+':'')+new Intl.NumberFormat('id-ID').format(dev):'—'}
+        </td>
+      </tr>`;
+    }).join('');
+    const totDev=totReal-totRenc;
+    return `<div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:14px;">
+      <div style="padding:11px 16px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div>
+          <span style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);">${icon} ${nama}</span>
+          <span style="font-size:10px;color:var(--txt3);margin-left:6px;">Akun ${kode}</span>
+        </div>
+        <div style="display:flex;gap:14px;font-size:11px;flex-wrap:wrap;">
+          <span style="color:var(--txt3);">Total Rencana: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${totRenc?fmtI(totRenc):'—'}</strong></span>
+          <span style="color:var(--txt3);">Total Realisasi SP2D: <strong style="color:#00b87a;font-family:'Fira Code',monospace;">${totReal?fmtI(totReal):'—'}</strong></span>
+          ${totRenc>0?`<span style="color:${totDev>=0?'#00b87a':'#e05555'};font-weight:700;">${totDev>=0?'+':''}${fmtN(Math.abs(totDev))} (${totRenc?((totReal/totRenc)*100).toFixed(1):'0'}%)</span>`:''}
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--surf);">
+              <th style="padding:7px 10px;text-align:left;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">BULAN</th>
+              <th style="padding:7px 10px;text-align:left;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">RENCANA RPD (Rp)</th>
+              <th style="padding:7px 10px;text-align:left;font-size:9.5px;font-weight:600;color:#00b87a;letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">REALISASI SP2D (Rp)</th>
+              <th style="padding:7px 10px;text-align:left;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">TANGGAL SP2D</th>
+              <th style="padding:7px 10px;text-align:right;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);">DEVIASI</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      ${!canE?`<div style="padding:8px 14px;font-size:10px;color:var(--txt3);border-top:1px solid var(--bdr);">🔒 Hanya Admin / Editor Bagian Umum yang dapat mengubah data ini.</div>`:''}
+    </div>`;
+  }).join('');
+
+  return `<div style="margin-bottom:4px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
       <div>
-        <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);">📊 RPD — Rencana Penarikan Dana per Bulan</div>
-        <div style="font-size:11px;color:var(--txt3);margin-top:2px;">Triwulan ${twRom[twIdx]} aktif · Realisasi aktual dari input saat tandai dilaksanakan</div>
+        <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--ink);">📊 RPD & Realisasi SP2D per Bulan</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:2px;">Input manual rencana penarikan dana (DIPA Hal. III) dan realisasi SP2D per jenis belanja</div>
       </div>
     </div>
-    ${dlBanner}
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <thead>
-          <tr style="background:var(--surf);">
-            <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);min-width:210px;">KOMPONEN</th>
-            ${bulanTW.map(m=>`<th style="padding:10px 6px;text-align:center;font-size:10px;font-weight:600;color:var(--teal);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);">${MN[m-1].toUpperCase()}</th>`).join('')}
-          </tr>
-        </thead>
-        <tbody>
-          <tr style="border-bottom:2px solid var(--bdr);">
-            <td style="padding:10px 14px;border-right:1px solid var(--bdr);vertical-align:top;">
-              <div style="font-weight:700;color:var(--ink);font-size:12px;margin-bottom:2px;">👤 Belanja Pegawai <span style="font-weight:400;font-size:10px;color:var(--txt3);">Akun 51</span></div>
-              <div style="font-size:10px;color:var(--teal);margin-bottom:6px;">✦ Otomatis dari ${bpKeg.length} kegiatan</div>
-              <div style="font-size:11px;color:var(--txt3);">Rencana TW: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmt(totRencBP)}</strong></div>
-              <div style="font-size:11px;color:var(--txt3);">Realisasi: <strong style="color:${totClrBP};font-family:'Fira Code',monospace;">${fmt(totRealBP)}</strong>${totRencBP>0?` <span style="color:${totClrBP};font-weight:700;">(${totPctBP}%)</span>`:''}</div>
-              ${totRealBP>0&&totRencBP>0?`<div style="font-size:11px;color:var(--txt3);">Deviasi: <strong style="font-family:'Fira Code',monospace;color:${totDevBP>=0?'#00b87a':'#e05555'};">${totDevBP>=0?'+':''}${fmt(totDevBP)}</strong>${fmtDev(totDevBP,totRencBP)}</div>`:''}
-            </td>
-            ${buildCols(bpKeg)}
-          </tr>
-          <tr>
-            <td style="padding:10px 14px;border-right:1px solid var(--bdr);vertical-align:top;">
-              <div style="font-weight:700;color:var(--ink);font-size:12px;margin-bottom:2px;">📦 Belanja Barang <span style="font-weight:400;font-size:10px;color:var(--txt3);">Akun 52</span></div>
-              <div style="font-size:10px;color:var(--teal);margin-bottom:6px;">✦ Otomatis dari ${bbKeg.length} kegiatan</div>
-              <div style="font-size:11px;color:var(--txt3);">Rencana TW: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmt(totRenc52)}</strong></div>
-              <div style="font-size:11px;color:var(--txt3);">Realisasi: <strong style="color:${totClr52};font-family:'Fira Code',monospace;">${fmt(totReal52)}</strong>${totRenc52>0?` <span style="color:${totClr52};font-weight:700;">(${totPct52}%)</span>`:''}</div>
-              ${totReal52>0&&totRenc52>0?`<div style="font-size:11px;color:var(--txt3);">Deviasi: <strong style="font-family:'Fira Code',monospace;color:${totDev52>=0?'#00b87a':'#e05555'};">${totDev52>=0?'+':''}${fmt(totDev52)}</strong>${fmtDev(totDev52,totRenc52)}</div>`:''}
-            </td>
-            ${buildCols(bbKeg)}
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div style="padding:10px 16px;border-top:1px solid var(--bdr);font-size:10px;color:var(--txt3);">
-      💡 Klik jadwal kegiatan → input realisasi aktual (bisa berbeda dari rencana). Deviasi = selisih realisasi vs rencana RPD.
+    ${dlBanner?`<div style="border-radius:8px;overflow:hidden;margin-bottom:12px;">${dlBanner}</div>`:''}
+    ${blocksHtml}
+    <div style="font-size:10px;color:var(--txt3);padding:4px 2px;">
+      💡 Rencana RPD = rencana penarikan dana sesuai DIPA Halaman III yang disampaikan ke KPPN. Realisasi SP2D = nilai yang sudah terbit SP2D di SPAN/SAKTI. Deviasi = Realisasi − Rencana.
     </div>
   </div>`;
 }
@@ -4626,24 +4661,15 @@ function generateLaporanKinerja(){
   doc.addPage();
   pageHeader(`MONITORING RPD & REALISASI ANGGARAN TA ${tahun}`,`${periodeTxt} · TW ${twRom[twIdx]}`);
 
-  // ── Hitung rencana & realisasi dari kegiatan doneBulan (konsisten dengan dashboard) ──
-  // Akun 51 (Belanja Pegawai): rencana dari RPD, realisasi dari kegiatan getBPKegiatan()
-  // Akun 52+53: rencana & realisasi dari jadwal kegiatan & doneBulan
-  const bidangUmumIds2=new Set(data.bidang.filter(b=>/umum/i.test(b.nama)).map(b=>b.id));
-  const rpd51h2=getRPD()['51'];
+  // ── Halaman 2: RPD & Realisasi SP2D dari input manual ──
+  const rpdH2=getRPD();
   const limitM=isTahunan?12:rptM;
   let cumRenc=0,cumReal=0;
   const rowsRPD=[];
   for(let m=1;m<=12;m++){
-    const r51renc=rpd51h2.rencana[m-1]||0;
-    // Realisasi akun 51 dari doneBulan kegiatan (konsisten dg dashboard, bukan RPD manual)
-    const r51real=getBPKegiatan().filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
-    const keg52=data.kegiatan.filter(k=>!bidangUmumIds2.has(k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
-    const keg53=data.kegiatan.filter(k=>bidangUmumIds2.has(k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
-    const r52renc=keg52.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
-    const r52real=keg52.filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
-    const r53renc=keg53.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
-    const r53real=keg53.filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
+    const r51renc=rpdH2['51'].rencana[m-1]||0, r51real=rpdH2['51'].realisasi[m-1]||0;
+    const r52renc=rpdH2['52'].rencana[m-1]||0, r52real=rpdH2['52'].realisasi[m-1]||0;
+    const r53renc=rpdH2['53'].rencana[m-1]||0, r53real=rpdH2['53'].realisasi[m-1]||0;
     const renc=r51renc+r52renc+r53renc, real=r51real+r52real+r53real;
     if(m<=limitM){cumRenc+=renc;cumReal+=real;}
     const dev=real-renc;
@@ -4703,27 +4729,18 @@ function generateLaporanKinerja(){
   pageHeader(`TARGET BELANJA TRIWULAN ${twRom[twIdx]} TAHUN ${tahun}`,`${MN[TWMON[twIdx][0]-1]}–${MN[TWMON[twIdx][2]-1]} ${tahun}`);
 
   const bulanTW=TWMON[twIdx];
-  const rpd51=getRPD()['51'];
-  // Bidang Umum: nama bidang yang mengandung kata "umum" (case-insensitive)
-  const bidangUmumIds=new Set(data.bidang.filter(b=>/umum/i.test(b.nama)).map(b=>b.id));
+  const rpdH3=getRPD();
 
   const rowsTW=[];
   let totRenc51=0,totReal51=0,totRenc52=0,totReal52=0,totRenc53=0,totReal53=0;
   bulanTW.forEach(m=>{
     const mi=m-1;
-    // Akun 51: rencana dari RPD, realisasi dari doneBulan kegiatan (konsisten dg dashboard)
-    const r51renc=rpd51.rencana[mi]||0;
-    const r51real=getBPKegiatan().filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
+    // Semua akun: dari RPD manual
+    const r51renc=rpdH3['51'].rencana[mi]||0, r51real=rpdH3['51'].realisasi[mi]||0;
+    const r52renc=rpdH3['52'].rencana[mi]||0, r52real=rpdH3['52'].realisasi[mi]||0;
+    const r53renc=rpdH3['53'].rencana[mi]||0, r53real=rpdH3['53'].realisasi[mi]||0;
     totRenc51+=r51renc; totReal51+=r51real;
-    // Akun 52: kegiatan non-bagian-umum
-    const keg52=data.kegiatan.filter(k=>!bidangUmumIds.has(k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
-    const r52renc=keg52.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
-    const r52real=keg52.filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
     totRenc52+=r52renc; totReal52+=r52real;
-    // Akun 53: kegiatan bagian umum
-    const keg53=data.kegiatan.filter(k=>bidangUmumIds.has(k.bidangId)&&k.jadwal.some(j=>j.bulan===m));
-    const r53renc=keg53.reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
-    const r53real=keg53.filter(k=>k.doneBulan.includes(m)).reduce((s,k)=>{const j=k.jadwal.find(j=>j.bulan===m);return s+(j?.anggaran||0);},0);
     totRenc53+=r53renc; totReal53+=r53real;
 
     const totRenc=r51renc+r52renc+r53renc, totReal=r51real+r52real+r53real;
@@ -4830,18 +4847,12 @@ function generateLaporanKinerja(){
   doc.addPage();
   pageHeader(`EVALUASI IKPA — PENYERAPAN ANGGARAN TW ${twRom[twIdx]} ${tahun}`,periodeTxt);
 
-  // Hitung realisasi dari doneBulan (bukan dari bl.realisasi manual) untuk konsistensi
-  const TWMON2=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
-  const monthsUpToTW=TWMON2.slice(0,twIdx+1).flat();
+  // Realisasi IKPA: dari RPD manual (kumulatif s.d. TW)
+  const rpdH5=getRPD();
+  const monthsUpToTW=TWMON.slice(0,twIdx+1).flat();
   function getRealKode(kode){
-    if(kode==='51'){
-      return getBPKegiatan().reduce((s,k)=>(k.doneBulan||[]).filter(m=>monthsUpToTW.includes(m)).reduce((ss,m)=>ss+kTPB(k,m),s),0);
-    }
-    if(kode==='52'){
-      return getBBKegiatan().reduce((s,k)=>(k.doneBulan||[]).filter(m=>monthsUpToTW.includes(m)).reduce((ss,m)=>ss+kTPB(k,m),s),0);
-    }
-    // kode 53 & lainnya: dari realisasi manual IKPA
-    return ikpa.belanja[kode]?.realisasi[twIdx]||0;
+    const r=rpdH5[kode];
+    return r?monthsUpToTW.reduce((s,m)=>s+(r.realisasi[m-1]||0),0):0;
   }
 
   const rowsIK=kodes.map(kode=>{
