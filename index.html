@@ -4014,10 +4014,15 @@ function hitungNKPA(twIdx){
     const realisasi=rpdK?monthsUpTo.reduce((s,m)=>s+(rpdK.realisasi[m-1]||0),0):0;
     const pctRaw=realisasi/pagu*100;
     const target=conf.target[twIdx];
-    const pctVsTarget=target>0?Math.min(pctRaw/target*100,100):0;
+    const threshold=conf.threshold[twIdx]||0;
+    // Jika selisih (target−realisasi) ≤ threshold → dianggap 100% (dalam toleransi)
+    // Sesuai PER-5/PB/2024: nilai = 100 apabila |target−realisasi| ≤ threshold
+    const selisih=target-pctRaw; // negatif = over-target, positif = under-target
+    const withinTolerance=threshold>0&&selisih<=threshold;
+    const pctVsTarget=(pctRaw>=target||withinTolerance)?100:target>0?Math.min(pctRaw/target*100,100):0;
     const nkpaJ=pctVsTarget*proporsi; // 0-100 × 0-1 = 0-100
     nkpaTotal+=nkpaJ;nAktif++;
-    detail[kode]={pagu,proporsi:proporsi*100,realisasi,pctRaw,target,pctVsTarget,nkpaJ};
+    detail[kode]={pagu,proporsi:proporsi*100,realisasi,pctRaw,target,threshold,withinTolerance,pctVsTarget,nkpaJ};
   });
   const nilaiIKPA=Math.round(Math.min(100,nkpaTotal)*100)/100;
   const nkpaRound=Math.round(nkpaTotal*100)/100;
@@ -4260,9 +4265,14 @@ function renderIKPA(){
         <td style="padding:6px 10px;font-size:10px;font-family:'Fira Code',monospace;color:var(--txt2);text-align:right;">${fmtN(d.pagu)}</td>
         <td style="padding:6px 10px;font-size:10px;text-align:right;color:var(--txt3);">${d.proporsi.toFixed(2)}%</td>
         <td style="padding:6px 10px;font-size:10px;font-family:'Fira Code',monospace;text-align:right;color:#00b87a;">${fmtN(d.realisasi)}</td>
-        <td style="padding:6px 10px;font-size:10px;text-align:right;color:var(--txt3);">${d.pctRaw.toFixed(1)}% / target ${d.target}%</td>
-        <td style="padding:6px 10px;font-size:11px;font-weight:700;text-align:right;color:${pctClr};">${d.pctVsTarget.toFixed(1)}%
-          <div style="font-size:9px;font-weight:400;color:var(--txt3);">NKPA: ${d.nkpaJ.toFixed(2)}</div></td>
+        <td style="padding:6px 10px;font-size:10px;text-align:right;color:var(--txt3);">
+          ${d.pctRaw.toFixed(2)}% / target ${d.target}%
+          ${d.threshold>0?`<div style="font-size:9px;color:#e8a020;">toleransi ±${d.threshold}%</div>`:''}
+        </td>
+        <td style="padding:6px 10px;font-size:11px;font-weight:700;text-align:right;color:${pctClr};">
+          ${d.pctVsTarget===100&&d.withinTolerance?`<span style="font-size:9px;color:#007c91;font-weight:600;">✓ Toleransi</span><br>`:``}${d.pctVsTarget.toFixed(1)}%
+          <div style="font-size:9px;font-weight:400;color:var(--txt3);">NKPA: ${d.nkpaJ.toFixed(2)}</div>
+        </td>
       </tr>`;
     }).join('');
     nkpaDetail=`<div style="overflow-x:auto;margin-top:4px;"><table style="width:100%;border-collapse:collapse;font-size:11px;">
