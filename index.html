@@ -4758,6 +4758,9 @@ function renderRPDSection(){
 
   const blocksHtml=BL_CONF.map(({kode,icon,nama,color})=>{
     const r=rpd[kode];
+    // Acuan dari menu kegiatan: total anggaran kegiatan per bulan untuk akun ini
+    const acuanKeg=Array.from({length:12},(_,mi)=>data.kegiatan.filter(k=>k.akun===kode).reduce((s,k)=>s+kTPB(k,mi+1),0));
+    const totAcuanTW=bulanTW.reduce((s,m)=>s+acuanKeg[m-1],0);
     let totRenc=0,totReal=0;
     const rows=MN.map((mn,mi)=>{
       const renc=r.rencana[mi]||0,real=r.realisasi[mi]||0,ts=r.tglInput[mi]||'';
@@ -4788,6 +4791,7 @@ function renderRPDSection(){
             onblur="setRPDManual('${kode}',${mi},'rencana',this.value,true);this.style.borderColor='var(--bdr)'"
             onfocus="this.style.borderColor='${color}'">`
           :`<span style="font-size:11px;font-family:'Fira Code',monospace;">${renc?fmtI(renc):'—'}</span>`}
+          ${acuanKeg[mi]>0?`<div style="font-size:9px;color:${color};opacity:.65;margin-top:3px;white-space:nowrap;">📋 ${fmtI(acuanKeg[mi])}</div>`:''}
         </td>
         <td style="padding:5px 10px;border-right:1px solid var(--bdr);">
           ${canE?`<input type="number" min="0" step="1" value="${real||''}" placeholder="0"
@@ -4823,6 +4827,7 @@ function renderRPDSection(){
           <span style="font-size:10px;color:var(--txt3);background:var(--surf);padding:2px 7px;border-radius:99px;border:1px solid var(--bdr);">Akun ${kode}</span>
         </div>
         <div style="display:flex;align-items:center;gap:16px;font-size:11px;flex-wrap:wrap;">
+          ${totAcuanTW>0?`<span style="color:var(--txt3);">Kegiatan TW${twRom[twIdx]}: <strong style="color:${color};font-family:'Fira Code',monospace;">${fmtI(totAcuanTW)}</strong></span>`:''}
           <span style="color:var(--txt3);">Rencana: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${totRenc?fmtI(totRenc):'—'}</strong></span>
           <span style="color:var(--txt3);">Realisasi: <strong style="color:#00b87a;font-family:'Fira Code',monospace;">${totReal?fmtI(totReal):'—'}</strong></span>
           ${totRenc>0?`<span style="display:flex;align-items:center;gap:6px;">
