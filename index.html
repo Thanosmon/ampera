@@ -4053,14 +4053,14 @@ function hitungNKPA(twIdx){
 //   Nilai IKPA RPD    = 100 jika rata-rata ≤ 5%, turun 5 poin per % di atas 5%
 function hitungDeviasiRPD(twIdx){
   const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
-  const monthsUpTo=TWMON.slice(0,twIdx+1).flat();
+  // Hanya bulan dalam TW yang dipilih (bukan kumulatif dari Januari)
+  const bulanTW=TWMON[twIdx];
   const ikpa=getIKPAData();
   const rpd=getRPD();
   if(getIKPATotalPaguTW(twIdx)===0)return null;
   const devPerBulan=[],detailBulan=[];
-  monthsUpTo.forEach(m=>{
-    // Deviasi per bulan menggunakan pagu TW yang mencakup bulan m
-    const twBulan=Math.ceil(m/3)-1; // TW 0-indexed untuk bulan m
+  bulanTW.forEach(m=>{
+    const twBulan=twIdx; // semua bulan dalam TW ini pakai pagu TW yang sama
     const totalPaguBulan=getIKPATotalPaguTW(twBulan);
     if(totalPaguBulan===0)return;
     let devTert=0,hasData=false;
@@ -4352,7 +4352,7 @@ function renderIKPA(){
       </tr></thead>
       <tbody>${rows}</tbody>
       <tfoot><tr style="background:var(--surf);border-top:2px solid var(--bdr);">
-        <td colspan="4" style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--ink);">Rata-Rata Kumulatif s.d. TW ${twRom[twIdx]}</td>
+        <td colspan="4" style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--ink);">Rata-Rata Deviasi TW ${twRom[twIdx]}</td>
         <td style="padding:6px 10px;font-size:12px;font-weight:800;text-align:right;color:${SC[deviRPD.status]};font-family:'Fira Code',monospace;">${fmtP(deviRPD.rataRata)}%</td>
       </tr></tfoot>
     </table></div>`;
