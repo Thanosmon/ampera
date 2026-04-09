@@ -4092,6 +4092,64 @@ function hitungDeviasiRPD(twIdx){
   return{rataRata:rataRataR,nilaiIKPA,devPerBulan,detailBulan,status,nBulan:devPerBulan.length};
 }
 
+// Proyeksi NKPA: simulasi jika RPD rencana terpenuhi untuk bulan yang tersisa
+function hitungProyeksiNKPA(twIdx){
+  const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
+  const monthsUpTo=TWMON.slice(0,twIdx+1).flat();
+  const bulanTW=TWMON[twIdx];
+  const totalPagu=getIKPATotalPaguTW(twIdx);
+  if(totalPagu===0)return null;
+  const today=new Date();
+  const currentMonth=today.getMonth()+1;
+  const rpd=getRPD();
+  let projNKPA=0;
+  const detail={};
+  ['51','52','53'].forEach(kode=>{
+    const conf=IKPA_CONF[kode];
+    const pagu=getPaguTW(kode,twIdx);
+    const bl=getIKPAData().belanja[kode];
+    if(!bl||!bl.paguSet||pagu===0){detail[kode]={skip:true};return;}
+    const rpdK=rpd[kode];
+    const proporsi=pagu/totalPagu;
+    let realSudah=0,rencTersisa=0;
+    monthsUpTo.forEach(m=>{
+      const real=rpdK?(rpdK.realisasi[m-1]||0):0;
+      const renc=rpdK?(rpdK.rencana[m-1]||0):0;
+      if(m<currentMonth){realSudah+=real;}
+      else if(m===currentMonth){realSudah+=real;rencTersisa+=(real?0:renc);}
+      else{rencTersisa+=renc;}
+    });
+    const projTotal=realSudah+rencTersisa;
+    const projPct=projTotal/pagu*100;
+    const target=conf.target[twIdx];
+    const threshold=conf.threshold[twIdx]||0;
+    const selisih=target-projPct;
+    const withinTolerance=threshold>0&&selisih<=threshold;
+    const pctVsTarget=(projPct>=target||withinTolerance)?100:target>0?Math.min(projPct/target*100,100):0;
+    const nkpaJ=pctVsTarget*proporsi;
+    projNKPA+=nkpaJ;
+    detail[kode]={pagu,proporsi:proporsi*100,realSudah,rencTersisa,projTotal,projPct,target,threshold,withinTolerance,pctVsTarget,nkpaJ};
+  });
+  // Breakdown per bulan TW (untuk tabel rencana bulanan)
+  const bulanDetail=bulanTW.map(m=>{
+    const isFuture=m>currentMonth;
+    const isCurrent=m===currentMonth;
+    const row={m,isFuture,isCurrent};
+    let totRenc=0,totReal=0;
+    ['51','52','53'].forEach(k=>{
+      const rpdK=rpd[k];
+      const renc=rpdK?(rpdK.rencana[m-1]||0):0;
+      const real=rpdK?(rpdK.realisasi[m-1]||0):0;
+      row[k]={renc,real};totRenc+=renc;totReal+=real;
+    });
+    row.totRenc=totRenc;row.totReal=totReal;
+    return row;
+  });
+  const projNKPATotal=Math.round(Math.min(100,projNKPA)*100)/100;
+  const status=projNKPATotal>=95?'aman':projNKPATotal>=75?'toleransi':projNKPATotal>=50?'perhatian':'kritis';
+  return{projNKPATotal,detail,status,currentMonth,bulanDetail};
+}
+
 // Compat shim — digunakan di laporan PDF dan dashboard mini
 function ikpaNilai(kode,twIdx){
   const conf=IKPA_CONF[kode];
@@ -4244,6 +4302,7 @@ function renderIKPA(){
   const nkpa=hitungNKPA(twIdx);
   const deviRPD=hitungDeviasiRPD(twIdx);
   const totalPagu=getIKPATotalPagu();
+  const proyeksi=hitungProyeksiNKPA(twIdx);
 
   // ── Banner "Belum Final" ──
   const notFinalBanner=isNotFinal?`<div style="margin-bottom:16px;padding:10px 16px;background:#fffbf0;border:1.5px solid #f0d080;border-radius:10px;display:flex;align-items:center;gap:10px;font-size:11px;color:#a07010;">
@@ -4252,10 +4311,30 @@ function renderIKPA(){
   </div>`:'';
 
   // ── Card helper untuk 2 indikator ──
-  function buildIndicatorCard(title,subtitle,icon,nilaiIKPA,status,topInfo,detailHtml,color){
+  // barConfig={fillPct, zones:[{from,to,color}], markers:[{pct,color,label}]}
+  function buildIndicatorCard(title,subtitle,icon,nilaiIKPA,status,topInfo,detailHtml,color,barConfig){
     const sc=SC[status]||'#7a9aac';
     const sl=SL[status]||'—';
-    const barPct=nilaiIKPA!==null?Math.min(100,nilaiIKPA):0;
+    let barHtml='';
+    if(nilaiIKPA!==null){
+      if(barConfig){
+        const fp=Math.min(100,Math.max(0,barConfig.fillPct));
+        const zonesHtml=(barConfig.zones||[]).map(z=>`<div style="position:absolute;left:${z.from.toFixed(2)}%;width:${(Math.min(100,z.to)-z.from).toFixed(2)}%;height:100%;background:${z.color};opacity:.18;"></div>`).join('');
+        const markHtml=(barConfig.markers||[]).map(mk=>{
+          const p=Math.min(99.5,Math.max(.5,mk.pct)).toFixed(2);
+          return `<div style="position:absolute;left:${p}%;top:-2px;height:calc(100% + 4px);width:2px;background:${mk.color};z-index:3;transform:translateX(-50%);border-radius:2px;"></div>`+
+                 `<div style="position:absolute;left:${p}%;top:13px;transform:translateX(-50%);white-space:nowrap;font-size:8px;font-weight:700;color:${mk.color};letter-spacing:.2px;">${mk.label}</div>`;
+        }).join('');
+        barHtml=`<div style="position:relative;height:10px;background:#e4edf3;border-radius:99px;margin-bottom:26px;overflow:visible;">
+          <div style="position:absolute;inset:0;border-radius:99px;overflow:hidden;">${zonesHtml}</div>
+          <div style="height:100%;width:${fp}%;background:${sc};border-radius:99px;transition:width .5s;position:relative;z-index:2;"></div>
+          ${markHtml}
+        </div>`;
+      }else{
+        const barPct=Math.min(100,nilaiIKPA);
+        barHtml=`<div style="height:10px;background:#e4edf3;border-radius:99px;margin-bottom:10px;"><div style="height:100%;width:${barPct}%;background:${sc};border-radius:99px;transition:width .5s;"></div></div>`;
+      }
+    }
     return `<div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);">
       <div style="padding:14px 18px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
         <div>
@@ -4274,9 +4353,7 @@ function renderIKPA(){
           </div>
           <div style="text-align:right;font-size:11px;">${topInfo}</div>
         </div>
-        <div style="height:10px;background:#e4edf3;border-radius:99px;margin-bottom:10px;">
-          <div style="height:100%;width:${barPct}%;background:${sc};border-radius:99px;transition:width .5s;"></div>
-        </div>`:'<div style="padding:16px 0;text-align:center;color:var(--txt3);font-size:12px;">Masukkan pagu per jenis belanja di bawah untuk mulai menghitung</div>'}
+        ${barHtml}`:'<div style="padding:16px 0;text-align:center;color:var(--txt3);font-size:12px;">Masukkan pagu per jenis belanja di bawah untuk mulai menghitung</div>'}
         ${detailHtml}
       </div>
     </div>`;
@@ -4326,7 +4403,30 @@ function renderIKPA(){
   }
   const nkpaTopInfo=nkpa?`<div style="color:var(--txt3);">NKPA: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmtP(nkpa.nkpaTotal)}</strong></div>
     <div style="color:var(--txt3);margin-top:2px;">Target TW ${twRom[twIdx]}: <strong style="color:#007c91;">${['51','52','53'].filter(k=>!nkpa.detail[k]?.skip).map(k=>`${IKPA_CONF[k].target[twIdx]}%`).join(' / ')}</strong></div>`:'';
-  const card1=buildIndicatorCard('Penyerapan Anggaran','Indikator IKPA 1','📊',nkpa?nkpa.nilaiIKPA:null,nkpa?nkpa.status:'na',nkpaTopInfo,nkpaDetail,'#007c91');
+  // ── barConfig Card 1: bar = % realisasi tertimbang vs pagu (0-100%), marker di target & min toleransi ──
+  const barConfig1=nkpa?(()=>{
+    const aktif=['51','52','53'].filter(k=>nkpa.detail[k]&&!nkpa.detail[k].skip);
+    if(!aktif.length)return null;
+    const tp=getIKPATotalPaguTW(twIdx);
+    const wReal=aktif.reduce((s,k)=>s+nkpa.detail[k].realisasi,0)/tp*100;
+    const wTarget=aktif.reduce((s,k)=>s+IKPA_CONF[k].target[twIdx]*(nkpa.detail[k].proporsi/100),0);
+    const wMin=aktif.reduce((s,k)=>s+(IKPA_CONF[k].target[twIdx]-(IKPA_CONF[k].threshold[twIdx]||0))*(nkpa.detail[k].proporsi/100),0);
+    const hasTol=aktif.some(k=>IKPA_CONF[k].threshold[twIdx]>0);
+    const minBound=hasTol?wMin:wTarget;
+    return{
+      fillPct:wReal,
+      zones:[
+        {from:0,to:minBound,color:'#e05555'},
+        ...(hasTol&&wMin<wTarget?[{from:wMin,to:wTarget,color:'#e8a020'}]:[]),
+        {from:wTarget,to:100,color:'#00b87a'}
+      ],
+      markers:[
+        ...(hasTol&&wMin<wTarget?[{pct:wMin,color:'#e8a020',label:`${wMin.toFixed(0)}% (tol.)`}]:[]),
+        {pct:wTarget,color:'#007c91',label:`${wTarget.toFixed(0)}% target`}
+      ]
+    };
+  })():null;
+  const card1=buildIndicatorCard('Penyerapan Anggaran','Indikator IKPA 1','📊',nkpa?nkpa.nilaiIKPA:null,nkpa?nkpa.status:'na',nkpaTopInfo,nkpaDetail,'#007c91',barConfig1);
 
   // ── Card 2: Deviasi RPD ──
   let deviDetail='';
@@ -4359,7 +4459,20 @@ function renderIKPA(){
   }
   const deviTopInfo=deviRPD?`<div style="color:var(--txt3);">Rata-rata deviasi: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmtP(deviRPD.rataRata)}%</strong></div>
     <div style="color:var(--txt3);margin-top:2px;">Toleransi: <strong style="color:#00b87a;">≤ 5%</strong></div>`:'';
-  const card2=buildIndicatorCard('Deviasi RPD Hal. III DIPA','Indikator IKPA 2','📋',deviRPD?deviRPD.nilaiIKPA:null,deviRPD?deviRPD.status:'na',deviTopInfo,deviDetail,'#7c5cbf');
+  // ── barConfig Card 2: bar = Nilai IKPA (0-100), zona merah/orange/hijau sesuai threshold status ──
+  const barConfig2=deviRPD&&deviRPD.nBulan>0?{
+    fillPct:deviRPD.nilaiIKPA,
+    zones:[
+      {from:0,to:60,color:'#e05555'},
+      {from:60,to:80,color:'#e8a020'},
+      {from:80,to:100,color:'#00b87a'}
+    ],
+    markers:[
+      {pct:60,color:'#e05555',label:'60 (kritis)'},
+      {pct:80,color:'#e8a020',label:'80 (tol.)'}
+    ]
+  }:null;
+  const card2=buildIndicatorCard('Deviasi RPD Hal. III DIPA','Indikator IKPA 2','📋',deviRPD?deviRPD.nilaiIKPA:null,deviRPD?deviRPD.status:'na',deviTopInfo,deviDetail,'#7c5cbf',barConfig2);
 
   // ── Per-TW Summary Table ──
   const summaryRows=[
@@ -4491,6 +4604,78 @@ function renderIKPA(){
       <span style="font-family:'Fira Code',monospace;font-weight:700;color:var(--ink);">${fmtN(totalPagu)}</span>
     </div>`:''}
   </div>
+
+  ${proyeksi?`
+  <div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+    <div style="padding:13px 16px 12px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);">📅 Proyeksi Penyerapan dari RPD Rencana</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:2px;">Simulasi NKPA jika rencana RPD terpenuhi untuk bulan yang tersisa TW ${twRom[twIdx]}</div>
+      </div>
+      <div style="padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;background:${SC[proyeksi.status]}18;color:${SC[proyeksi.status]};border:1px solid ${SC[proyeksi.status]}40;">
+        Proyeksi NKPA: ${fmtP(proyeksi.projNKPATotal)} ${proyeksi.projNKPATotal>=95?'✅':proyeksi.projNKPATotal>=75?'⚠️':'❌'}
+      </div>
+    </div>
+
+    <div style="overflow-x:auto;border-bottom:1px solid var(--bdr);">
+      <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:480px;">
+        <thead><tr style="background:var(--surf);">
+          <th style="padding:6px 12px;text-align:left;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;border-bottom:1px solid var(--bdr);">BULAN</th>
+          ${['51','52','53'].map(k=>`<th style="padding:6px 12px;text-align:right;font-size:9px;font-weight:600;color:${IKPA_CONF[k].color};letter-spacing:.4px;border-bottom:1px solid var(--bdr);">${IKPA_CONF[k].icon} ${IKPA_CONF[k].nama.split(' ').pop()}</th>`).join('')}
+          <th style="padding:6px 12px;text-align:right;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;border-bottom:1px solid var(--bdr);">TOTAL</th>
+        </tr></thead>
+        <tbody>${proyeksi.bulanDetail.map(bd=>{
+          const lbl=bd.isFuture?'🔮 '+MN[bd.m-1]:(bd.isCurrent?'⏳ '+MN[bd.m-1]:'✓ '+MN[bd.m-1]);
+          const rowClr=bd.isFuture?'color:var(--txt3);font-style:italic;':'color:var(--txt2);';
+          return '<tr style="border-top:1px solid var(--bdr);">'+
+            '<td style="padding:5px 12px;font-size:11px;font-weight:600;'+rowClr+'">'+lbl+'</td>'+
+            ['51','52','53'].map(k=>{
+              const v=bd.isFuture?bd[k].renc:(bd[k].real||bd[k].renc);
+              return '<td style="padding:5px 12px;font-size:10px;font-family:\'Fira Code\',monospace;text-align:right;'+(v?'':'color:var(--txt3);')+'">'+( v?fmtN(v):'—')+'</td>';
+            }).join('')+
+            '<td style="padding:5px 12px;font-size:10px;font-family:\'Fira Code\',monospace;text-align:right;font-weight:600;">'+(()=>{const t=bd.isFuture?bd.totRenc:(bd.totReal||bd.totRenc);return t?fmtN(t):'—';})()+'</td>'+
+          '</tr>';
+        }).join('')}</tbody>
+      </table>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:580px;">
+        <thead><tr style="background:var(--surf);">
+          <th style="padding:6px 12px;text-align:left;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;border-bottom:1px solid var(--bdr);">JENIS BELANJA</th>
+          <th style="padding:6px 12px;text-align:right;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;border-bottom:1px solid var(--bdr);">REAL S.D. KINI</th>
+          <th style="padding:6px 12px;text-align:right;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;border-bottom:1px solid var(--bdr);">+ RENC. TERSISA</th>
+          <th style="padding:6px 12px;text-align:right;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;border-bottom:1px solid var(--bdr);">PROYEKSI TOTAL</th>
+          <th style="padding:6px 12px;text-align:right;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;border-bottom:1px solid var(--bdr);">TARGET</th>
+          <th style="padding:6px 12px;text-align:right;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;border-bottom:1px solid var(--bdr);">STATUS PROYEKSI</th>
+        </tr></thead>
+        <tbody>${['51','52','53'].map(k=>{
+          const d=proyeksi.detail[k];
+          const conf=IKPA_CONF[k];
+          if(!d||d.skip)return '<tr><td colspan="6" style="padding:5px 12px;font-size:11px;color:var(--txt3);">'+conf.icon+' '+conf.nama+' <span style="font-size:9px;">(pagu belum diset)</span></td></tr>';
+          const akan=d.projPct>=d.target||d.withinTolerance;
+          const statusClr=akan?'#00b87a':d.projPct>=(d.target*0.9)?'#e8a020':'#e05555';
+          const statusTxt=akan?'✅ Terpenuhi':(d.projPct>=d.target*0.9?'⚠️ Hampir':'❌ Perlu tambah');
+          const kekurangan=akan?0:Math.max(0,(d.target/100*d.pagu)-d.projTotal);
+          return '<tr style="border-top:1px solid var(--bdr);">'+
+            '<td style="padding:6px 12px;font-size:11px;font-weight:600;color:var(--ink);">'+conf.icon+' '+conf.nama+'</td>'+
+            '<td style="padding:6px 12px;font-size:10px;font-family:\'Fira Code\',monospace;text-align:right;color:#007c91;">'+fmtN(d.realSudah)+'</td>'+
+            '<td style="padding:6px 12px;font-size:10px;font-family:\'Fira Code\',monospace;text-align:right;color:var(--txt3);font-style:italic;">'+(d.rencTersisa?fmtN(d.rencTersisa):'—')+'</td>'+
+            '<td style="padding:6px 12px;font-size:10px;font-family:\'Fira Code\',monospace;text-align:right;font-weight:700;color:var(--ink);">'+fmtN(d.projTotal)+' <span style="font-size:9px;font-weight:400;color:var(--txt3);">('+d.projPct.toFixed(1)+'%)</span></td>'+
+            '<td style="padding:6px 12px;font-size:10px;text-align:right;color:var(--txt3);">'+d.target+'%'+(d.threshold>0?'<div style="font-size:9px;color:#e8a020;">±'+d.threshold+'% tol.</div>':'')+'</td>'+
+            '<td style="padding:6px 12px;font-size:10px;font-weight:700;text-align:right;color:'+statusClr+';">'+statusTxt+(!akan&&kekurangan>0?'<div style="font-size:9px;font-weight:400;color:#e05555;">kurang ±'+fmtN(Math.round(kekurangan))+'</div>':'')+'</td>'+
+          '</tr>';
+        }).join('')}</tbody>
+        <tfoot><tr style="background:var(--surf);border-top:2px solid var(--bdr);">
+          <td colspan="3" style="padding:6px 12px;font-size:11px;font-weight:700;color:var(--ink);">Proyeksi NKPA (jika rencana terpenuhi)</td>
+          <td colspan="3" style="padding:6px 12px;font-size:13px;font-weight:800;text-align:right;font-family:'Fira Code',monospace;color:${SC[proyeksi.status]};">${fmtP(proyeksi.projNKPATotal)}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+    <div style="padding:8px 14px;border-top:1px solid var(--bdr);font-size:10px;color:var(--txt3);">
+      💡 ✓ = realisasi aktual · ⏳ = bulan berjalan · 🔮 = proyeksi dari rencana RPD. Kolom "Kurang" = tambahan realisasi yang dibutuhkan untuk memenuhi target.
+    </div>
+  </div>`:''}
 
   ${renderRPDSection()}`;
 }
