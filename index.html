@@ -4960,7 +4960,8 @@ function exportPDF(mode){
   function fmt(n){return 'Rp '+Number(n).toLocaleString('id-ID');}
 
   const total_ang=data.kegiatan.reduce((s,k)=>s+k.jadwal.reduce((a,j)=>a+j.anggaran,0),0);
-  const total_don=data.kegiatan.reduce((s,k)=>s+k.jadwal.filter(j=>k.doneBulan.includes(j.bulan)).reduce((a,j)=>a+j.anggaran,0),0);
+  // Gunakan kTPBReal agar realisasi aktual (jika diinput manual) ikut terbaca
+  const total_don=data.kegiatan.reduce((s,k)=>s+kTDone(k),0);
   const pct=total_ang?((total_don/total_ang)*100).toFixed(1)+'%':'0%';
   const BNAMES=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
 
@@ -5000,7 +5001,7 @@ function exportPDF(mode){
         head:[['Kegiatan','Tempat','Jadwal Bulan','Anggaran','Dilaksanakan','% Real.']],
         body:kb.map(k=>{
           const ta=k.jadwal.reduce((a,j)=>a+j.anggaran,0);
-          const td=k.jadwal.filter(j=>k.doneBulan.includes(j.bulan)).reduce((a,j)=>a+j.anggaran,0);
+          const td=kTDone(k);
           return[k.nama,k.tempat,k.jadwal.map(j=>BNAMES[j.bulan-1]).join(', '),fmt(ta),fmt(td),ta?(td/ta*100).toFixed(1)+'%':'0%'];
         }),
         styles:{fontSize:7.5,cellPadding:2},
@@ -5183,7 +5184,8 @@ function exportExcel(mode){
   const BNAMES=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
   function kT(k){return k.jadwal.reduce((a,j)=>a+j.anggaran,0);}
-  function kTD(k){return k.jadwal.filter(j=>k.doneBulan.includes(j.bulan)).reduce((a,j)=>a+j.anggaran,0);}
+  // Gunakan kTPBReal agar nilai realisasi aktual (jika berbeda dari rencana) ikut terbaca
+  function kTD(k){return kTDone(k);}
 
   if(mode==='semua'||mode==='kegiatan'){
     const rows=[['No','Nama Kegiatan','Bidang','Tempat','Pagu','Realisasi','% Serapan','Bulan Pelaksanaan','Bulan Dilaksanakan','Catatan']];
@@ -5205,7 +5207,7 @@ function exportExcel(mode){
         const j=k.jadwal.find(jj=>jj.bulan===m);
         if(!j)return;
         const done=k.doneBulan.includes(m);
-        rows.push([BNAMES[m-1],k.nama,getBidangNama(k.bidangId),j.anggaran,done?'Dilaksanakan':'Direncanakan',done?j.anggaran:0]);
+        rows.push([BNAMES[m-1],k.nama,getBidangNama(k.bidangId),j.anggaran,done?'Dilaksanakan':'Direncanakan',done?kTPBReal(k,m):0]);
       });
     }
     const ws=XLSX.utils.aoa_to_sheet(rows);
@@ -5236,8 +5238,8 @@ function exportExcel(mode){
       const r=[i+1,k.nama,getBidangNama(k.bidangId)];
       for(let m=1;m<=12;m++){
         if(!bulan_ada.has(m))r.push('');
-        else if(k.doneBulan.includes(m))r.push('✅');
-        else r.push('■');
+        else if(k.doneBulan.includes(m))r.push('Dilaksanakan');
+        else r.push('Rencana');
       }
       r.push(ta);rows.push(r);
     });
@@ -5247,7 +5249,7 @@ function exportExcel(mode){
 
     // Sheet ringkasan
     const sr=[
-      ['AMPERA — Ringkasan Anggaran TA 2026'],
+      ['AMPERA — Ringkasan Anggaran TA '+getTAYear()],
       ['Kanwil DJPb Prov. Sumatera Selatan'],
       ['Dicetak',now.toLocaleDateString('id-ID')],
       [],
