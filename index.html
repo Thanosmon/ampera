@@ -4367,6 +4367,26 @@ function renderIKPA(){
       const conf=IKPA_CONF[kode];
       if(!d||d.skip)return`<tr><td style="padding:5px 10px;font-size:11px;color:var(--txt3);" colspan="6">${conf.icon} ${conf.nama} <span style="font-size:9px;">(pagu belum diset)</span></td></tr>`;
       const pctClr=d.pctVsTarget>=100?'#00b87a':d.pctVsTarget>=75?'#007c91':d.pctVsTarget>0?'#e8a020':'#e05555';
+      const minPct=d.target-d.threshold;
+      const sc=Math.max(d.pctRaw,d.target,25)*1.3;
+      const tPos=(d.target/sc*100).toFixed(1);
+      const mPos=(minPct/sc*100).toFixed(1);
+      const fPos=Math.min(100,d.pctRaw/sc*100).toFixed(1);
+      const miniBar=`<div style="position:relative;height:6px;background:#e4edf3;border-radius:3px;overflow:visible;">
+        <div style="position:absolute;inset:0;border-radius:3px;overflow:hidden;">
+          <div style="position:absolute;left:0;width:${mPos}%;height:100%;background:#e05555;opacity:.2;"></div>
+          ${d.threshold>0?`<div style="position:absolute;left:${mPos}%;width:${(d.target/sc*100-parseFloat(mPos)).toFixed(1)}%;height:100%;background:#e8a020;opacity:.2;"></div>`:''}
+          <div style="position:absolute;left:${tPos}%;width:${(100-parseFloat(tPos)).toFixed(1)}%;height:100%;background:#00b87a;opacity:.2;"></div>
+          <div style="position:absolute;left:0;width:${fPos}%;height:100%;background:${pctClr};border-radius:3px;"></div>
+        </div>
+        <div style="position:absolute;left:${tPos}%;top:-2px;height:calc(100% + 4px);width:2px;background:#007c91;transform:translateX(-50%);z-index:2;border-radius:1px;"></div>
+        ${d.threshold>0?`<div style="position:absolute;left:${mPos}%;top:-2px;height:calc(100% + 4px);width:1.5px;background:#e8a020;transform:translateX(-50%);z-index:2;border-radius:1px;"></div>`:''}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:8px;margin-top:2px;color:var(--txt3);">
+        <span>${d.pctRaw.toFixed(1)}% realisasi</span>
+        ${d.threshold>0?`<span style="color:#e8a020;">min ${minPct.toFixed(0)}% (tol.)</span>`:''}
+        <span style="color:#007c91;">${d.target}% target</span>
+      </div>`;
       return`<tr style="border-top:1px solid var(--bdr);">
         <td style="padding:6px 10px;font-size:11px;font-weight:600;color:var(--ink);white-space:nowrap;">${conf.icon} ${conf.nama}</td>
         <td style="padding:6px 10px;font-size:10px;font-family:'Fira Code',monospace;color:var(--txt2);text-align:right;">${fmtN(d.pagu)}</td>
@@ -4380,7 +4400,8 @@ function renderIKPA(){
           ${d.pctVsTarget===100&&d.withinTolerance?`<span style="font-size:9px;color:#007c91;font-weight:600;">✓ Toleransi</span><br>`:``}${d.pctVsTarget.toFixed(1)}%
           <div style="font-size:9px;font-weight:400;color:var(--txt3);">NKPA: ${d.nkpaJ.toFixed(2)}</div>
         </td>
-      </tr>`;
+      </tr>
+      <tr><td colspan="6" style="padding:0 10px 8px;">${miniBar}</td></tr>`;
     }).join('');
     nkpaDetail=`<div style="overflow-x:auto;margin-top:4px;"><table style="width:100%;border-collapse:collapse;font-size:11px;">
       <thead><tr style="background:var(--surf);">
@@ -4403,30 +4424,7 @@ function renderIKPA(){
   }
   const nkpaTopInfo=nkpa?`<div style="color:var(--txt3);">NKPA: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmtP(nkpa.nkpaTotal)}</strong></div>
     <div style="color:var(--txt3);margin-top:2px;">Target TW ${twRom[twIdx]}: <strong style="color:#007c91;">${['51','52','53'].filter(k=>!nkpa.detail[k]?.skip).map(k=>`${IKPA_CONF[k].target[twIdx]}%`).join(' / ')}</strong></div>`:'';
-  // ── barConfig Card 1: bar = % realisasi tertimbang vs pagu (0-100%), marker di target & min toleransi ──
-  const barConfig1=nkpa?(()=>{
-    const aktif=['51','52','53'].filter(k=>nkpa.detail[k]&&!nkpa.detail[k].skip);
-    if(!aktif.length)return null;
-    const tp=getIKPATotalPaguTW(twIdx);
-    const wReal=aktif.reduce((s,k)=>s+nkpa.detail[k].realisasi,0)/tp*100;
-    const wTarget=aktif.reduce((s,k)=>s+IKPA_CONF[k].target[twIdx]*(nkpa.detail[k].proporsi/100),0);
-    const wMin=aktif.reduce((s,k)=>s+(IKPA_CONF[k].target[twIdx]-(IKPA_CONF[k].threshold[twIdx]||0))*(nkpa.detail[k].proporsi/100),0);
-    const hasTol=aktif.some(k=>IKPA_CONF[k].threshold[twIdx]>0);
-    const minBound=hasTol?wMin:wTarget;
-    return{
-      fillPct:wReal,
-      zones:[
-        {from:0,to:minBound,color:'#e05555'},
-        ...(hasTol&&wMin<wTarget?[{from:wMin,to:wTarget,color:'#e8a020'}]:[]),
-        {from:wTarget,to:100,color:'#00b87a'}
-      ],
-      markers:[
-        ...(hasTol&&wMin<wTarget?[{pct:wMin,color:'#e8a020',label:`${wMin.toFixed(0)}% (tol.)`}]:[]),
-        {pct:wTarget,color:'#007c91',label:`${wTarget.toFixed(0)}% target`}
-      ]
-    };
-  })():null;
-  const card1=buildIndicatorCard('Penyerapan Anggaran','Indikator IKPA 1','📊',nkpa?nkpa.nilaiIKPA:null,nkpa?nkpa.status:'na',nkpaTopInfo,nkpaDetail,'#007c91',barConfig1);
+  const card1=buildIndicatorCard('Penyerapan Anggaran','Indikator IKPA 1','📊',nkpa?nkpa.nilaiIKPA:null,nkpa?nkpa.status:'na',nkpaTopInfo,nkpaDetail,'#007c91');
 
   // ── Card 2: Deviasi RPD ──
   let deviDetail='';
@@ -4459,20 +4457,7 @@ function renderIKPA(){
   }
   const deviTopInfo=deviRPD?`<div style="color:var(--txt3);">Rata-rata deviasi: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmtP(deviRPD.rataRata)}%</strong></div>
     <div style="color:var(--txt3);margin-top:2px;">Toleransi: <strong style="color:#00b87a;">≤ 5%</strong></div>`:'';
-  // ── barConfig Card 2: bar = Nilai IKPA (0-100), zona merah/orange/hijau sesuai threshold status ──
-  const barConfig2=deviRPD&&deviRPD.nBulan>0?{
-    fillPct:deviRPD.nilaiIKPA,
-    zones:[
-      {from:0,to:60,color:'#e05555'},
-      {from:60,to:80,color:'#e8a020'},
-      {from:80,to:100,color:'#00b87a'}
-    ],
-    markers:[
-      {pct:60,color:'#e05555',label:'60 (kritis)'},
-      {pct:80,color:'#e8a020',label:'80 (tol.)'}
-    ]
-  }:null;
-  const card2=buildIndicatorCard('Deviasi RPD Hal. III DIPA','Indikator IKPA 2','📋',deviRPD?deviRPD.nilaiIKPA:null,deviRPD?deviRPD.status:'na',deviTopInfo,deviDetail,'#7c5cbf',barConfig2);
+  const card2=buildIndicatorCard('Deviasi RPD Hal. III DIPA','Indikator IKPA 2','📋',deviRPD?deviRPD.nilaiIKPA:null,deviRPD?deviRPD.status:'na',deviTopInfo,deviDetail,'#7c5cbf');
 
   // ── Per-TW Summary Table ──
   const summaryRows=[
