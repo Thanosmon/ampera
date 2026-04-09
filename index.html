@@ -3170,67 +3170,51 @@ function renderDashboard(){
   // ── Build selector options ──
   const selOpts=MN.map((m,i)=>`<option value="${i+1}" ${i+1===bln?'selected':''}>${m} 2026</option>`).join('');
 
-  // ── Build IKPA dashboard cards (identik menu IKPA, read-only, compact) ──
+  // ── Build IKPA dashboard cards — 2 indikator sesuai formula OM-SPAN ──
   const ikpaDashCards=(()=>{
     const _sc={aman:'#00b87a',toleransi:'#007c91',perhatian:'#e8a020',kritis:'#e05555',na:'#7a9aac'};
-    const _sl={aman:'Aman',toleransi:'Dalam Toleransi',perhatian:'Perlu Perhatian',kritis:'Kritis',na:'Tidak Ada'};
-    const _ikpa=getIKPAData();
+    const _sl={aman:'Aman',toleransi:'Dalam Toleransi',perhatian:'Perlu Perhatian',kritis:'Kritis',na:'Belum Ada Data'};
+    const nkpaD=hitungNKPA(twIdxDash);
+    const deviD=hitungDeviasiRPD(twIdxDash);
+    const today_=new Date();
     const TWMON_=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
-    return ['51','52','53'].map(kode=>{
-      const conf=IKPA_CONF[kode];
-      const bl=_ikpa.belanja[kode];
-      const n=bl&&bl.paguSet?ikpaNilai(kode,twIdxDash):null;
-      const pct=(n&&n.status!=='na')?+n.pct.toFixed(1):0;
-      const stColor=n?_sc[n.status]:'#7a9aac';
-      const stLabel=n?_sl[n.status]:'Belum Diisi';
-      const targetPct=conf.target[twIdxDash],thPct=conf.threshold[twIdxDash],minPct=targetPct-thPct;
-      const barPct=Math.min(100,pct);
-      // Realisasi kumulatif s.d. TW ini
-      const mUp=TWMON_.slice(0,twIdxDash+1).flat();
-      let realTW=0;
-      if(kode==='51'||kode==='52'){
-        const keg=kode==='51'?getBPKegiatan():getBBKegiatan();
-        realTW=keg.reduce((s,k)=>(k.doneBulan||[]).filter(m=>mUp.includes(m)).reduce((ss,m)=>ss+kTPBReal(k,m),s),0);
-      }else{
-        realTW=bl&&bl.realisasi&&bl.realisasi[twIdxDash]?bl.realisasi[twIdxDash]:0;
-      }
-      return `<div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+    const twLastM=TWMON_[twIdxDash][2];
+    const isNotFin=today_.getMonth()+1<twLastM&&twIdxDash===Math.ceil((today_.getMonth()+1)/3)-1;
+    function miniCard(title,sub,icon,nilai,status,detail1,detail2,clr){
+      const sc=_sc[status]||'#7a9aac',sl=_sl[status]||'—';
+      const bar=nilai!==null?Math.min(100,nilai):0;
+      return`<div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);">
         <div style="padding:11px 14px 10px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;gap:8px;">
           <div>
-            <div style="font-size:9px;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;">Akun ${kode}</div>
-            <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-top:1px;">${conf.icon} ${conf.nama}</div>
+            <div style="font-size:9px;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;">${sub}</div>
+            <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-top:1px;">${icon} ${title}</div>
           </div>
-          <div style="padding:3px 9px;border-radius:20px;font-size:9px;font-weight:600;white-space:nowrap;background:${stColor}18;color:${stColor};border:1px solid ${stColor}40;">${stLabel}</div>
+          <div style="padding:3px 9px;border-radius:20px;font-size:9px;font-weight:600;white-space:nowrap;background:${sc}18;color:${sc};border:1px solid ${sc}40;">${sl}</div>
         </div>
         <div style="padding:12px 14px;">
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt3);margin-bottom:6px;">
-            <span>Realisasi: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${pct}%</strong></span>
-            <span>Target TW ${twRomDash[twIdxDash]}: <strong style="color:${conf.color};">${targetPct}%</strong>${thPct>0?` <span style="color:#e8a020;font-size:9px;">(min ${minPct}%)</span>`:''}</span>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;">
+            ${nilai!==null?`<div style="font-family:'Fira Code',monospace;font-size:28px;font-weight:800;color:${sc};line-height:1;">${nilai.toFixed(2)}<span style="font-size:11px;font-weight:400;color:var(--txt3);margin-left:3px;">/ 100</span></div>`
+            :`<div style="font-size:11px;color:var(--txt3);">Masukkan pagu di menu IKPA</div>`}
+            ${isNotFin?`<div style="font-size:9px;color:#a07010;background:#fffbf0;padding:2px 6px;border-radius:6px;border:1px solid #f0d080;">⏳ sementara</div>`:''}
           </div>
-          <div style="position:relative;height:9px;background:#e4edf3;border-radius:99px;">
-            ${thPct>0?`<div style="position:absolute;left:${minPct}%;width:${thPct}%;height:100%;background:${conf.color}22;border-radius:99px;"></div>`:''}
-            <div style="position:absolute;left:0;width:${barPct}%;height:100%;background:${stColor};border-radius:99px;transition:width .4s;"></div>
-            <div style="position:absolute;left:${Math.min(98,targetPct)}%;top:-3px;width:2.5px;height:15px;background:${conf.color};border-radius:1px;"></div>
-            ${thPct>0&&minPct>0?`<div style="position:absolute;left:${Math.min(98,minPct)}%;top:-3px;width:2px;height:15px;background:#e8a020;border-radius:1px;"></div>`:''}
-          </div>
-          <div style="display:flex;gap:10px;margin-top:5px;font-size:10px;color:var(--txt3);flex-wrap:wrap;">
-            <span><span style="display:inline-block;width:7px;height:7px;background:${conf.color};border-radius:1px;margin-right:2px;vertical-align:middle;"></span>Target ${targetPct}%</span>
-            ${thPct>0?`<span><span style="display:inline-block;width:7px;height:7px;background:#e8a020;border-radius:1px;margin-right:2px;vertical-align:middle;"></span>Min ${minPct}%</span>`:''}
-            ${n&&n.status!=='na'&&n.nilai!==null?`<span style="margin-left:auto;font-size:11px;font-weight:700;color:${n.nilai>=100?'#00b87a':'#e05555'};">Nilai: ${n.nilai}</span>`:n&&n.status==='na'?`<span style="margin-left:auto;font-size:10px;color:var(--txt3);">Tidak diperhitungkan</span>`:''}
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr);">
-            <div>
-              <div style="font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Pagu (Rp)</div>
-              <div style="font-size:13px;font-weight:700;font-family:'Fira Code',monospace;color:var(--ink);">${bl&&bl.paguSet&&bl.pagu?new Intl.NumberFormat('id-ID').format(bl.pagu):'—'}</div>
-            </div>
-            <div>
-              <div style="font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Realisasi s.d. TW ${twRomDash[twIdxDash]} (Rp)</div>
-              <div style="font-size:13px;font-weight:700;font-family:'Fira Code',monospace;color:${stColor};">${realTW?new Intl.NumberFormat('id-ID').format(realTW):'—'}</div>
-            </div>
+          ${nilai!==null?`<div style="height:6px;background:#e4edf3;border-radius:99px;margin-bottom:8px;">
+            <div style="height:100%;width:${bar}%;background:${sc};border-radius:99px;transition:width .4s;"></div>
+          </div>`:''}
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--txt3);">
+            <span>${detail1}</span><span>${detail2}</span>
           </div>
         </div>
       </div>`;
-    }).join('');
+    }
+    const c1=miniCard('Penyerapan Anggaran','Indikator IKPA 1','📊',
+      nkpaD?nkpaD.nilaiIKPA:null,nkpaD?nkpaD.status:'na',
+      nkpaD?`NKPA: <strong>${nkpaD.nkpaTotal.toFixed(2)}</strong>`:`Belum ada data`,
+      nkpaD?`TW ${twRomDash[twIdxDash]} — ${nkpaD.nAktif} j.bel aktif`:'');
+    const c2=miniCard('Deviasi RPD Hal. III','Indikator IKPA 2','📋',
+      deviD&&deviD.nBulan>0?deviD.nilaiIKPA:null,deviD&&deviD.nBulan>0?deviD.status:'na',
+      deviD&&deviD.nBulan>0?`Deviasi avg: <strong>${deviD.rataRata.toFixed(2)}%</strong>`:'Belum ada data RPD',
+      deviD&&deviD.nBulan>0?`Toleransi ≤ 5%`:'');
+    return c1+c2;
   })();
 
   // ── HTML ──
@@ -3992,13 +3976,107 @@ function getIKPAData(){
 let _activeTW=null;
 function getCurrentTW(){return _activeTW||Math.ceil((new Date().getMonth()+1)/3);}
 function switchTW(tw){_activeTW=tw;renderIKPA();}
+
+// ═══════════════════════════════════════════════════════════════════
+// IKPA FORMULA ENGINE — sesuai perhitungan OM-SPAN/SPAN
+// Dua indikator terpisah:
+//   1. Penyerapan Anggaran → NKPA tertimbang proporsi pagu
+//   2. Deviasi RPD Hal. III DIPA → rata-rata deviasi tertimbang kumulatif
+// ═══════════════════════════════════════════════════════════════════
+
+function getIKPATotalPagu(){
+  const ikpa=getIKPAData();
+  return['51','52','53'].reduce((s,k)=>{const bl=ikpa.belanja[k];return s+(bl&&bl.paguSet?bl.pagu:0);},0);
+}
+
+// Indikator 1: NKPA (Nilai Kinerja Penyerapan Anggaran)
+// Formula OM-SPAN:
+//   proporsi_j       = pagu_j / pagu_total
+//   %real_j          = realisasi_j / pagu_j × 100
+//   %vs_target_j     = min(%real_j / target_j × 100, 100)   ← maks 100%
+//   NKPA_tertimbang_j = %vs_target_j × proporsi_j            ← proporsi 0-1
+//   NKPA_total       = Σ NKPA_tertimbang_j                  ← maks 100
+//   Nilai IKPA       = NKPA_total (dibulatkan 2 desimal)
+function hitungNKPA(twIdx){
+  const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
+  const monthsUpTo=TWMON.slice(0,twIdx+1).flat();
+  const ikpa=getIKPAData();
+  const rpd=getRPD();
+  const totalPagu=getIKPATotalPagu();
+  if(totalPagu===0)return null;
+  let nkpaTotal=0,nAktif=0;
+  const detail={};
+  ['51','52','53'].forEach(kode=>{
+    const bl=ikpa.belanja[kode],conf=IKPA_CONF[kode];
+    if(!bl||!bl.paguSet||bl.pagu===0){detail[kode]={skip:true};return;}
+    const pagu=bl.pagu,proporsi=pagu/totalPagu;
+    const rpdK=rpd[kode];
+    const realisasi=rpdK?monthsUpTo.reduce((s,m)=>s+(rpdK.realisasi[m-1]||0),0):0;
+    const pctRaw=realisasi/pagu*100;
+    const target=conf.target[twIdx];
+    const pctVsTarget=target>0?Math.min(pctRaw/target*100,100):0;
+    const nkpaJ=pctVsTarget*proporsi; // 0-100 × 0-1 = 0-100
+    nkpaTotal+=nkpaJ;nAktif++;
+    detail[kode]={pagu,proporsi:proporsi*100,realisasi,pctRaw,target,pctVsTarget,nkpaJ};
+  });
+  const nilaiIKPA=Math.round(Math.min(100,nkpaTotal)*100)/100;
+  const nkpaRound=Math.round(nkpaTotal*100)/100;
+  const status=nilaiIKPA>=95?'aman':nilaiIKPA>=75?'toleransi':nilaiIKPA>=50?'perhatian':'kritis';
+  return{nkpaTotal:nkpaRound,nilaiIKPA,detail,nAktif,totalPagu,status};
+}
+
+// Indikator 2: Deviasi RPD Halaman III DIPA
+// Formula OM-SPAN:
+//   proporsi_j        = pagu_j / pagu_total
+//   %dev_j_bulan_m    = |realisasi_j_m − rencana_j_m| / rencana_j_m × 100
+//   dev_tert_bulan_m  = Σ (%dev_j_m × proporsi_j)          ← tertimbang semua j.bel
+//   rata_rata_kumulatif = rata-rata(dev_tert) dari bulan 1 s.d. akhir TW
+//   Nilai IKPA RPD    = 100 jika rata-rata ≤ 5%, turun 5 poin per % di atas 5%
+function hitungDeviasiRPD(twIdx){
+  const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
+  const monthsUpTo=TWMON.slice(0,twIdx+1).flat();
+  const ikpa=getIKPAData();
+  const rpd=getRPD();
+  const totalPagu=getIKPATotalPagu();
+  if(totalPagu===0)return null;
+  const devPerBulan=[],detailBulan=[];
+  monthsUpTo.forEach(m=>{
+    let devTert=0,hasData=false;
+    const rowDetail=[];
+    ['51','52','53'].forEach(kode=>{
+      const bl=ikpa.belanja[kode];
+      if(!bl||!bl.paguSet||bl.pagu===0)return;
+      const rpdK=rpd[kode];if(!rpdK)return;
+      const renc=rpdK.rencana[m-1]||0,real=rpdK.realisasi[m-1]||0;
+      if(renc===0&&real===0)return;
+      hasData=true;
+      const proporsi=bl.pagu/totalPagu;
+      const dev=Math.abs(real-renc);
+      const pctDev=renc>0?(dev/renc*100):0;
+      const tert=pctDev*proporsi;
+      devTert+=tert;
+      rowDetail.push({kode,renc,real,dev,pctDev,tert,proporsi:proporsi*100});
+    });
+    if(hasData){devPerBulan.push(devTert);detailBulan.push({m,devTert,rowDetail});}
+  });
+  const sumDev=devPerBulan.reduce((s,d)=>s+d,0);
+  const rataRata=devPerBulan.length>0?sumDev/devPerBulan.length:0;
+  const rataRataR=Math.round(rataRata*100)/100;
+  let nilaiIKPA;
+  if(rataRata<=5)nilaiIKPA=100;
+  else if(rataRata<=25)nilaiIKPA=Math.max(0,Math.round((100-(rataRata-5)*5)*100)/100);
+  else nilaiIKPA=0;
+  const status=nilaiIKPA>=100?'aman':nilaiIKPA>=80?'toleransi':nilaiIKPA>=60?'perhatian':'kritis';
+  return{rataRata:rataRataR,nilaiIKPA,devPerBulan,detailBulan,status,nBulan:devPerBulan.length};
+}
+
+// Compat shim — digunakan di laporan PDF dan dashboard mini
 function ikpaNilai(kode,twIdx){
   const conf=IKPA_CONF[kode];
   const bl=getIKPAData().belanja[kode];
   if(!bl||!bl.paguSet)return null;
   const pagu=bl.pagu;
   if(pagu===0)return{pct:0,target:conf.target[twIdx],minPct:conf.target[twIdx]-conf.threshold[twIdx],threshold:conf.threshold[twIdx],nilai:null,status:'na'};
-  // Semua kode: realisasi kumulatif dari RPD manual s.d. akhir TW
   const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
   const monthsUpTo=TWMON.slice(0,twIdx+1).flat();
   const rpd=getRPD()[kode];
@@ -4011,12 +4089,13 @@ function ikpaNilai(kode,twIdx){
   else{nilai=minPct>0?Math.min(100,Math.round((pct/minPct)*100)):0;status=pct<minPct*0.7?'kritis':'perhatian';}
   return{pct,target,minPct,threshold,nilai,status,realisasi};
 }
-function setIKPAPagu(kode,val){
+
+function setIKPAPagu(kode,val,isBlur){
   if(!canEditBP()){toast('Hanya Admin/Editor Bagian Umum yang dapat mengubah data ini','⛔');return;}
   const bl=getIKPAData().belanja[kode];
-  bl.pagu=parseFloat(val)||0;
-  bl.paguSet=true;
-  updSum();renderIKPA();
+  bl.pagu=parseFloat(val)||0;bl.paguSet=true;
+  saveLS();
+  if(isBlur){updSum();renderIKPA();}
 }
 function setIKPAReal(kode,tw,val){
   if(!canEditBP()){toast('Hanya Admin/Editor Bagian Umum yang dapat mengubah data ini','⛔');return;}
@@ -4113,175 +4192,246 @@ function renderIKPA(){
   const tw=getCurrentTW(),twIdx=tw-1;
   const twRom=['I','II','III','IV'];
   const TWMON=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
-  const statusColor={aman:'#00b87a',toleransi:'#007c91',perhatian:'#e8a020',kritis:'#e05555',na:'#7a9aac'};
-  const statusLabel={aman:'Aman',toleransi:'Dalam Toleransi',perhatian:'Perlu Perhatian',kritis:'Kritis',na:'Tidak Ada'};
+  const SC={aman:'#00b87a',toleransi:'#007c91',perhatian:'#e8a020',kritis:'#e05555',na:'#7a9aac'};
+  const SL={aman:'Aman',toleransi:'Dalam Toleransi',perhatian:'Perlu Perhatian',kritis:'Kritis',na:'Belum Ada Data'};
   const ikpa=getIKPAData();
-  const codes=Object.keys(IKPA_CONF);
-
-  // Hitung estimasi nilai rata-rata TW saat ini (skip yg na/belum diisi)
-  let totN=0,cntN=0;
-  codes.forEach(kode=>{const bl=ikpa.belanja[kode];if(bl&&bl.paguSet&&bl.pagu>0){const n=ikpaNilai(kode,twIdx);if(n&&n.nilai!==null){totN+=n.nilai;cntN++;}}});
-  const avgN=cntN>0?Math.round(totN/cntN):null;
-  const avgColor=avgN===null?'#7a9aac':avgN>=90?'#00b87a':avgN>=75?'#007c91':avgN>=60?'#e8a020':'#e05555';
-
   const bpEdit=canEditBP();
-  const cardsHtml=codes.map(kode=>{
-    const conf=IKPA_CONF[kode],bl=ikpa.belanja[kode];
-    const n=bl&&bl.paguSet?ikpaNilai(kode,twIdx):null;
-    const pct=(n&&n.status!=='na')?+n.pct.toFixed(1):0;
-    const stColor=n?statusColor[n.status]:'#7a9aac';
-    const stLabel=n?statusLabel[n.status]:'Belum diisi';
-    const targetPct=conf.target[twIdx],thPct=conf.threshold[twIdx],minPct=targetPct-thPct;
-    const barPct=Math.min(100,pct);
-    return `<div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);">
-      <div style="padding:13px 16px 11px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;gap:8px;">
+  const fmtN=n=>n||n===0?new Intl.NumberFormat('id-ID').format(Math.round(n)):'—';
+  const fmtP=n=>n!==null&&n!==undefined?n.toFixed(2):'—';
+
+  // Cek apakah TW yang dipilih belum selesai (bulan terakhir TW belum lewat)
+  const today=new Date();
+  const currentMonth=today.getMonth()+1;
+  const twLastMonth=TWMON[twIdx][2];
+  const isNotFinal=currentMonth<twLastMonth&&tw===getCurrentTW();
+
+  // ── Hitung dua indikator ──
+  const nkpa=hitungNKPA(twIdx);
+  const deviRPD=hitungDeviasiRPD(twIdx);
+  const totalPagu=getIKPATotalPagu();
+
+  // ── Banner "Belum Final" ──
+  const notFinalBanner=isNotFinal?`<div style="margin-bottom:16px;padding:10px 16px;background:#fffbf0;border:1.5px solid #f0d080;border-radius:10px;display:flex;align-items:center;gap:10px;font-size:11px;color:#a07010;">
+    <span style="font-size:16px;">⏳</span>
+    <div><strong>Data Triwulan ${twRom[twIdx]} masih berjalan</strong> — Triwulan berakhir ${MN[twLastMonth-1]} ${getTAYear()}. Nilai IKPA di bawah bersifat sementara dan akan berubah seiring bertambahnya realisasi. Nilai final ditetapkan di akhir triwulan oleh sistem MyIntress.</div>
+  </div>`:'';
+
+  // ── Card helper untuk 2 indikator ──
+  function buildIndicatorCard(title,subtitle,icon,nilaiIKPA,status,topInfo,detailHtml,color){
+    const sc=SC[status]||'#7a9aac';
+    const sl=SL[status]||'—';
+    const barPct=nilaiIKPA!==null?Math.min(100,nilaiIKPA):0;
+    return `<div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+      <div style="padding:14px 18px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
         <div>
-          <div style="font-size:10px;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;">Akun ${kode}</div>
-          <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-top:1px;">${conf.icon} ${conf.nama}</div>
+          <div style="font-size:10px;color:var(--txt3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;">${subtitle}</div>
+          <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--ink);">${icon} ${title}</div>
         </div>
-        <div style="padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;background:${stColor}18;color:${stColor};border:1px solid ${stColor}40;">${stLabel}</div>
+        ${nilaiIKPA!==null?`<div style="padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;background:${sc}18;color:${sc};border:1px solid ${sc}40;">${sl}</div>`:'<div style="padding:4px 10px;border-radius:20px;font-size:10px;color:var(--txt3);border:1px solid var(--bdr);">Belum Ada Data</div>'}
       </div>
-      <div style="padding:14px 16px;">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt3);margin-bottom:7px;">
-          <span>Realisasi: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${pct}%</strong></span>
-          <span>Target TW ${twRom[twIdx]}: <strong style="color:${conf.color};">${targetPct}%</strong>${thPct>0?` <span style="color:#e8a020;font-size:10px;">(min ${minPct}%)</span>`:''}</span>
-        </div>
-        <div style="position:relative;height:11px;background:#e4edf3;border-radius:99px;">
-          ${thPct>0?`<div style="position:absolute;left:${minPct}%;width:${thPct}%;height:100%;background:${conf.color}22;border-radius:99px;"></div>`:''}
-          <div style="position:absolute;left:0;width:${barPct}%;height:100%;background:${stColor};border-radius:99px;transition:width .4s;"></div>
-          <div style="position:absolute;left:${Math.min(98,targetPct)}%;top:-3px;width:2.5px;height:17px;background:${conf.color};border-radius:1px;"></div>
-          ${thPct>0&&minPct>0?`<div style="position:absolute;left:${Math.min(98,minPct)}%;top:-3px;width:2px;height:17px;background:#e8a020;border-radius:1px;"></div>`:''}
-        </div>
-        <div style="display:flex;gap:12px;margin-top:5px;font-size:10px;color:var(--txt3);flex-wrap:wrap;">
-          <span><span style="display:inline-block;width:8px;height:8px;background:${conf.color};border-radius:1px;margin-right:3px;vertical-align:middle;"></span>Target ${targetPct}%</span>
-          ${thPct>0?`<span><span style="display:inline-block;width:8px;height:8px;background:#e8a020;border-radius:1px;margin-right:3px;vertical-align:middle;"></span>Min ${minPct}%</span>`:''}
-          ${n&&n.status!=='na'&&n.nilai!==null?`<span style="margin-left:auto;font-size:11px;font-weight:700;color:${n.nilai>=100?'#00b87a':'#e05555'};">Nilai: ${n.nilai}</span>`:n&&n.status==='na'?`<span style="margin-left:auto;font-size:10px;color:var(--txt3);">Tidak diperhitungkan</span>`:''}
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);">
-          <div style="display:flex;flex-direction:column;">
-            <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Pagu (Rp)</div>
-            <div class="ikpa-card-val" style="min-height:26px;color:var(--ink);display:flex;align-items:center;">
-              ${bl&&bl.paguSet&&bl.pagu?new Intl.NumberFormat('id-ID').format(bl.pagu):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`}
-            </div>
-            <div style="border-top:1px dashed var(--bdr);margin:6px 0;"></div>
-            ${bpEdit?`<input type="number" step="1" style="width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;box-sizing:border-box;"
-              value="${bl&&bl.paguSet?bl.pagu:''}" placeholder="ketik angka..."
-              onchange="setIKPAPagu('${kode}',this.value)"
-              onfocus="this.style.borderColor='${conf.color}'"
-              onblur="this.style.borderColor='var(--bdr)'">`
-              :`<div style="font-size:10px;color:var(--txt3);padding:4px 0;font-style:italic;">🔒 Hanya Admin / Editor Bagian Umum</div>`}
-            ${kode==='51'?`<div style="font-size:10px;color:var(--txt3);padding:2px 0 0;">Akum. kegiatan: ${fmt(getBPKegiatan().reduce((s,k)=>s+kT(k),0))}</div>`:''}
+      <div style="padding:16px 18px;">
+        ${nilaiIKPA!==null?`
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px;gap:12px;">
+          <div>
+            <div style="font-size:10px;color:var(--txt3);margin-bottom:3px;">Nilai IKPA</div>
+            <div style="font-family:'Fira Code',monospace;font-size:32px;font-weight:800;color:${sc};line-height:1;">${fmtP(nilaiIKPA)}</div>
+            <div style="font-size:9px;color:var(--txt3);margin-top:3px;">dari 100</div>
           </div>
-          <div style="display:flex;flex-direction:column;">
-            <div style="font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Realisasi SP2D s.d. TW ${twRom[twIdx]} (Rp)</div>
-            <div class="ikpa-card-val" style="min-height:26px;color:var(--green);display:flex;align-items:center;">
-              ${(()=>{const mUp=[[1,2,3],[4,5,6],[7,8,9],[10,11,12]].slice(0,twIdx+1).flat();const rpd=getRPD()[kode];const r=rpd?mUp.reduce((s,m)=>s+(rpd.realisasi[m-1]||0),0):0;return r?new Intl.NumberFormat('id-ID').format(r):`<span style="color:var(--txt3);font-size:11px;font-weight:400;font-family:inherit;">—</span>`;})()}
-            </div>
-            <div style="border-top:1px dashed var(--bdr);margin:6px 0;"></div>
-            <div style="font-size:10px;color:var(--teal);padding:2px 0;">✦ Input per bulan di bagian RPD di bawah</div>
-          </div>
+          <div style="text-align:right;font-size:11px;">${topInfo}</div>
         </div>
+        <div style="height:10px;background:#e4edf3;border-radius:99px;margin-bottom:10px;">
+          <div style="height:100%;width:${barPct}%;background:${sc};border-radius:99px;transition:width .5s;"></div>
+        </div>`:'<div style="padding:16px 0;text-align:center;color:var(--txt3);font-size:12px;">Masukkan pagu per jenis belanja di bawah untuk mulai menghitung</div>'}
+        ${detailHtml}
       </div>
     </div>`;
-  }).join('');
+  }
 
-  const tabelRows=codes.map((kode,ki)=>{
+  // ── Card 1: Penyerapan (NKPA) ──
+  let nkpaDetail='';
+  if(nkpa){
+    const rows=['51','52','53'].map(kode=>{
+      const d=nkpa.detail[kode];
+      const conf=IKPA_CONF[kode];
+      if(!d||d.skip)return`<tr><td style="padding:5px 10px;font-size:11px;color:var(--txt3);" colspan="6">${conf.icon} ${conf.nama} <span style="font-size:9px;">(pagu belum diset)</span></td></tr>`;
+      const pctClr=d.pctVsTarget>=100?'#00b87a':d.pctVsTarget>=75?'#007c91':d.pctVsTarget>0?'#e8a020':'#e05555';
+      return`<tr style="border-top:1px solid var(--bdr);">
+        <td style="padding:6px 10px;font-size:11px;font-weight:600;color:var(--ink);white-space:nowrap;">${conf.icon} ${conf.nama}</td>
+        <td style="padding:6px 10px;font-size:10px;font-family:'Fira Code',monospace;color:var(--txt2);text-align:right;">${fmtN(d.pagu)}</td>
+        <td style="padding:6px 10px;font-size:10px;text-align:right;color:var(--txt3);">${d.proporsi.toFixed(2)}%</td>
+        <td style="padding:6px 10px;font-size:10px;font-family:'Fira Code',monospace;text-align:right;color:#00b87a;">${fmtN(d.realisasi)}</td>
+        <td style="padding:6px 10px;font-size:10px;text-align:right;color:var(--txt3);">${d.pctRaw.toFixed(1)}% / target ${d.target}%</td>
+        <td style="padding:6px 10px;font-size:11px;font-weight:700;text-align:right;color:${pctClr};">${d.pctVsTarget.toFixed(1)}%
+          <div style="font-size:9px;font-weight:400;color:var(--txt3);">NKPA: ${d.nkpaJ.toFixed(2)}</div></td>
+      </tr>`;
+    }).join('');
+    nkpaDetail=`<div style="overflow-x:auto;margin-top:4px;"><table style="width:100%;border-collapse:collapse;font-size:11px;">
+      <thead><tr style="background:var(--surf);">
+        <th style="padding:5px 10px;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-align:left;border-bottom:1px solid var(--bdr);">JENIS BELANJA</th>
+        <th style="padding:5px 10px;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-align:right;border-bottom:1px solid var(--bdr);">PAGU (Rp)</th>
+        <th style="padding:5px 10px;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-align:right;border-bottom:1px solid var(--bdr);">PROPORSI</th>
+        <th style="padding:5px 10px;font-size:9px;font-weight:600;color:#00b87a;letter-spacing:.4px;text-align:right;border-bottom:1px solid var(--bdr);">REALISASI (Rp)</th>
+        <th style="padding:5px 10px;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-align:right;border-bottom:1px solid var(--bdr);">% vs TARGET</th>
+        <th style="padding:5px 10px;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-align:right;border-bottom:1px solid var(--bdr);">NKPA TERT.</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr style="background:var(--surf);border-top:2px solid var(--bdr);">
+        <td colspan="2" style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--ink);">Total</td>
+        <td style="padding:6px 10px;font-size:10px;text-align:right;color:var(--txt3);">100%</td>
+        <td style="padding:6px 10px;font-size:10px;font-family:'Fira Code',monospace;text-align:right;color:#00b87a;">${fmtN(totalPagu?['51','52','53'].reduce((s,k)=>{const d=nkpa.detail[k];return s+(!d||d.skip?0:d.realisasi);},0):0)}</td>
+        <td style="padding:6px 10px;"></td>
+        <td style="padding:6px 10px;font-size:12px;font-weight:800;text-align:right;color:${SC[nkpa.status]};font-family:'Fira Code',monospace;">NKPA = ${fmtP(nkpa.nkpaTotal)}</td>
+      </tr></tfoot>
+    </table></div>`;
+  }
+  const nkpaTopInfo=nkpa?`<div style="color:var(--txt3);">NKPA: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmtP(nkpa.nkpaTotal)}</strong></div>
+    <div style="color:var(--txt3);margin-top:2px;">Target TW ${twRom[twIdx]}: <strong style="color:#007c91;">${['51','52','53'].filter(k=>!nkpa.detail[k]?.skip).map(k=>`${IKPA_CONF[k].target[twIdx]}%`).join(' / ')}</strong></div>`:'';
+  const card1=buildIndicatorCard('Penyerapan Anggaran','Indikator IKPA 1','📊',nkpa?nkpa.nilaiIKPA:null,nkpa?nkpa.status:'na',nkpaTopInfo,nkpaDetail,'#007c91');
+
+  // ── Card 2: Deviasi RPD ──
+  let deviDetail='';
+  if(deviRPD&&deviRPD.detailBulan.length>0){
+    const MNS=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+    const rows=deviRPD.detailBulan.map(({m,devTert,rowDetail})=>{
+      const devClr=devTert<=0?'var(--txt3)':devTert<=5?'#00b87a':devTert<=10?'#e8a020':'#e05555';
+      return`<tr style="border-top:1px solid var(--bdr);">
+        <td style="padding:5px 10px;font-size:11px;color:var(--txt2);font-weight:${TWMON[twIdx].includes(m)?700:400};">${MN[m-1]}${TWMON[twIdx].includes(m)?` <span style="font-size:9px;color:var(--teal);">TW${twRom[twIdx]}</span>`:''}</td>
+        ${['51','52','53'].map(kode=>{
+          const rd=rowDetail.find(r=>r.kode===kode);
+          return rd?`<td style="padding:5px 10px;font-size:10px;font-family:'Fira Code',monospace;text-align:right;color:${rd.pctDev<=0.1?'var(--txt3)':rd.pctDev<=5?'#00b87a':'#e05555'};">${rd.pctDev.toFixed(2)}%</td>`
+            :`<td style="padding:5px 10px;font-size:10px;text-align:right;color:var(--txt3);">—</td>`;
+        }).join('')}
+        <td style="padding:5px 10px;font-size:11px;font-weight:700;text-align:right;color:${devClr};">${devTert.toFixed(2)}%</td>
+      </tr>`;
+    }).join('');
+    deviDetail=`<div style="overflow-x:auto;margin-top:4px;"><table style="width:100%;border-collapse:collapse;font-size:11px;min-width:420px;">
+      <thead><tr style="background:var(--surf);">
+        <th style="padding:5px 10px;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-align:left;border-bottom:1px solid var(--bdr);">BULAN</th>
+        ${['51','52','53'].map(k=>`<th style="padding:5px 10px;font-size:9px;font-weight:600;color:${IKPA_CONF[k].color};letter-spacing:.4px;text-align:right;border-bottom:1px solid var(--bdr);">${IKPA_CONF[k].icon} Akun ${k}</th>`).join('')}
+        <th style="padding:5px 10px;font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.4px;text-align:right;border-bottom:1px solid var(--bdr);">DEV. TERTIMBANG</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr style="background:var(--surf);border-top:2px solid var(--bdr);">
+        <td colspan="4" style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--ink);">Rata-Rata Kumulatif s.d. TW ${twRom[twIdx]}</td>
+        <td style="padding:6px 10px;font-size:12px;font-weight:800;text-align:right;color:${SC[deviRPD.status]};font-family:'Fira Code',monospace;">${fmtP(deviRPD.rataRata)}%</td>
+      </tr></tfoot>
+    </table></div>`;
+  }
+  const deviTopInfo=deviRPD?`<div style="color:var(--txt3);">Rata-rata deviasi: <strong style="color:var(--ink);font-family:'Fira Code',monospace;">${fmtP(deviRPD.rataRata)}%</strong></div>
+    <div style="color:var(--txt3);margin-top:2px;">Toleransi: <strong style="color:#00b87a;">≤ 5%</strong></div>`:'';
+  const card2=buildIndicatorCard('Deviasi RPD Hal. III DIPA','Indikator IKPA 2','📋',deviRPD?deviRPD.nilaiIKPA:null,deviRPD?deviRPD.status:'na',deviTopInfo,deviDetail,'#7c5cbf');
+
+  // ── Per-TW Summary Table ──
+  const summaryRows=[
+    {label:'NKPA Penyerapan',fn:i=>{ const n=hitungNKPA(i); return n?`<span style="font-family:'Fira Code',monospace;font-weight:700;">${fmtP(n.nkpaTotal)}</span>`:`<span style="color:var(--txt3);">—</span>`; }},
+    {label:'Nilai IKPA Penyerapan',fn:i=>{ const n=hitungNKPA(i); if(!n)return`<span style="color:var(--txt3);">—</span>`; const c=SC[n.status]; return`<span style="font-weight:800;font-family:'Fira Code',monospace;color:${c};font-size:13px;">${fmtP(n.nilaiIKPA)}</span> <span style="font-size:9px;color:${c};">${SL[n.status]}</span>`; }},
+    {label:'Deviasi RPD Rata-rata',fn:i=>{ const d=hitungDeviasiRPD(i); return d&&d.nBulan>0?`<span style="font-family:'Fira Code',monospace;">${fmtP(d.rataRata)}%</span>`:`<span style="color:var(--txt3);">—</span>`; }},
+    {label:'Nilai IKPA RPD',fn:i=>{ const d=hitungDeviasiRPD(i); if(!d||d.nBulan===0)return`<span style="color:var(--txt3);">—</span>`; const c=SC[d.status]; return`<span style="font-weight:800;font-family:'Fira Code',monospace;color:${c};font-size:13px;">${fmtP(d.nilaiIKPA)}</span> <span style="font-size:9px;color:${c};">${SL[d.status]}</span>`; }},
+  ].map((row,ri)=>`<tr style="border-top:1px solid var(--bdr);background:${ri%2===0?'':'rgba(0,0,0,.015)'};">
+    <td style="padding:9px 14px;font-size:11px;font-weight:600;color:var(--txt2);border-right:1px solid var(--bdr);">${row.label}</td>
+    ${[0,1,2,3].map(i=>`<td style="padding:9px 14px;text-align:center;background:${i===twIdx?'rgba(0,124,145,.05)':''};">
+      ${i>twIdx?`<span style="color:var(--txt3);font-size:10px;">—</span>`:row.fn(i)}
+      ${i===twIdx&&isNotFinal?`<div style="font-size:8px;color:#a07010;">⏳ sementara</div>`:''}
+    </td>`).join('')}
+  </tr>`).join('');
+
+  // ── Input Pagu Section ──
+  const paguRows=['51','52','53'].map(kode=>{
     const conf=IKPA_CONF[kode],bl=ikpa.belanja[kode];
-    const bg=ki%2===0?'':'rgba(0,0,0,.015)';
-    const targetRow=`<tr style="background:${bg};">
-      <td rowspan="2" style="padding:10px 14px;border-right:1px solid var(--bdr);vertical-align:middle;border-bottom:1px solid var(--bdr)30;">
-        <div style="font-weight:600;color:var(--ink);font-size:12px;">${conf.icon} ${conf.nama}</div>
+    return`<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--bdr);flex-wrap:wrap;">
+      <div style="min-width:160px;flex:1;">
+        <div style="font-size:12px;font-weight:600;color:var(--ink);">${conf.icon} ${conf.nama}</div>
         <div style="font-size:10px;color:var(--txt3);">Akun ${kode}</div>
-      </td>
-      ${[0,1,2,3].map(i=>{
-        const active=i===twIdx;
-        return `<td style="padding:8px 14px;text-align:center;background:${active?'rgba(0,124,145,.05)':''};border-bottom:1px solid var(--bdr)15;">
-          <div style="font-size:12px;font-weight:700;color:${conf.color};">${conf.target[i]}%</div>
-          ${conf.threshold[i]>0?`<div style="font-size:9px;color:#e8a020;">±${conf.threshold[i]}%</div>`:'<div style="font-size:9px;color:var(--txt3);">target</div>'}
-        </td>`;
-      }).join('')}
-      <td rowspan="2" style="padding:10px 14px;text-align:right;border-left:1px solid var(--bdr);vertical-align:middle;font-family:'Fira Code',monospace;font-size:12px;color:var(--ink);border-bottom:1px solid var(--bdr)30;">
-        ${bl&&bl.paguSet?(bl.pagu>0?fmt(bl.pagu):'<span style="color:var(--txt3);font-size:11px;">Tidak Ada</span>'):'<span style="color:var(--txt3);">—</span>'}
-      </td>
-    </tr>`;
-    const realRow=`<tr style="background:${bg};">
-      ${[0,1,2,3].map(i=>{
-        const active=i===twIdx;
-        const isFuture=i>twIdx;
-        const isPast=i<twIdx;
-        const n=bl&&bl.paguSet&&!isFuture?ikpaNilai(kode,i):null;
-        const sc=n?statusColor[n.status]:'#7a9aac';
-        const pct=n&&n.status!=='na'?n.pct:0;
-        return `<td style="padding:3px 14px 10px;text-align:center;background:${active?'rgba(0,124,145,.05)':''};border-bottom:1px solid var(--bdr)30;">
-          ${isFuture?`<div style="font-size:10px;color:var(--bdr);font-style:italic;">—</div>`:
-            n&&n.status==='na'?`<div style="font-size:10px;color:var(--txt3);">N/A</div>`:
-            n&&bl&&bl.pagu>0?`<div style="font-size:12px;font-weight:600;font-family:'Fira Code',monospace;color:${sc};">${pct.toFixed(1)}%</div>
-            <div style="font-size:9px;color:${sc};">nilai ${n.nilai}</div>`:
-            `<div style="font-size:11px;color:var(--txt3);">—</div>`}
-        </td>`;
-      }).join('')}
-    </tr>`;
-    return targetRow+realRow;
+      </div>
+      <div style="font-size:12px;font-family:'Fira Code',monospace;color:var(--ink);min-width:140px;">
+        ${bl&&bl.paguSet&&bl.pagu?new Intl.NumberFormat('id-ID').format(bl.pagu):`<span style="color:var(--txt3);">Belum diset</span>`}
+      </div>
+      ${totalPagu>0&&bl&&bl.paguSet&&bl.pagu?`<div style="font-size:10px;color:var(--txt3);min-width:70px;">
+        Proporsi: <strong>${(bl.pagu/totalPagu*100).toFixed(2)}%</strong>
+      </div>`:'<div style="min-width:70px;"></div>'}
+      ${bpEdit?`<input type="number" step="1" value="${bl&&bl.paguSet?bl.pagu:''}" placeholder="masukkan pagu..."
+        style="border:1.5px solid var(--bdr);border-radius:8px;padding:7px 10px;font-size:12px;font-family:'Fira Code',monospace;color:var(--txt2);background:var(--surf);outline:none;width:180px;box-sizing:border-box;"
+        oninput="setIKPAPagu('${kode}',this.value,false)"
+        onblur="setIKPAPagu('${kode}',this.value,true);this.style.borderColor='var(--bdr)'"
+        onfocus="this.style.borderColor='${conf.color}'">`
+        :`<div style="font-size:10px;color:var(--txt3);font-style:italic;">🔒 Hanya Admin / Editor Bagian Umum</div>`}
+    </div>`;
   }).join('');
 
   document.getElementById('mainContent').innerHTML=`
   <div class="dash-header" style="border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
     <div>
-      <h2 style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:white;margin:0 0 3px;">🎯 IKPA — Penyerapan Anggaran</h2>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);">Kanwil DJPb Prov. Sumatera Selatan</div>
+      <h2 style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:white;margin:0 0 3px;">🎯 IKPA — Indikator Kinerja Pelaksanaan Anggaran</h2>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);">Kanwil DJPb Prov. Sumatera Selatan · Nilai final ditetapkan MyIntress</div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
       ${[1,2,3,4].map(i=>`<button onclick="switchTW(${i})" style="padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Figtree',sans-serif;transition:all 0.18s;background:${i===tw?'var(--teal)':'rgba(255,255,255,0.08)'};color:${i===tw?'white':'rgba(255,255,255,0.55)'};border:1.5px solid ${i===tw?'var(--teal)':'rgba(255,255,255,0.15)'};${i===tw?'box-shadow:0 2px 8px rgba(0,196,224,0.3);':''}">TW ${twRom[i-1]} <span style="opacity:.75;font-size:10px;">${TWMON[i-1].map(m=>MS[m-1]).join('-')}</span></button>`).join('')}
     </div>
   </div>
-
-  <div class="ikpa-banner-grid${avgN!==null?' has-score':''}" style="background:linear-gradient(135deg,#003d80 0%,#004f9f 100%);border-radius:0 0 14px 14px;overflow:hidden;margin:0 0 20px;border:1px solid rgba(0,150,181,0.25);border-top:none;">
-    ${avgN!==null?`<div style="padding:22px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.15);">
-      <div class="ikpa-score-num" style="color:${avgColor};">${avgN}</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.4);text-align:center;margin-top:5px;line-height:1.5;">Estimasi Nilai<br>TW ${twRom[twIdx]}</div>
-    </div>`:''}
-    <div style="padding:22px 26px;display:flex;align-items:center;gap:28px;flex-wrap:wrap;">
-      <div style="flex:1;min-width:180px;">
-        <div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Periode Aktif</div>
-        <div style="font-size:16px;font-weight:700;color:white;font-family:'Sora',sans-serif;">Triwulan ${twRom[twIdx]}</div>
-        <div style="font-size:13px;color:rgba(255,255,255,.55);margin-top:2px;">${MN[TWMON[twIdx][0]-1]}–${MN[TWMON[twIdx][2]-1]} ${getTAYear()}</div>
+  <div style="background:linear-gradient(135deg,#003d80 0%,#004f9f 100%);border-radius:0 0 14px 14px;margin:0 0 20px;padding:18px 24px;border:1px solid rgba(0,150,181,0.25);border-top:none;">
+    <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:center;">
+      <div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">Periode</div>
+        <div style="font-size:15px;font-weight:700;color:white;font-family:'Sora',sans-serif;">Triwulan ${twRom[twIdx]} ${getTAYear()}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;">${MN[TWMON[twIdx][0]-1]} – ${MN[TWMON[twIdx][2]-1]}</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.3);max-width:340px;line-height:1.7;border-left:1px solid rgba(255,255,255,.08);padding-left:24px;">
-        Nilai kinerja = rata-rata tertimbang realisasi vs target per jenis belanja.<br>
-        Threshold <span style="color:#e8a020;">±10%</span> berlaku khusus Belanja Pegawai (51) TW I–III.
+      <div style="border-left:1px solid rgba(255,255,255,.1);padding-left:28px;display:flex;gap:32px;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">NKPA Penyerapan</div>
+          <div style="font-size:26px;font-weight:800;font-family:'Fira Code',monospace;color:${nkpa?SC[nkpa.status]:'rgba(255,255,255,.25)'};">${nkpa?fmtP(nkpa.nilaiIKPA):'—'}</div>
+          ${isNotFinal?`<div style="font-size:9px;color:#e8a020;">⏳ sementara</div>`:''}
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Nilai IKPA RPD</div>
+          <div style="font-size:26px;font-weight:800;font-family:'Fira Code',monospace;color:${deviRPD&&deviRPD.nBulan>0?SC[deviRPD.status]:'rgba(255,255,255,.25)'};">${deviRPD&&deviRPD.nBulan>0?fmtP(deviRPD.nilaiIKPA):'—'}</div>
+          ${isNotFinal?`<div style="font-size:9px;color:#e8a020;">⏳ sementara</div>`:''}
+        </div>
+      </div>
+      <div style="border-left:1px solid rgba(255,255,255,.1);padding-left:28px;font-size:10px;color:rgba(255,255,255,.3);line-height:1.8;max-width:280px;">
+        Formula sesuai OM-SPAN/SPAN:<br>
+        📊 NKPA = Σ (min(%real/target,100%) × proporsi)<br>
+        📋 RPD = rata-rata deviasi tertimbang kumulatif
       </div>
     </div>
   </div>
 
-  <div class="ikpa-cards-grid">
-    ${cardsHtml}
+  ${notFinalBanner}
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;" class="ikpa-cards-grid">
+    ${card1}
+    ${card2}
   </div>
 
   <div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:20px;">
     <div style="padding:13px 16px 12px;border-bottom:1px solid var(--bdr);">
-      <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);">📋 Target & Realisasi per Triwulan</div>
+      <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);">📈 Ringkasan IKPA per Triwulan</div>
     </div>
     <div style="overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <thead>
-          <tr style="background:var(--surf);">
-            <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);min-width:160px;">JENIS BELANJA</th>
-            ${[0,1,2,3].map(i=>`<th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:600;color:${i===twIdx?'var(--teal)':'var(--txt3)'};letter-spacing:.5px;border-bottom:1px solid var(--bdr);background:${i===twIdx?'rgba(0,124,145,.05)':''};">
-              TW ${twRom[i]}<div style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">${TWMON[i].map(m=>MS[m-1]).join('-')}</div>
-            </th>`).join('')}
-            <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);border-left:1px solid var(--bdr);">PAGU</th>
-          </tr>
-        </thead>
-        <tbody>${tabelRows}</tbody>
+        <thead><tr style="background:var(--surf);">
+          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.5px;border-bottom:1px solid var(--bdr);min-width:180px;">INDIKATOR</th>
+          ${[0,1,2,3].map(i=>`<th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:600;color:${i===twIdx?'var(--teal)':'var(--txt3)'};letter-spacing:.5px;border-bottom:1px solid var(--bdr);background:${i===twIdx?'rgba(0,124,145,.05)':''};">
+            TW ${twRom[i]}<div style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">${TWMON[i].map(m=>MS[m-1]).join('-')}</div>
+          </th>`).join('')}
+        </tr></thead>
+        <tbody>${summaryRows}</tbody>
       </table>
     </div>
-    <div style="padding:10px 16px;border-top:1px solid var(--bdr);display:flex;gap:14px;flex-wrap:wrap;font-size:10px;color:var(--txt3);">
-      <span><span style="display:inline-block;width:10px;height:10px;background:#00b87a;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Aman (≥ target)</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#007c91;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Dalam Toleransi</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#e8a020;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Perlu Perhatian</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#e05555;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Kritis</span>
-      <span style="margin-left:auto;"><span style="color:#e8a020;">±%</span> = batas toleransi (khusus akun 51)</span>
+    <div style="padding:8px 14px;border-top:1px solid var(--bdr);font-size:10px;color:var(--txt3);">
+      💡 Nilai IKPA Penyerapan = NKPA = Σ(min(%real/target,100%) × proporsi pagu) · Nilai IKPA RPD: 100 jika deviasi ≤5%, turun 5 poin per % di atas 5%.
     </div>
+  </div>
+
+  <div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+    <div style="padding:13px 16px 12px;border-bottom:1px solid var(--bdr);">
+      <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);">⚙️ Input Pagu per Jenis Belanja</div>
+      <div style="font-size:11px;color:var(--txt3);margin-top:2px;">Pagu resmi dari DIPA — digunakan sebagai dasar perhitungan proporsi dan NKPA</div>
+    </div>
+    ${paguRows}
+    ${totalPagu>0?`<div style="padding:10px 16px;border-top:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;font-size:11px;">
+      <span style="color:var(--txt3);">Total Pagu</span>
+      <span style="font-family:'Fira Code',monospace;font-weight:700;color:var(--ink);">${fmtN(totalPagu)}</span>
+    </div>`:''}
   </div>
 
   ${renderRPDSection()}`;
