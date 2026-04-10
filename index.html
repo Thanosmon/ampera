@@ -918,14 +918,14 @@ td.muted{color:var(--txt3);font-size:12px;}
 }
 
 /* ── IKPA responsive ── */
-.ikpa-cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;margin-bottom:22px;}
+.ikpa-cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;margin-bottom:22px;align-items:start;}
 .ikpa-banner-grid{display:grid;grid-template-columns:1fr;}
 .ikpa-banner-grid.has-score{grid-template-columns:160px 1fr;}
 .ikpa-score-num{font-family:'Sora',sans-serif;font-size:40px;font-weight:800;line-height:1;}
 .rpd-col{padding:10px 8px;text-align:right;border-right:1px solid var(--bdr);min-width:160px;vertical-align:top;}
 .ikpa-card-val{font-size:14px;font-weight:700;font-family:'Fira Code',monospace;letter-spacing:0.3px;}
 @media(min-width:1440px){
-  .ikpa-cards-grid{grid-template-columns:repeat(3,1fr);gap:18px;}
+  .ikpa-cards-grid{grid-template-columns:repeat(2,1fr);gap:18px;}
   .ikpa-banner-grid.has-score{grid-template-columns:200px 1fr;}
   .ikpa-score-num{font-size:56px;}
   .rpd-col{padding:14px 14px;min-width:200px;}
