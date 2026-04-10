@@ -4483,10 +4483,10 @@ function renderIKPA(){
       const prop=tot>0&&p>0?(p/tot*100).toFixed(4)+'%':'—';
       const isAct=i===twIdx;
       return`<td style="padding:6px 10px;border-right:1px solid var(--bdr);background:${isAct?'rgba(0,124,145,.04)':''};">
-        ${bpEdit?`<input type="number" step="1" value="${p||''}" placeholder="0"
+        ${bpEdit?`<input type="text" inputmode="numeric" value="${p?new Intl.NumberFormat('id-ID').format(p):''}" placeholder="0"
           style="${inpS}${isAct?'border-color:'+conf.color+';':''}"
-          oninput="setIKPAPagu('${kode}',${i},this.value,false)"
-          onblur="setIKPAPagu('${kode}',${i},this.value,true);this.style.borderColor='${isAct?conf.color:'var(--bdr)'}'"
+          oninput="var r=this.value.replace(/[^\d]/g,'');this.value=r?new Intl.NumberFormat('id-ID').format(r):'';setIKPAPagu('${kode}',${i},r||0,false)"
+          onblur="var r=this.value.replace(/[^\d]/g,'');setIKPAPagu('${kode}',${i},r||0,true);this.style.borderColor='${isAct?conf.color:'var(--bdr)'}'"
           onfocus="this.style.borderColor='${conf.color}'">`
           :`<span style="font-size:11px;font-family:'Fira Code',monospace;">${p?new Intl.NumberFormat('id-ID').format(p):'—'}</span>`}
         <div style="font-size:9px;color:var(--txt3);margin-top:2px;">${prop}</div>
