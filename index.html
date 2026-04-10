@@ -3214,7 +3214,12 @@ function renderDashboard(){
       deviD&&deviD.nBulan>0?deviD.nilaiIKPA:null,deviD&&deviD.nBulan>0?deviD.status:'na',
       deviD&&deviD.nBulan>0?`Deviasi avg: <strong>${deviD.rataRata.toFixed(2)}%</strong>`:'Belum ada data RPD',
       deviD&&deviD.nBulan>0?`Toleransi ≤ 5%`:'');
-    return c1+c2;
+    const proyD=hitungProyeksiNKPA(twIdxDash);
+    const c3=miniCard('Proyeksi NKPA (RPD)','Simulasi dari Rencana RPD','📅',
+      proyD?proyD.projNKPATotal:null,proyD?proyD.status:'na',
+      proyD?`Jika RPD rencana terpenuhi`:'Belum ada data RPD rencana',
+      proyD?(proyD.projNKPATotal>=95?'✅ Target tercapai':proyD.projNKPATotal>=75?'⚠️ Perlu perhatian':'❌ Kritis'):'');
+    return c1+c2+c3;
   })();
 
   // ── HTML ──
