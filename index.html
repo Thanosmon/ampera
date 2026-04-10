@@ -498,6 +498,23 @@ td.muted{color:var(--txt3);font-size:12px;}
   }
   .mob-more-btn .mn-ico{font-size:18px;line-height:1;}
   .mob-more-btn:active{background:rgba(255,255,255,0.05);}
+
+  /* ── IKPA mobile ── */
+  .ikpa-dash-grid{grid-template-columns:1fr!important;}
+  .ikpa-banner-info{flex-direction:column!important;gap:14px!important;}
+  .ikpa-banner-numbers{border-left:none!important;padding-left:0!important;border-top:1px solid rgba(255,255,255,.12);padding-top:14px!important;}
+  .ikpa-banner-formula{display:none!important;}
+  .ikpa-tw-btns{gap:4px!important;}
+  .ikpa-tw-btns .tw-month{display:none!important;}
+
+  /* ── chart-card-head: wrap ── */
+  .chart-card-head{flex-wrap:wrap;gap:6px;}
+  .chart-card-head h4{font-size:11px;line-height:1.4;}
+  .chart-card-head span{font-size:10px;}
+
+  /* ── KPI strip ── */
+  .dash-kpi{padding:8px 10px;}
+  .dash-kpi-val{font-size:15px;}
 }
 
 /* ═══════════════════════════════════
@@ -686,10 +703,15 @@ td.muted{color:var(--txt3);font-size:12px;}
   transition: width 0.5s ease;
 }
 @media(max-width:768px){
-  .sticky-summary { height:auto; padding:8px 12px; flex-wrap:wrap; gap:6px; }
-  .ss-item { flex:none; min-width:calc(50% - 12px); }
+  .sticky-summary { height:44px; padding:0 10px; flex-wrap:nowrap; gap:0; overflow:hidden; }
+  .ss-item { flex:1; min-width:0; padding:0 6px; }
+  .sticky-summary>div:nth-child(5){ display:none!important; }
+  .sticky-summary>div:nth-child(4){ display:none!important; }
   .ss-divider { display:none; }
-  .ss-progress-wrap { flex:none; width:100%; padding:0; }
+  .ss-progress-wrap { flex:1; width:auto; min-width:0; padding:0 6px; }
+  .ss-lbl { font-size:7px; letter-spacing:.2px; }
+  .ss-val { font-size:11px; }
+  .ss-val.ss-pct { font-size:12px; }
 }
 
 /* Chart Grid */
@@ -3302,7 +3324,7 @@ function renderDashboard(){
             <h4>🎯 IKPA — Penyerapan per Jenis Belanja · TW ${twRomDash[twIdxDash]} (${MN[twIdxDash*3]}–${MN[twIdxDash*3+2]})</h4>
             <button onclick="switchView('ikpa',document.querySelector('[data-view=ikpa]'))" style="background:none;border:1.5px solid var(--bdr);border-radius:8px;padding:4px 12px;font-size:11px;color:var(--txt2);cursor:pointer;font-family:'Figtree',sans-serif;">📝 Edit & Detail →</button>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 16px 16px;">
+          <div class="ikpa-dash-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 16px 16px;">
             ${ikpaDashCards}
           </div>
         </div>
@@ -4525,18 +4547,18 @@ function renderIKPA(){
       <h2 style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:white;margin:0 0 3px;">🎯 IKPA — Indikator Kinerja Pelaksanaan Anggaran</h2>
       <div style="font-size:11px;color:rgba(255,255,255,0.5);">Kanwil DJPb Prov. Sumatera Selatan · Nilai final ditetapkan MyIntress</div>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      ${[1,2,3,4].map(i=>`<button onclick="switchTW(${i})" style="padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Figtree',sans-serif;transition:all 0.18s;background:${i===tw?'var(--teal)':'rgba(255,255,255,0.08)'};color:${i===tw?'white':'rgba(255,255,255,0.55)'};border:1.5px solid ${i===tw?'var(--teal)':'rgba(255,255,255,0.15)'};${i===tw?'box-shadow:0 2px 8px rgba(0,196,224,0.3);':''}">TW ${twRom[i-1]} <span style="opacity:.75;font-size:10px;">${TWMON[i-1].map(m=>MS[m-1]).join('-')}</span></button>`).join('')}
+    <div class="ikpa-tw-btns" style="display:flex;gap:6px;flex-wrap:wrap;">
+      ${[1,2,3,4].map(i=>`<button onclick="switchTW(${i})" style="padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Figtree',sans-serif;transition:all 0.18s;background:${i===tw?'var(--teal)':'rgba(255,255,255,0.08)'};color:${i===tw?'white':'rgba(255,255,255,0.55)'};border:1.5px solid ${i===tw?'var(--teal)':'rgba(255,255,255,0.15)'};${i===tw?'box-shadow:0 2px 8px rgba(0,196,224,0.3);':''}">TW ${twRom[i-1]} <span class="tw-month" style="opacity:.75;font-size:10px;">${TWMON[i-1].map(m=>MS[m-1]).join('-')}</span></button>`).join('')}
     </div>
   </div>
   <div style="background:linear-gradient(135deg,#003d80 0%,#004f9f 100%);border-radius:0 0 14px 14px;margin:0 0 20px;padding:18px 24px;border:1px solid rgba(0,150,181,0.25);border-top:none;">
-    <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:center;">
+    <div class="ikpa-banner-info" style="display:flex;gap:28px;flex-wrap:wrap;align-items:center;">
       <div>
         <div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">Periode</div>
         <div style="font-size:15px;font-weight:700;color:white;font-family:'Sora',sans-serif;">Triwulan ${twRom[twIdx]} ${getTAYear()}</div>
         <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;">${MN[TWMON[twIdx][0]-1]} – ${MN[TWMON[twIdx][2]-1]}</div>
       </div>
-      <div style="border-left:1px solid rgba(255,255,255,.1);padding-left:28px;display:flex;gap:32px;flex-wrap:wrap;">
+      <div class="ikpa-banner-numbers" style="border-left:1px solid rgba(255,255,255,.1);padding-left:28px;display:flex;gap:32px;flex-wrap:wrap;">
         <div style="text-align:center;">
           <div style="font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">NKPA Penyerapan</div>
           <div style="font-size:26px;font-weight:800;font-family:'Fira Code',monospace;color:${nkpa?SC[nkpa.status]:'rgba(255,255,255,.25)'};">${nkpa?fmtP(nkpa.nilaiIKPA):'—'}</div>
@@ -4548,7 +4570,7 @@ function renderIKPA(){
           ${isNotFinal?`<div style="font-size:9px;color:#e8a020;">⏳ sementara</div>`:''}
         </div>
       </div>
-      <div style="border-left:1px solid rgba(255,255,255,.1);padding-left:28px;font-size:10px;color:rgba(255,255,255,.3);line-height:1.8;max-width:280px;">
+      <div class="ikpa-banner-formula" style="border-left:1px solid rgba(255,255,255,.1);padding-left:28px;font-size:10px;color:rgba(255,255,255,.3);line-height:1.8;max-width:280px;">
         Formula sesuai OM-SPAN/SPAN:<br>
         📊 NKPA = Σ (min(%real/target,100%) × proporsi)<br>
         📋 RPD = rata-rata deviasi tertimbang kumulatif
